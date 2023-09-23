@@ -9,7 +9,7 @@ nav_order: 6
 
 ## Reviewer
 
-`2023` Reviewer for ISMRM, Siggraph, Siggraph Asia, MICCAI, Neurips
+`2023` Reviewer for Neurips, ICLR, Siggraph, Siggraph Asia, MICCAI, ISMRM
 
 `2022` Reviewer for ISMRM, EMBC, MICCAI
 
