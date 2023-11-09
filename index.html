@@ -197,7 +197,7 @@ Link to your social media connections, too. This theme is set up to use [Font Aw
                 <tr>
                   <th scope="row">Sep 21, 2023</th>
                   <td>
-                    Our MRI off-resonance correction paper (Physics-Informed Deep Learning Framework for MRI Off-Resonance Correction Trained with Noise Instead of Data) was accpeted to <a href="https://nips.cc/" rel="external nofollow noopener" target="_blank">NeurIPS 2023</a>! Project led by my awesome collaborator <a href="https://people.eecs.berkeley.edu/~asdegoyeneche/" rel="external nofollow noopener" target="_blank">Alfredo</a>! Arxiv and code will be available soon!
+                    Our MRI off-resonance correction paper (Physics-Informed Deep Learning Framework for MRI Off-Resonance Correction Trained with Noise Instead of Data) was accpeted to <a href="https://nips.cc/" rel="external nofollow noopener" target="_blank">NeurIPS 2023</a>! Project led by my awesome collaborator <a href="https://people.eecs.berkeley.edu/~asdegoyeneche/" rel="external nofollow noopener" target="_blank">Alfredo</a>! Arxiv and code will be available soon! <a href="https://openreview.net/forum?id=Ia4dmqst0Z" rel="external nofollow noopener" target="_blank">[Paper]</a>
 
                   </td>
                 </tr>
@@ -374,6 +374,88 @@ I presented our work on <strong>Memory-efficient Learning for High-dimensional M
     <!-- Hidden abstract block -->
     <div class="abstract hidden">
       <p>Magnetic Resonance Imaging (MRI) is an effective medical imaging modality, offering excellent soft tissue contrast, versatile orientation capabilities, and no ionizing radiation exposure. However, its inherent physics constraints lead to time-consuming data acquisition and prolonged scan times. To reduce scan time, recently, deep learning (DL) has achieved notable success in reconstructing high-quality MR images from under-sampled data, surpassing conventional non-learned approaches. Despite this progress, challenges such as hand-crafted loss functions, high computational costs, and limited training data remain. In this dissertation, I will present a series of projects focused on enhancing fidelity and efficiency in MRI reconstruction. I will first introduce a supervised learning method that synthesizes multi-contrast MR images from a single MRF scan. Next, I will present a novel feature loss designed to preserve perceptual similarity, demonstrating its effectiveness in high-fidelity image reconstruction. Following that, I will touch upon memory-efficient learning for high-dimensional MRI reconstruction and present a novel framework for rigorous uncertainty estimation. Lastly, I will introduce a novel complex-valued representation tailored for tasks with limited training data.</p>
+    </div>
+  </div>
+</div>
+</li>
+<li>
+<!-- _layouts/bib.html -->
+<div class="row">
+  <div class="col-sm-2 preview">
+<img id="Off_resonetpng" class="preview z-depth-1 rounded myImg" src="/assets/img/publication_preview/Off_resonet.png"><div id="Off_resonetpng-modal" class="modal2">
+      <span class="closeimg" onclick="document.getElementById('Off_resonetpng-modal').style.display='none'">×</span>
+      <div class="myCaption"></div>
+      <img class="modal-content2" id="Off_resonetpng-modal-img">
+    </div>
+    <script>
+      // Get the modal
+      var modal = document.getElementById("Off_resonetpng-modal");
+      // Get the image and insert it inside the modal - use its "alt" text as a caption
+      var img = document.getElementById('Off_resonetpng');
+      var modalImg = document.getElementById("Off_resonetpng-modal-img");
+      var captionText = modal.getElementsByTagName('div')[0];
+      img.onclick = function () {
+        modal.style.display = "block";
+        modalImg.src = this.src;
+        captionText.innerHTML = "";
+      }
+      // Get the <span> element that closes the modal
+      var span = modal.getElementsByTagName('span')[0];
+      // When the user clicks on <span> (x), close the modal
+      span.onclick = function () {
+        modal.style.display = "none";
+      }
+      modal.onclick = function () {
+        modal.style.display = "none";
+      }
+    </script>
+</div>
+
+  <!-- Entry bib key -->
+  <div id="de2023resonet" class="col-sm-8 col-md-9">
+    <!-- Title -->
+    <div class="title">ResoNet: a Physics-Informed DL Framework for Off-Resonance Correction in MRI Trained with Noise</div>
+    <!-- Author -->
+    <div class="author">
+      
+
+      Alfredo De Goyeneche, Shreya Ramachandran, <em>Ke Wang</em>, Ekin Karasan, and
+      <span class="more-authors" title="click to view 3 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '3 more authors' ? 'Joseph Yitan Cheng, X Yu Stella, Michael Lustig' : '3 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">3 more authors</span>
+</div>
+
+    <!-- Journal/Book title and date -->
+    
+    
+    <div class="periodical">
+      <em>In Thirty-seventh Conference on Neural Information Processing Systems</em>, 2023
+    </div>
+    <div class="periodical">
+      
+    </div>
+
+    <!-- Links/Buttons -->
+    <div class="links">
+      <a class="abstract btn btn-sm z-depth-0" role="button">Abs</a>
+    </div>
+    
+    <div class="badges">
+    </div>
+
+    <!-- Hidden abstract block -->
+    <div class="abstract hidden">
+      <p>Magnetic Resonance Imaging (MRI) is a powerful medical imaging modality that offers diagnostic information without harmful ionizing radiation. Unlike optical imaging, MRI sequentially samples the spatial Fourier domain k-space of the image. Measurements are collected in multiple shots, or readouts, and in each shot, data along a smooth trajectory is sampled.
+  Conventional MRI data acquisition relies on sampling k-space row-by-row in short intervals, which is slow and inefficient. More efficient, non-Cartesian sampling trajectories (e.g., Spirals) use longer data readout intervals, but are more susceptible to magnetic field inhomogeneities, leading to off-resonance artifacts. Spiral trajectories cause off-resonance blurring in the image, and the mathematics of this blurring resembles that of optical blurring, where magnetic field variation corresponds to depth and readout duration to aperture size. Off-resonance blurring is a system issue with a physics-based, accurate forward model. We present a physics-informed deep learning framework for off-resonance correction in MRI, which is trained exclusively on synthetic, noise-like data with representative marginal statistics. Our approach allows for fat/water partial volume effects modeling and separation, and parallel imaging acceleration. Through end-to-end training using synthetic randomized data (i.e., images, coil sensitivities, field maps), we train the network to reverse off-resonance effects across diverse anatomies and contrasts without retraining. We demonstrate the effectiveness of our approach through results on phantom and \emphin-vivo data. This work has the potential to facilitate the clinical adoption of non-Cartesian sampling trajectories, enabling efficient, rapid, and motion-robust MRI scans. Code is publicly available at: https://github.com/mikgroup/ResoNet</p>
     </div>
   </div>
 </div>
@@ -975,7 +1057,7 @@ I presented our work on <strong>Memory-efficient Learning for High-dimensional M
     <footer class="fixed-bottom">
       <div class="container mt-0">
         © Copyright 2023 Ke  Wang. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>.
-Last updated: September 23, 2023.
+Last updated: November 09, 2023.
       </div>
     </footer>
 
