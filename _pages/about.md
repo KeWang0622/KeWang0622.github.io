@@ -6,7 +6,7 @@ subtitle: # <a href='#'>Affiliations</a>. Address. Contacts. Moto. Etc.
 
 profile:
   align: left
-  image: kw_wsss.jpg
+  image: kw_ws.jpg
   image_circular: false # crops the image to make it circular
   address: 
     <p>Samsung Research America</p>
