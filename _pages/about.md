@@ -6,9 +6,9 @@ subtitle: # <a href='#'>Affiliations</a>. Address. Contacts. Moto. Etc.
 
 profile:
   align: left
-  image: kewang.jpg
+  image: kw_wsss.jpg
   image_circular: false # crops the image to make it circular
-  address: >
+  address: 
     <p>Samsung Research America</p>
     <p>MPI Lab</p>
     <p>6625 Excellence Way</p>
