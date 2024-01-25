@@ -8,9 +8,7 @@ profile:
   align: left
   image: kw_ws.jpg
   image_circular: false # crops the image to make it circular
-  address: 
-    <p>Adobe Inc.</p>
-    <p>Computational Photography Team</p>
+  # address: 
 
 news: true  # includes a list of news items
 latest_posts: false  # includes a list of the newest posts
