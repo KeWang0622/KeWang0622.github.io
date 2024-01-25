@@ -14,9 +14,14 @@
 - title: Experience
   type: time_table
   contents:
+    - title: Computer Scientist
+      institution: Adobe Inc. Computational Photography Team
+      year: 2024 -
+      description:
+        - Working on real-world computational photography applications.
     - title: Senior Research Enginner
       institution: Samsung Research America (MPI Lab)
-      year: 2023 - present
+      year: 2023 - 2024
       description:
         - Working on real-world computational imaging applications for next-generation AI camera.
     - title: Graduate Student Researcher
