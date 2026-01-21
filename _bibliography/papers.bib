@@ -15,6 +15,17 @@
   url= "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2023/EECS-2023-178.html"
 }
 
+@article{you2025photoframer,
+  title={PhotoFramer: Multi-modal Image Composition Instruction},
+  author={You, Zhiyuan and Wang, Ke and Zhang, He and Cai, Xin and Gu, Jinjin and Xue, Tianfan and Dong, Chao and Zhang, Zhoutong},
+  journal={arXiv preprint arXiv:2512.00993},
+  year={2025},
+  selected={true},
+  arxiv="https://arxiv.org/abs/2512.00993",
+  project="https://zhiyuanyou.github.io/photoframer/",
+  abstract={Composition matters during the photo-taking process, yet many casual users struggle to frame well-composed images. To provide composition guidance, we introduce PhotoFramer, a multi-modal composition instruction framework. Given a poorly composed image, PhotoFramer first describes how to improve the composition in natural language and then generates a well-composed example image. To train such a model, we curate a large-scale dataset. Inspired by how humans take photos, we organize composition guidance into a hierarchy of sub-tasks: shift, zoom-in, and view-change tasks. Shift and zoom-in data are sampled from existing cropping datasets, while view-change data are obtained via a two-stage pipeline. First, we sample pairs with varying viewpoints from multi-view datasets, and train a degradation model to transform well-composed photos into poorly composed ones. Second, we apply this degradation model to expert-taken photos to synthesize poor images to form training pairs. Using this dataset, we finetune a model that jointly processes and generates both text and images, enabling actionable textual guidance with illustrative examples. Extensive experiments demonstrate that textual instructions effectively steer image composition, and coupling them with exemplars yields consistent improvements over exemplar-only baselines. PhotoFramer offers a practical step toward composition assistants that make expert photographic priors accessible to everyday users.}
+}
+
 @inproceedings{de2023resonet,
   title={ResoNet: a Physics-Informed DL Framework for Off-Resonance Correction in MRI Trained with Noise},
   author={De Goyeneche, Alfredo and Ramachandran, Shreya and Wang, Ke and Karasan, Ekin and Cheng, Joseph Yitan and Stella, X Yu and Lustig, Michael},

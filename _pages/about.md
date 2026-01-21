@@ -15,7 +15,7 @@ latest_posts: false  # includes a list of the newest posts
 selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true  # includes social icons at the bottom of the page
 ---
-I am currently a research scientist/engineer at Adobe Inc, with [Marc Levoy](https://graphics.stanford.edu/~levoy/)'s computational photography team. Before that, I was a senior research engineer at Samsung Research America (SRA), MPI Lab. 
+I am currently the Head of Applied Research at [Pika Labs](https://pika.art/). Before that, I was a research scientist/engineer at Adobe Inc with [Marc Levoy](https://graphics.stanford.edu/~levoy/)'s computational photography team, and a senior research engineer at Samsung Research America (SRA), MPI Lab. 
 
 I obtained my Ph.D. degree from [Electrical Engineering and Computer Sciences at UC Berkeley](https://eecs.berkeley.edu/), working with [Prof. Miki Lustig](http://people.eecs.berkeley.edu/~mlustig/) and [Prof. Stella Yu](https://web.eecs.umich.edu/~stellayu/). I was a member of [Berkeley Artificial Intelligence Research (BAIR)](https://bair.berkeley.edu/). I graduated with honor from the department of [Biomedical Engineering](http://www.med.tsinghua.edu.cn/) in [Tsinghua University](http://www.tsinghua.edu.cn/publish/thu2018en/index.html/). My research interests lie in **computational imaging, computational photography, deep learning, signal processing, inverse problem, medical imaging and computer vision**. I am an enthusiast of science, engineering, music, ice skating, rock climbing and everything related to medicine and healthcare! My name in Chinese is 王可.
 
