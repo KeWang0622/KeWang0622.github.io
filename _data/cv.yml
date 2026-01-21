@@ -14,9 +14,14 @@
 - title: Experience
   type: time_table
   contents:
+    - title: Applied Research Lead (Head of Applied Research)
+      institution: Pika Labs
+      year: 2025 -
+      description:
+        - Leading applied research for next-generation GenAI applications.
     - title: Computer Scientist
       institution: Adobe Inc. Computational Photography Team
-      year: 2024 -
+      year: 2024 - 2025
       description:
         - Working on real-world computational photography applications.
     - title: Senior Research Enginner

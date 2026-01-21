@@ -19,7 +19,7 @@ I am currently the Head of Applied Research at [Pika Labs](https://pika.art/). B
 
 I obtained my Ph.D. degree from [Electrical Engineering and Computer Sciences at UC Berkeley](https://eecs.berkeley.edu/), working with [Prof. Miki Lustig](http://people.eecs.berkeley.edu/~mlustig/) and [Prof. Stella Yu](https://web.eecs.umich.edu/~stellayu/). I was a member of [Berkeley Artificial Intelligence Research (BAIR)](https://bair.berkeley.edu/). I graduated with honor from the department of [Biomedical Engineering](http://www.med.tsinghua.edu.cn/) in [Tsinghua University](http://www.tsinghua.edu.cn/publish/thu2018en/index.html/). My research interests lie in **computational imaging, computational photography, deep learning, signal processing, inverse problem, medical imaging and computer vision**. I am an enthusiast of science, engineering, music, ice skating, rock climbing and everything related to medicine and healthcare! My name in Chinese is 王可.
 
-Feel free to reach me at **kewang [at] adobe [dot] com**.
+Feel free to reach me at **kewang0622 [at] gmail [dot] com**.
 
 <!--
 Write your biography here. Tell the world about yourself. Link to your favorite [subreddit](http://reddit.com). You can put a picture in, too. The code is already in, just name your picture `prof_pic.jpg` and put it in the `img/` folder.test
