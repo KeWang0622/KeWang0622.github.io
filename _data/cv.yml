@@ -97,3 +97,31 @@
 #   contents:
 #     - <u>Hobbies:</u> Hobby 1, Hobby 2, etc.
 
+- title: Service
+  type: time_table
+  contents:
+    - title: Reviewer for CVPR
+      year: 2026
+    - title: Reviewer for NeurIPS, ICML, ICLR
+      year: 2025
+    - title: Reviewer for NeurIPS, ICML, ICLR, Siggraph, MICCAI
+      year: 2024
+    - title: Reviewer for ISMRM, Siggraph, Siggraph Asia, MICCAI, NeurIPS
+      year: 2023
+    - title: Reviewer for MICCAI, EMBC, ISMRM
+      year: 2022
+    - title: Reviewer for Scientific Report
+      year: 2023 -
+    - title: Reviewer for Quantitative Imaging in Medicine and Surgery
+      year: 2023 -
+    - title: Reviewer for Magnetic Resonance in Medicine
+      year: 2022 -
+    - title: Reviewer for IEEE Transaction on Medical Imaging
+      year: 2022 -
+    - title: Reviewer for Frontiers in Oncology
+      year: 2022 -
+    - title: Reviewer for Computational and Mathematical Methods in Medicine
+      year: 2022 -
+    - title: Reviewer for IEEE Transactions on Circuits and Systems for Video Technology
+      year: 2020 -
+
