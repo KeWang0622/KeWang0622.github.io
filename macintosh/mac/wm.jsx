@@ -86,11 +86,14 @@ function Window({ win, children, onFocus, onClose, onMove, onResize, active, mob
     };
   }, [onMove, onResize]);
 
+  const [settled, setSettled] = useState(false);
+  useEffect(()=>{ const t=setTimeout(()=>setSettled(true),400); return ()=>clearTimeout(t); },[]);
+
   if(win.minimized) return null;
 
   return (
     <div ref={ref}
-      className={'win '+(active?'active ':'')+(mobileActive?'mobile-active':'')}
+      className={'win '+(active?'active ':'')+(mobileActive?'mobile-active ':'')+(settled?'settled':'')}
       style={{ left:win.x, top:win.y, width:win.w, height:win.h, zIndex: win.z }}
       onMouseDown={onFocus}>
       <div className="titlebar" onMouseDown={startDrag}>
