@@ -368,9 +368,10 @@ function App(){
   }[tweaks.pattern];
   const deskSize = tweaks.pattern==='dots'?'2px 2px': tweaks.pattern==='checker'?'8px 8px':'auto';
 
-  const modeFilter = tweaks.mode==='Invert'?'invert(1)':
-    tweaks.mode==='Sepia'?'sepia(1) hue-rotate(-20deg) saturate(2)':
-    'none';
+  const modeFilter = 'none';
+  uE(()=>{
+    document.documentElement.setAttribute('data-mode', tweaks.mode||'B&W');
+  },[tweaks.mode]);
   const zoomScale = tweaks.zoom==='S'?0.85:tweaks.zoom==='L'?1.15:1;
 
   const isMobile = vw < 820;

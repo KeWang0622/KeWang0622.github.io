@@ -119,7 +119,7 @@ window.KW_DATA = {
       "Thesis: MRI Reconstruction with Greater Fidelity and Efficiency. Advisors: Miki Lustig & Stella Yu."],
     ["Summers 2019 — 2022", "Research intern / collaborator", "Stanford · GE Healthcare · Philips Research",
       "Projects spanning MRI fingerprinting, off-resonance correction, and accelerated acquisition."],
-    ["2013 — 2017", "BEng, Biomedical Engineering (honors)", "Tsinghua University (清华大学)",
+    ["2014 — 2018", "BEng, Biomedical Engineering (honors)", "Tsinghua University (清华大学)",
       "First exposure to inverse problems and medical imaging."],
   ],
 

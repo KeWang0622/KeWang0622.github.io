@@ -25,11 +25,11 @@ function AboutMe(){
         <div className="mq-track">
           <span>★ CVPR '23</span><span>★ NeurIPS '23</span><span>★ PNAS '22</span>
           <span>★ MRM '22</span><span>★ MICCAI '21</span><span>★ Adobe Project Indigo</span>
-          <span>★ Pika Labs</span><span>★ UC Berkeley BAIR</span><span>★ Tsinghua '17</span>
+          <span>★ Pika Labs</span><span>★ UC Berkeley BAIR</span><span>★ Tsinghua '18</span>
           <span>★ 425 citations</span><span>★ h-index 10</span><span>★ Hello!</span>
           <span>★ CVPR '23</span><span>★ NeurIPS '23</span><span>★ PNAS '22</span>
           <span>★ MRM '22</span><span>★ MICCAI '21</span><span>★ Adobe Project Indigo</span>
-          <span>★ Pika Labs</span><span>★ UC Berkeley BAIR</span><span>★ Tsinghua '17</span>
+          <span>★ Pika Labs</span><span>★ UC Berkeley BAIR</span><span>★ Tsinghua '18</span>
           <span>★ 425 citations</span><span>★ h-index 10</span><span>★ Hello!</span>
         </div>
       </div>
@@ -384,7 +384,7 @@ function AboutThisMac(){
         <div className="row"><span>h-index</span><span>10</span></div>
         <div className="row"><span>Coffee</span><span>2,048 K</span></div>
         <div style={{marginTop:14, fontSize:11, textAlign:'center'}}>
-          © Ke Wang · 2017–2026 · Tsinghua → Berkeley → Samsung → Adobe → Pika
+          © Ke Wang · 2018–2026 · Tsinghua → Berkeley → Samsung → Adobe → Pika
         </div>
       </div>
     </div>
