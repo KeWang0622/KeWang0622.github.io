@@ -1,3 +1,4 @@
+const {useState,useEffect,useMemo,useRef}=React;
 // ============ WINDOW BODIES ============
 
 const MetricBar = ({label, value, max}) => (
@@ -17,7 +18,7 @@ function AboutMe(){
       <div className="hero-title">
         <div className="inner">
           <h1>Ke Wang  ·  王 可</h1>
-          <div className="sub">Applied Research Lead · Pika Labs</div>
+          <div className="sub">Head of Applied Research · Pika Labs</div>
         </div>
       </div>
 
@@ -26,11 +27,11 @@ function AboutMe(){
           <span>★ CVPR '23</span><span>★ NeurIPS '23</span><span>★ PNAS '22</span>
           <span>★ MRM '22</span><span>★ MICCAI '21</span><span>★ Adobe Project Indigo</span>
           <span>★ Pika Labs</span><span>★ UC Berkeley BAIR</span><span>★ Tsinghua '18</span>
-          <span>★ 425 citations</span><span>★ h-index 10</span><span>★ Hello!</span>
+          <span>★ {window.KW_DATA.metrics.citations} citations</span><span>★ CVPR 2026</span><span>★ Hello!</span>
           <span>★ CVPR '23</span><span>★ NeurIPS '23</span><span>★ PNAS '22</span>
           <span>★ MRM '22</span><span>★ MICCAI '21</span><span>★ Adobe Project Indigo</span>
           <span>★ Pika Labs</span><span>★ UC Berkeley BAIR</span><span>★ Tsinghua '18</span>
-          <span>★ 425 citations</span><span>★ h-index 10</span><span>★ Hello!</span>
+          <span>★ {window.KW_DATA.metrics.citations} citations</span><span>★ CVPR 2026</span><span>★ Hello!</span>
         </div>
       </div>
 
@@ -43,7 +44,7 @@ function AboutMe(){
           <h2 className="sec">README.txt</h2>
           <p>I build systems that let machines <b>see, reason about, and create</b> images
           and video. Today I lead applied research at <b>Pika Labs</b>, working on the
-          next generation of generative video models. Before Pika I shipped
+          next generation of generative AI applications, including agent research behind <a href="https://www.pika.me/" target="_blank" rel="noreferrer">Pika.me</a>. Before Pika I shipped
           computational-photography features with <b>Marc Levoy</b>'s team at Adobe
           (<a href="https://research.adobe.com/articles/indigo/indigo.html" target="_blank">Project Indigo</a>),
           and before that I was a senior research engineer at Samsung's MPI Lab.</p>
@@ -56,11 +57,12 @@ function AboutMe(){
       </div>
 
       <div className="statcards">
-        <div className="sc"><b>425</b><span>CITATIONS</span></div>
-        <div className="sc"><b>10</b><span>H-INDEX</span></div>
-        <div className="sc"><b>16</b><span>PAPERS</span></div>
+        <div className="sc"><b>{window.KW_DATA.metrics.citations}</b><span>CITATIONS</span></div>
+        <div className="sc"><b>{window.KW_DATA.metrics.h_index}</b><span>H-INDEX</span></div>
+        <div className="sc"><b>{window.KW_DATA.publications.length}</b><span>WORKS</span></div>
       </div>
 
+      <p className="data-stamp">Google Scholar snapshot · {window.KW_DATA.updated} · Works include papers, abstracts and the dissertation.</p>
       <h2 className="sec">What I work on</h2>
       <p>
         <span className="pill">computational imaging</span>&nbsp;
@@ -82,64 +84,22 @@ function AboutMe(){
 }
 
 function Publications(){
-  const rows = window.KW_DATA.publications;
-  const [sel, setSel] = useState(0);
-  const [sort, setSort] = useState('cites');
-  const sorted = useMemo(()=>{
-    const a = [...rows];
-    if(sort==='cites') a.sort((x,y)=>y.cites-x.cites);
-    else if(sort==='year') a.sort((x,y)=>parseInt(y.year)-parseInt(x.year));
-    else if(sort==='venue') a.sort((x,y)=>x.venue.localeCompare(y.venue));
-    return a;
-  },[rows,sort]);
-  const cur = sorted[sel];
-  return (
-    <div>
-      <div style={{marginBottom:6, fontSize:12, display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:6}}>
-        <span>{rows.length} items · 425 citations total</span>
-        <span>Sort by:
-          <a onClick={()=>setSort('cites')} style={{cursor:'pointer', marginLeft:6, textDecoration: sort==='cites'?'underline':'none'}}>citations</a> ·
-          <a onClick={()=>setSort('year')}  style={{cursor:'pointer', marginLeft:6, textDecoration: sort==='year'?'underline':'none'}}>year</a> ·
-          <a onClick={()=>setSort('venue')} style={{cursor:'pointer', marginLeft:6, textDecoration: sort==='venue'?'underline':'none'}}>venue</a>
-        </span>
-      </div>
-      <table className="files">
-        <thead>
-          <tr>
-            <th style={{width:18}}></th>
-            <th><span>Name</span></th>
-            <th><span>Venue</span></th>
-            <th><span>Year</span></th>
-            <th><span>Cites</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((r,i) => (
-            <tr key={r.title} className={sel===i?'sel':''}
-              onClick={()=>setSel(i)}
-              onDoubleClick={()=>window.open(r.url,'_blank')}
-              style={{cursor:'pointer'}}>
-              <td className="ic"><Icons.DocSm/></td>
-              <td>{r.title}</td>
-              <td>{r.venue}</td>
-              <td>{r.year}</td>
-              <td>{r.cites}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {cur && (
-        <div style={{marginTop:12, padding:10, border:'1px solid #000', background:'#fff'}}>
-          <div style={{fontSize:13, fontWeight:'bold', marginBottom:4}}>{cur.title}</div>
-          <div style={{fontSize:11, marginBottom:4}}>{cur.authors}</div>
-          <div style={{fontSize:11, marginBottom:6}}><em>{cur.venue} {cur.year}</em> · {cur.cites} citations · <b>{cur.role}</b></div>
-          <div style={{fontSize:12, marginBottom:6}}>{cur.tldr}</div>
-          <a href={cur.url} target="_blank" rel="noreferrer">Open paper →</a>
-        </div>
-      )}
-    </div>
-  );
+  const rows=window.KW_DATA.publications;
+  const [query,setQuery]=useState(''),[sort,setSort]=useState('year'),[filter,setFilter]=useState('all'),[selected,setSelected]=useState(null),[copied,setCopied]=useState(false);
+  const sorted=useMemo(()=>rows.filter(r=>(filter==='all'||(filter==='2026'?r.year==='2026':r.role==='first author'))&&(r.title+' '+r.authors+' '+r.venue).toLowerCase().includes(query.toLowerCase())).slice().sort((x,y)=>sort==='cites'?(y.cites??-1)-(x.cites??-1):sort==='venue'?x.venue.localeCompare(y.venue):Number(y.year)-Number(x.year)),[rows,query,sort,filter]);
+  const cur=sorted.find(r=>r.title===selected)||sorted[0];
+  async function copyCitation(){try{await navigator.clipboard.writeText(cur.authors+'. '+cur.title+'. '+cur.venue+', '+cur.year+'. '+cur.url);setCopied(true);setTimeout(()=>setCopied(false),1800);}catch{setCopied(false);}}
+  return <div className="publication-browser">
+    <div className="finder-toolbar"><input aria-label="Search publications" placeholder="Find a paper, author, or venue…" value={query} onChange={e=>setQuery(e.target.value)}/><select aria-label="Sort publications" value={sort} onChange={e=>setSort(e.target.value)}><option value="year">Newest first</option><option value="cites">Most cited</option><option value="venue">By venue</option></select></div>
+    <div className="finder-filters">{[['all','All works'],['2026','CVPR 2026'],['first','First author']].map(([id,label])=><button key={id} aria-pressed={filter===id} onClick={()=>setFilter(id)}>{label}</button>)}<span>{sorted.length} items</span></div>
+    <div className="files-scroll"><table className="files"><thead><tr><th>Name</th><th>Venue</th><th>Year</th><th>Cites*</th></tr></thead><tbody>{sorted.map(r=><tr key={r.title} className={cur?.title===r.title?'sel':''} onClick={()=>{setSelected(r.title);setCopied(false);}}><td><button className="paper-select" onClick={()=>{setSelected(r.title);setCopied(false);}}>{r.title}</button></td><td>{r.venue}</td><td>{r.year}</td><td>{r.cites??'—'}</td></tr>)}</tbody></table></div>
+    {!sorted.length&&<p className="empty-state">No papers match. Try another title or clear the filter.</p>}
+    {cur&&<article className="paper-inspector"><div className="inspector-label">FILE PREVIEW · {cur.venue} {cur.year}</div><h3>{cur.title}</h3><p className="paper-authors">{cur.authors}</p><p>{cur.tldr}</p><div className="paper-actions"><a className="mac-button primary" href={cur.url} target="_blank" rel="noreferrer">Open paper ↗</a>{cur.project&&<a className="mac-button" href={cur.project} target="_blank" rel="noreferrer">Project ↗</a>}<button className="mac-button" onClick={copyCitation}>{copied?'Copied ✓':'Copy citation'}</button></div></article>}
+    <p className="data-stamp">* Google Scholar snapshot · {window.KW_DATA.updated}. — means no count displayed. Curated list; duplicate records are omitted.</p>
+  </div>;
 }
+
+function ResearchLab(){return <div className="research-lab"><div className="lab-hero"><img src="/assets/img/mri-mascot.png" alt="MRI scanner mascot"/><div><div className="inspector-label">OPEN THE RESEARCH NOTEBOOK</div><h1>MRI research,<br/>connected.</h1><p>A question. Several skills. Scientific evidence.</p></div></div><p>Explore how an agent connects acquisition, reconstruction and quantitative analysis. The slides include interactive coil maps, echo simulations and radial reconstruction.</p><div className="paper-actions"><a className="mac-button primary" href="/slides/mri-research/">Open interactive slides ↗</a><a className="mac-button" href="https://github.com/KeWang0622/mri-research-skill" target="_blank" rel="noreferrer">GitHub ↗</a></div><div className="lab-index"><span>01 / Agent + skills</span><span>02 / Acquisition + reconstruction</span><span>03 / Experiments + evidence</span></div><p className="data-stamp">24 slides · runs in your browser · analytic teaching simulations</p></div>;}
 
 function Metrics(){
   const m = window.KW_DATA.metrics;
@@ -168,7 +128,7 @@ function Metrics(){
       </div>
 
       <p style={{fontSize:11, marginTop:10}}>
-        Source: <a href="https://scholar.google.com/citations?user=Iz3m3v4AAAAJ" target="_blank">Google Scholar</a>
+        Snapshot: {m.asOf}. 2026 is a partial year.<br/>Source: <a href="https://scholar.google.com/citations?user=Iz3m3v4AAAAJ" target="_blank">Google Scholar</a>
       </p>
     </div>
   );
@@ -210,7 +170,7 @@ function CV(){
       </div>
 
       <h2 className="sec">Experience</h2>
-      {d.timeline.filter(t=>!t[0].includes('BEng') && !t[0].includes('PhD')).map((t,i)=>(
+      {d.timeline.filter(t=>!t[1].includes('BEng') && !t[1].includes('PhD')).map((t,i)=>(
         <div key={i} style={{marginBottom:10}}>
           <div style={{display:'flex', justifyContent:'space-between', fontSize:13}}>
             <b>{t[1]}</b><span>{t[0]}</span>
@@ -221,7 +181,7 @@ function CV(){
       ))}
 
       <h2 className="sec">Education</h2>
-      {d.timeline.filter(t=>t[0].includes('BEng') || t[0].includes('PhD')).map((t,i)=>(
+      {d.timeline.filter(t=>t[1].includes('BEng') || t[1].includes('PhD')).map((t,i)=>(
         <div key={i} style={{marginBottom:10}}>
           <div style={{display:'flex', justifyContent:'space-between', fontSize:13}}>
             <b>{t[1]}</b><span>{t[0]}</span>
@@ -238,7 +198,7 @@ function CV(){
       <ul style={{paddingLeft:16, fontSize:12}}>
         {d.publications.slice(0,6).map((p,i)=>(
           <li key={i} style={{marginBottom:6}}>
-            <a href={p.url} target="_blank"><b>{p.title}</b></a>, <em>{p.venue} {p.year}</em> · {p.cites} cites
+            <a href={p.url} target="_blank"><b>{p.title}</b></a>, <em>{p.venue} {p.year}</em> · {p.cites??'—'} citations
           </li>
         ))}
       </ul>
@@ -380,7 +340,7 @@ function AboutThisMac(){
         <div className="row"><span>Total Memory</span><span>8,192 K</span></div>
         <div className="row"><span>Largest Unused Block</span><span>6,144 K</span></div>
         <div className="row"><span>Applied Research</span><span>∞ K</span></div>
-        <div className="row"><span>Citations</span><span>425</span></div>
+        <div className="row"><span>Citations</span><span>{window.KW_DATA.metrics.citations}</span></div>
         <div className="row"><span>h-index</span><span>10</span></div>
         <div className="row"><span>Coffee</span><span>2,048 K</span></div>
         <div style={{marginTop:14, fontSize:11, textAlign:'center'}}>
@@ -577,8 +537,8 @@ function Terminal(){
     if(cmd==='help') out = ['commands: whoami, now, pubs, cites, advisors, stack, contact, fortune, clear'];
     else if(cmd==='whoami') out = ['ke wang — applied research lead @ pika labs'];
     else if(cmd==='now') out = ['making generative video feel like cinema.'];
-    else if(cmd==='pubs') out = ['16 papers · CVPR, NeurIPS, PNAS, MRM, MICCAI, IEEE SPM'];
-    else if(cmd==='cites') out = ['425 total · h-index 10 · i10-index 10 (Google Scholar, 2026)'];
+    else if(cmd==='pubs') out = [window.KW_DATA.publications.length+' curated works · CVPR, NeurIPS, PNAS, MRM, MICCAI, IEEE SPM'];
+    else if(cmd==='cites') out = [window.KW_DATA.metrics.citations+' total · h-index '+window.KW_DATA.metrics.h_index+' · Google Scholar snapshot '+window.KW_DATA.updated];
     else if(cmd==='advisors') out = ['PhD: Miki Lustig (Berkeley EECS), Stella Yu (Michigan)', 'Adobe: Marc Levoy'];
     else if(cmd==='stack') out = ['PyTorch · JAX · CUDA · Metal · Swift · Python · C++'];
     else if(cmd==='contact') out = ['kewang0622@gmail.com'];
@@ -639,4 +599,4 @@ function Alarm(){
   );
 }
 
-Object.assign(window, { AboutMe, Publications, Career, Hobbies, AboutThisMac, Notepad, Calculator, MacPaint, Chooser, Terminal, Alarm, Metrics, Collaborators, CV, Press, Services });
+Object.assign(window, { ResearchLab, AboutMe, Publications, Career, Hobbies, AboutThisMac, Notepad, Calculator, MacPaint, Chooser, Terminal, Alarm, Metrics, Collaborators, CV, Press, Services });

@@ -48,6 +48,8 @@ function Window({ win, children, onFocus, onClose, onMove, onResize, active, mob
   const ref = useRef(null);
   const drag = useRef(null);
   const rez = useRef(null);
+  const savedSize=useRef(null);
+  const toggleZoom=()=>{if(savedSize.current){onMove(savedSize.current.x,savedSize.current.y);onResize(savedSize.current.w,savedSize.current.h);savedSize.current=null;}else{savedSize.current={x:win.x,y:win.y,w:win.w,h:win.h};onMove(16,36);onResize(window.innerWidth-32,window.innerHeight-104);}};
 
   const startDrag = (e) => {
     if(e.target.closest('.close, .zoom, .resize')) return;
@@ -64,8 +66,8 @@ function Window({ win, children, onFocus, onClose, onMove, onResize, active, mob
   useEffect(() => {
     const move = (e) => {
       if(drag.current){
-        const x = Math.max(0, e.clientX - drag.current.x);
-        const y = Math.max(22, e.clientY - drag.current.y);
+        const x = Math.max(0, Math.min(window.innerWidth-120,e.clientX - drag.current.x));
+        const y = Math.max(30, Math.min(window.innerHeight-80,e.clientY - drag.current.y));
         onMove(x,y);
       }
       if(rez.current){
@@ -98,9 +100,9 @@ function Window({ win, children, onFocus, onClose, onMove, onResize, active, mob
       onMouseDown={onFocus}>
       <div className="titlebar" onMouseDown={startDrag}>
         <div className="stripes"/>
-        <div className="close" onClick={(e)=>{e.stopPropagation(); onClose();}}/>
+        <button aria-label={"Close "+win.title} className="close" onClick={(e)=>{e.stopPropagation(); onClose();}}/>
         <div className="title">{win.title}</div>
-        <div className="zoom"/>
+        <button className="zoom" aria-label={"Zoom "+win.title} onClick={e=>{e.stopPropagation();toggleZoom();}}/>
       </div>
       <div className={'body '+(win.nopad?'nopad':'')}>
         {children}
@@ -114,9 +116,9 @@ function Window({ win, children, onFocus, onClose, onMove, onResize, active, mob
 // ============ DESKTOP ICON ============
 function DeskIcon({ x, y, icon, label, onOpen, selected, onSelect }){
   return (
-    <div className={'deskicon '+(selected?'sel':'')}
+    <div role="button" tabIndex={0} aria-label={'Open '+label} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onOpen();}}} className={'deskicon '+(selected?'sel':'')}
       style={{ left:x, top:y }}
-      onClick={(e)=>{e.stopPropagation(); onSelect();}}
+      onClick={(e)=>{e.stopPropagation(); onSelect();if(window.matchMedia("(pointer: coarse)").matches)onOpen();}}
       onDoubleClick={onOpen}>
       {icon}
       <div className="lbl">{label}</div>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MRI Research with AI Agents — Interactive Slides | Ke Wang</title>
-<meta name="description" content="Interactive slides on MRI research with AI agents: skills, tools, acquisition, reconstruction, quantitative analysis, and live scientific simulations.">
+<meta name="description" content="Interactive MRI research slides: agents, skills, tools and scientific simulations.">
 <link rel="canonical" href="https://kewang0622.github.io/slides/mri-research/">
 <!--
   Static, client-side, no network calls and no API keys, so it can be served as
@@ -350,6 +350,84 @@
   .col:has(.case-logic) .punch{font-size:14px;line-height:1.45;padding:9px 11px;margin-top:8px}.col:has(.case-logic) .kicker{font-size:10px;letter-spacing:1px;line-height:1.4}
   .col:has(.case-logic) th,.col:has(.case-logic) td{padding-top:3px;padding-bottom:3px}
   .skill-reasons{margin:10px 0}.reason-heading{font-size:10px;letter-spacing:1px;color:var(--dim);font-weight:700}.skill-reasons p{font-size:13px;line-height:1.5;margin:5px 0}.skill-reasons strong{color:var(--accent)}
+
+  /* Editorial presentation system: quiet surfaces, explicit interaction. */
+  :root{--bg:#0b1017;--panel:#111923;--panel2:#0e1620;--line:#283747;--text:#edf2f7;--muted:#a4b2c1;--dim:#8699ac;--accent:#82b7ff;--warn:#eeb66a}
+  body::before{opacity:.28}body::after{background:radial-gradient(ellipse at 75% 0%,#1a2b4438,transparent 65%)}
+  #bar{height:2px;box-shadow:none;background:linear-gradient(90deg,#508be6,#a8ccff);transition:width .24s ease}
+  #top{background:var(--bg);border-bottom:1px solid #ffffff08;padding:0 26px;gap:18px}
+  .wordmark{font-size:16px;letter-spacing:-.4px}#sect{font-size:10px;letter-spacing:1.3px}
+  #count{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:0;min-width:48px;text-align:right}
+  .chapter-nav{margin-left:auto;pointer-events:auto;display:flex;align-items:center}
+  #slide-jump{width:112px;background:transparent;border:1px solid var(--line);border-radius:7px;color:var(--muted);padding:5px 8px;font:inherit;font-size:11px;cursor:pointer}
+  #slide-jump option{background:var(--panel);color:var(--text)}
+  .slide{gap:30px;padding:12px 28px 8px;bottom:46px}
+  .col{background:transparent;border:0;border-radius:0;box-shadow:none;padding:14px 17px 12px 4px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  h1,h2{text-wrap:balance;letter-spacing:-.7px}h2{font-weight:600;line-height:1.18;margin-bottom:16px}
+  .col .kicker{color:var(--accent);font-size:10px;letter-spacing:1.6px;font-weight:600;margin-bottom:12px}
+  .col p{color:var(--muted)}.col .lede{color:var(--text)}
+  .research-request{position:relative;border:1px solid #82b7ff24;border-left:2px solid var(--accent);background:linear-gradient(120deg,#182b40b0,#13203070);border-radius:3px 12px 12px 3px;padding:12px 14px;margin:10px 0 16px}
+  .research-request>span{font-size:9px;letter-spacing:1.7px;color:#afcffe}
+  .research-request p{font-size:15px!important;line-height:1.5!important;color:var(--text)!important;font-weight:450}
+  .skill-reasons{margin:12px 0}.reason-heading{font-size:9px;letter-spacing:1.4px}
+  .skill-reasons p{display:grid;grid-template-columns:minmax(0,1fr) 13px auto;align-items:center;gap:6px;font-size:12px!important;line-height:1.45!important;margin:0!important;padding:7px 0;border-bottom:1px solid #ffffff08}
+  .skill-reasons strong{font-size:10.5px;font-weight:500!important;border:1px solid #82b7ff2b;padding:3px 7px;border-radius:5px;background:#82b7ff08;color:#bad6ff!important;white-space:nowrap}
+  .col:has(.case-logic) .punch{border-left-width:2px;border-left-color:#82b7ff65;background:#82b7ff06;border-radius:0 8px 8px 0;font-size:13px;padding:9px 12px;line-height:1.5}
+  .punch>strong:first-child{display:inline-block;margin-bottom:3px;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--accent)}
+  .col:has(.case-logic) th,.col:has(.case-logic) td{font-size:11px;padding:4px 7px}
+  th{font-size:10px;font-weight:500;letter-spacing:.7px}td{border-bottom-color:#ffffff09}
+  .pan>figcaption{font-size:10px;line-height:1.5;letter-spacing:.3px;margin:0 0 8px;padding-left:2px;color:var(--muted)}
+  .pan>canvas{border-radius:12px;background:linear-gradient(140deg,#131d2a,#0e1721);box-shadow:inset 0 0 0 1px #ffffff08}
+  .fig{gap:14px}.row{gap:14px}
+  .experiment{border-top:1px solid var(--line);padding:12px 0 0;font-size:12px;gap:10px}
+  .experiment label{color:var(--muted)}.experiment output{font-family:var(--mono);font-size:12px;background:#82b7ff10;border-radius:5px;padding:5px 8px}
+  .experiment .result{font-size:12px;color:var(--muted);padding-top:3px;font-variant-numeric:tabular-nums}
+  .ctl.experiment{padding:12px;border:1px solid var(--line);background:#111d2b;border-radius:10px}
+  input[type=range]{appearance:none;height:4px;border-radius:9px;background:#30445b;outline-offset:8px;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border:3px solid #d5e7ff;background:#699eec;border-radius:50%;box-shadow:0 0 0 4px #82b7ff16;transition:box-shadow .16s}
+  input[type=range]::-moz-range-thumb{width:12px;height:12px;border:3px solid #d5e7ff;background:#699eec;border-radius:50%}
+  input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 0 7px #82b7ff20}
+  button{transition:background .16s,border-color .16s,transform .16s,color .16s}
+  .experiment button,.project-toolbar button{min-height:36px;border-radius:7px;padding:7px 13px;font-size:12px;border-color:#384e68;background:#172437}
+  .experiment button:hover:not(:disabled){background:#233a56;border-color:var(--accent)}button:active:not(:disabled){transform:translateY(1px)}
+  .agent-demo .experiment{border-top:0;margin-top:2px;justify-content:flex-end}
+  .agent-demo .experiment button,.project-toolbar button:first-child{background:#bad5ff;color:#102137;border:1px solid #bad5ff;font-weight:600;box-shadow:0 2px 8px #0002}
+  .agent-demo .experiment button:hover{background:#d2e3ff}.agent-demo output{margin-right:auto;order:-1;color:var(--muted);background:transparent;padding-left:0}
+  .agent-story{border:1px solid #82b7ff22;border-left:2px solid #82b7ff88;border-radius:0 10px 10px 0;background:#142134;padding:11px 15px;min-height:90px;font-size:15px}
+  .agent-story p{font-size:13px;line-height:1.5;color:var(--muted)}
+  .project-options summary{padding:7px 0;font-size:11px;color:var(--muted)}
+  #foot{height:46px;padding:0 26px;gap:8px;border-top:1px solid #ffffff0c;background:var(--bg);font-size:10px}
+  #foot button{min-height:30px;border-radius:6px;padding:4px 10px;font-size:10px;background:transparent;border-color:transparent;color:var(--muted)}
+  #foot button:hover:not(:disabled){background:#162337;border-color:#344d6c;color:var(--text)}
+  #foot #previous-slide,#foot #next-slide{min-width:38px;border:1px solid var(--line);color:var(--text);font-size:16px;padding:0 9px}
+  #foot .sp{font-size:10px;color:var(--dim)}#notes{bottom:46px;background:#101b28;color:var(--muted);box-shadow:0 -16px 50px #0006}
+  #notes a{color:var(--accent)}#notes b{color:var(--text)}
+  .photo{background:#111b28;border-color:#ffffff0d;box-shadow:none}.photo img{border-radius:7px}
+  .learning-row{padding:16px 0}.learning-row h3{letter-spacing:-.4px}.learning-row b{color:#b2ceee}
+  .learning-num{color:var(--dim)}.hero .mark{letter-spacing:-3px}.hero .tag{font-weight:400;line-height:1.45}
+  ::selection{background:#548cd880;color:#fff}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+  @media(max-width:800px){
+    #top{height:48px;padding:0 16px;gap:10px}.wordmark{font-size:14px}#sect{display:none}#slide-jump{width:98px}#count{font-size:10px}
+    .slide,.slide.wide.on,.slide.learning.on,.slide.about.on{inset:48px 0 58px;display:none;padding:22px 18px 30px;overflow-y:auto;overflow-x:hidden;max-width:none;gap:24px}
+    .slide.on{display:flex;flex-direction:column;justify-content:flex-start}.slide.wide.on,.slide.learning.on,.slide.about.on{display:flex;justify-content:flex-start}
+    .col{overflow:visible;padding:0}.fig{flex-shrink:0;overflow:visible;min-height:440px;height:68vh;max-height:740px;padding-bottom:6px}
+    .fig:has(.agent-demo){height:640px}.row.sq{flex:0 1 auto}.row{min-height:160px}.pan>figcaption{white-space:normal;min-height:28px;font-size:10px}
+    .row.sq>.pan>canvas{aspect-ratio:1/1}.fig:has(#coil-select) .row{flex-wrap:wrap}.fig:has(#coil-select) .pan{min-width:44%}
+    .slide.about .photo img{max-height:230px;object-position:center 30%}.photo{flex-shrink:0}.slide.about .col{flex-shrink:0}
+    h1{font-size:32px}h2{font-size:28px}.col p{font-size:14px}.col .project-point{margin:20px 0}
+    .slide.center.deco.on{padding:34px 22px;justify-content:flex-start}.slide.center.deco .hero{max-width:100%}.mascot{position:relative;order:2;right:auto;width:85%;max-height:300px;align-self:center}
+    .hero .mark{font-size:53px}.hero .tag{font-size:19px}.hero .who{font-size:13px}.meta{overflow-wrap:anywhere}
+    .learning-head{display:none}.learning-row{display:block;padding:20px 0}.learning-row>div{margin-bottom:14px}.learning-row h3{font-size:20px}.learning-row b{font-size:16px}
+    .tool-chain{flex-wrap:wrap;justify-content:flex-start;font-size:13px;gap:10px;padding:15px 0}.tools-overview td{padding:8px 5px;font-size:11px}
+    table{font-size:11px;overflow-wrap:anywhere}th,td{padding:6px 4px}pre{font-size:11px;flex-shrink:0}.skill-reasons p{font-size:12px!important}
+    .ctl.experiment{flex-wrap:wrap}.read{font-size:11px;white-space:normal}.experiment{gap:9px}.experiment button{min-height:38px}
+    #foot{height:58px;padding:0 12px;gap:3px}#foot button{min-height:38px;padding:4px 7px}#foot .sp,#fullscreen-toggle{display:none}#notes{bottom:58px;max-height:65vh;padding:16px}
+  }
+
+@media(min-width:801px) and (max-height:780px){
+.col:has(.case-logic){padding-top:9px;padding-bottom:6px}.col:has(.case-logic) h2{margin-bottom:11px}.col:has(.case-logic) .research-request{padding:9px 12px;margin:8px 0 10px}.col:has(.case-logic) .research-request p{font-size:14px!important}.skill-reasons{margin:8px 0}.skill-reasons p{padding:5px 0}.col:has(.case-logic) th,.col:has(.case-logic) td{padding-top:3px;padding-bottom:3px}
+}
 </style>
 </head>
 <body>
@@ -358,6 +436,7 @@
 <div id="top">
   <div class="wordmark"><b>mri</b><span>-research</span></div>
   <div id="sect"></div>
+  <label class="chapter-nav"><select id="slide-jump" aria-label="Jump to slide"></select></label>
   <div id="count"></div>
 </div>
 
@@ -365,8 +444,8 @@
 <div id="notes"></div>
 <div id="foot">
   <button id="previous-slide" aria-label="Previous slide">←</button><button id="next-slide" aria-label="Next slide">→</button>
-  <span><kbd>N</kbd> notes</span>
-  <span><kbd>F</kbd> full screen</span>
+  <button id="notes-toggle" title="Speaker notes (N)" aria-pressed="false">Notes</button>
+  <button id="fullscreen-toggle" title="Full screen (F)">Full screen</button>
   <button id="motion-toggle">Motion: on</button><button id="replay-figure">Replay figure</button><span class="sp">analytic simulations · no patient data</span>
 </div>
 
@@ -1281,7 +1360,7 @@ Object.assign(API, { COMPARTMENTS, D_FREE, D_AX, D_RAD, D_RESTRICTED });
 
 const CSS = {
   bg: '#0a0c0f', panel: '#14181d', line: '#2a323c',
-  text: '#e8ecf1', muted: '#93a0ad', dim: '#85929f',
+  text: '#e8ecf1', muted: '#a4b2c1', dim: '#8699ac',
   accent: '#4c9ffe', warn: '#ffb454', bad: '#ff6b6b', good: '#4ade80',
 };
 
@@ -1334,7 +1413,7 @@ function fit(cv) {
 // Corner brackets on every panel. One edit here gives the whole deck the same
 // instrument-panel frame, and they sit in the extreme corners where no renderer
 // puts content, so they cannot cover a number.
-function corners(g, w, h, col = 'rgba(76,159,254,0.30)') {
+function corners(g, w, h, col = 'rgba(130,183,255,0.09)') {
   const L = 9, i = 0.5;
   g.save();
   g.strokeStyle = col; g.lineWidth = 1;
@@ -3999,6 +4078,10 @@ const deck = document.getElementById('deck');
 const elSect = document.getElementById('sect'), elCount = document.getElementById('count');
 const elBar = document.getElementById('bar'), elNotes = document.getElementById('notes');
 let cur = 0, showNotes = false;
+const slideJump=document.getElementById('slide-jump');
+slideJump.innerHTML='<option value="" disabled>Contents</option>'+SLIDES.map((s,i)=>{const m=/<h[12][^>]*>([\s\S]*?)<\/h[12]>/.exec(s.html);const title=(m?m[1]:(i===0?'MRI research':'Overview')).replace(/<[^>]+>/g,'').replace(/&/g,'&amp;');return '<option value="'+i+'">'+String(i+1).padStart(2,'0')+' · '+title+'</option>';}).join('');
+slideJump.addEventListener('change',()=>show(Number(slideJump.value)));
+
 
 SLIDES.forEach((s, i) => {
   const sec = document.createElement('section');
@@ -4052,7 +4135,9 @@ function show(i) {
   stopAnim(); replayFigure = null;  // cancel the previous slide's animation
   SLIDES[cur]._el.classList.remove('on');
   cur = i;
+  slideJump.value='';
   const s = SLIDES[cur];
+  s._el.scrollTop=0;
   s._el.classList.add('on');
   elSect.textContent = s.section || '';
   document.getElementById('replay-figure').disabled = !s.fig;
@@ -4074,6 +4159,8 @@ function toggleMotion(){
   document.getElementById('motion-toggle').textContent=motionEnabled?'Motion: on':'Motion: off';
   if(replayFigure) replayFigure();
 }
+document.getElementById('notes-toggle').addEventListener('click',()=>{showNotes=!showNotes;elNotes.classList.toggle('on',showNotes);document.getElementById('notes-toggle').setAttribute('aria-pressed',String(showNotes));});
+document.getElementById('fullscreen-toggle').addEventListener('click',()=>{const p=document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(()=>{});});
 document.getElementById('previous-slide').addEventListener('click',()=>show(cur-1));
 document.getElementById('next-slide').addEventListener('click',()=>show(cur+1));
 document.getElementById('motion-toggle').textContent=REDUCED?'Reduced motion':'Motion: on';
@@ -4090,7 +4177,7 @@ addEventListener('keydown', e => {
   else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'ArrowUp') { show(cur - 1); e.preventDefault(); }
   else if (k === 'Home') show(0);
   else if (k === 'End') show(SLIDES.length - 1);
-  else if (k === 'n' || k === 'N') { showNotes = !showNotes; elNotes.classList.toggle('on',showNotes); }
+  else if (k === 'n' || k === 'N') { showNotes = !showNotes; elNotes.classList.toggle('on',showNotes); document.getElementById('notes-toggle').setAttribute('aria-pressed',String(showNotes)); }
   else if (k === 'p' || k === 'P') toggleMotion();
   else if ((k === 'r' || k === 'R') && replayFigure) replayFigure();
   else if (k === 'f' || k === 'F') {
