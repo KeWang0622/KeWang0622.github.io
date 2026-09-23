@@ -2,8 +2,9 @@
 const { useState: uS, useEffect: uE, useRef: uR, useMemo: uM } = React;
 
 const APPS = [
-  { id:'about',    title:"About Ke",           icon: Icons.MacFace(40),   kind:'about',    x:40,  y:50,  w:520, h:460 },
-  { id:'pubs',     title:"Publications",       icon: Icons.Folder(40),    kind:'pubs',     x:580, y:90,  w:500, h:480 },
+  {id:'research',title:'MRI Research',icon:Icons.Doc(40),kind:'research',x:150,y:100,w:530,h:470},
+  { id:'about',    title:"About Ke",           icon: Icons.MacFace(40),   kind:'about',    x:410, y:65,  w:560, h:540 },
+  { id:'pubs',     title:"Publications",       icon: Icons.Folder(40),    kind:'pubs',     x:360, y:65,  w:620, h:570 },
   { id:'metrics',  title:"Citation Metrics",   icon: Icons.Chooser(40),   kind:'metrics',  x:220, y:140, w:420, h:460 },
   { id:'collabs',  title:"Collaborators",      icon: Icons.Folder(40),    kind:'collabs',  x:360, y:80,  w:440, h:480 },
   { id:'cv',       title:"CV — Résumé",        icon: Icons.Doc(40),       kind:'cv',       x:200, y:90,  w:520, h:500 },
@@ -21,6 +22,7 @@ const APPS = [
 ];
 
 const DESKTOP_ICONS = [
+  {id:'research_ic',x:0,y:0,icon:Icons.Doc(40),label:'MRI Research',opens:'research'},
   { id:'disk',       x:'right-24', y:40,  icon: Icons.Disk(),      label:"Ke's HD",        opens:'about' },
   { id:'about_ic',   x:'right-24', y:140, icon: Icons.MacFace(40), label:"About Me",       opens:'about' },
   { id:'pubs_ic',    x:'right-24', y:240, icon: Icons.Folder(40),  label:"Publications",   opens:'pubs' },
@@ -35,6 +37,7 @@ const DESKTOP_ICONS = [
 
 function AppBody({ kind }){
   switch(kind){
+    case 'research': return <ResearchLab/>;
     case 'about':     return <AboutMe/>;
     case 'pubs':      return <Publications/>;
     case 'metrics':   return <Metrics/>;
@@ -80,6 +83,7 @@ function MenuBar({ onCmd, openIds }){
       ['Note Pad','notepad'],
       ['Press','press'],
       ['Publications','pubs'],
+      ['MRI Research','research'],
       ['Terminal','terminal'],
     ],
     File: [
@@ -237,7 +241,7 @@ function Launcher({ onClose, onOpen }){
       <div style={{maxHeight:260, overflow:'auto'}}>
         {filtered.map(i=>(
           <div key={i.id} className="folder-row" style={{padding:'6px 10px'}}
-            onClick={()=>{ onOpen(i.id); onClose(); }}>
+            role="button" tabIndex={0} onKeyDown={e=>{if(e.key==='Enter'){onOpen(i.id);onClose();}}} onClick={()=>{ onOpen(i.id); onClose(); }}>
             <Icons.FolderSm/>
             <span>{i.label}</span>
           </div>
@@ -251,9 +255,9 @@ function Launcher({ onClose, onOpen }){
 function Boot({ onDone }){
   const [stage, setStage] = uS(0);
   uE(()=>{
-    const t1 = setTimeout(()=>setStage(1), 1200);
-    const t2 = setTimeout(()=>setStage(2), 2500);
-    const t3 = setTimeout(onDone, 3800);
+    const t1 = setTimeout(()=>setStage(1), 250);
+    const t2 = setTimeout(()=>setStage(2), 600);
+    const t3 = setTimeout(onDone, 950);
     return ()=>{ clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   },[]);
   return (
@@ -272,7 +276,7 @@ function Boot({ onDone }){
 
 function App(){
   const wm = useWindows();
-  const [booted, setBooted] = uS(false);
+  const [booted, setBooted] = uS(()=>{try{return sessionStorage.getItem('kw-booted')==='1';}catch{return false;}});
   const [selDesk, setSelDesk] = uS(null);
   const [launcher, setLauncher] = uS(false);
   const [tweaks, setTweaks] = uS({ pattern:'dots', mode:'B&W', zoom:'M', crt:false });
@@ -314,9 +318,7 @@ function App(){
     if(!booted) return;
     const isMobile = window.innerWidth < 820;
     if(isMobile) return; // mobile shows clean desktop
-    setTimeout(()=>openApp('about'),100);
-    setTimeout(()=>openApp('pubs'),400);
-    setTimeout(()=>openApp('alarm'),700);
+    const t=setTimeout(()=>openApp('about'),80);return ()=>clearTimeout(t);
   },[booted]);
 
   const openApp = (id) => {
@@ -333,7 +335,7 @@ function App(){
     if(id==='edit-copy'){ document.execCommand('copy'); return; }
     if(id==='edit-paste'){ document.execCommand('paste'); return; }
     if(id==='edit-selectall'){ document.execCommand('selectAll'); return; }
-    if(id==='cleanup'){ alert('Desktop cleaned up. ✓'); return; }
+    if(id==='cleanup'){ wm.wins.forEach((w,i)=>wm.update(w.id,{x:40+i*28,y:50+i*28})); return; }
     if(id==='erase'){ alert('Nice try. This disk is bolted down.'); return; }
     if(id==='view-icon' || id==='view-smicon'){ alert('View: '+id.replace('view-','')); return; }
     if(id==='tweaks'){
@@ -348,10 +350,10 @@ function App(){
     if(id==='shutdown'){ if(confirm('Shut down Ke\'s Macintosh?')) document.body.style.background='#000'; return; }
     if(id==='boot'){ setBooted(false); setTimeout(()=>setBooted(true),0); return; }
     if(id==='trash'){ setTrashFull(false); alert('Trash emptied. ✓'); return; }
-    if(id==='balloon'){ alert('Ke\'s Macintosh · Version 1.0\nApplied Research Lead, Pika Labs.\nPress ⌘K to launch things. Drag windows by their title bars.'); return; }
+    if(id==='balloon'){ alert('Ke\'s Macintosh · September 2026\nHead of Applied Research, Pika Labs.\nPress ⌘K to launch things. Drag windows by their title bars.'); return; }
     const def = APPS.find(a=>a.id===id);
     if(!def) return;
-    wm.open(def);
+    wm.open({...def,w:Math.min(def.w,window.innerWidth-36),h:Math.min(def.h,window.innerHeight-100),x:Math.max(18,Math.min(def.x,window.innerWidth-def.w-24)),y:Math.max(36,Math.min(def.y,window.innerHeight-def.h-60))});
   };
 
   // resolve right-N positions
@@ -361,7 +363,7 @@ function App(){
   };
 
   const deskBg = {
-    dots: 'repeating-conic-gradient(#000 0% 25%, #fff 0% 50%)',
+    dots: 'repeating-conic-gradient(#b8b8b0 0% 25%, #d8d8d0 0% 50%)',
     checker: 'repeating-conic-gradient(#000 0% 25%, #fff 0% 50%)',
     lines: 'repeating-linear-gradient(45deg, #000 0 1px, #fff 1px 4px)',
     solid: '#a5a5a5',
@@ -378,7 +380,7 @@ function App(){
 
   return (
     <div style={{filter:modeFilter}} className={tweaks.crt?'crt':''}>
-      {!booted && <Boot onDone={()=>setBooted(true)}/>}
+      {!booted && <Boot onDone={()=>{setBooted(true);try{sessionStorage.setItem("kw-booted","1");}catch{}}}/>}
 
       <MenuBar onCmd={openApp} openIds={wm.wins.map(w=>[w.id, w.title])}/>
 
@@ -390,7 +392,8 @@ function App(){
         }}
         onClick={()=>setSelDesk(null)}>
 
-        {/* Desktop icons — grid layout on all devices (centered column) */}
+        <div className="desktop-note"><span>KE WANG / RESEARCH DESKTOP</span><h2>Ideas, experiments,<br/>and things I build.</h2><p>Double-click to explore. On touch screens, tap once.</p><button className="mac-button" onClick={e=>{e.stopPropagation();setLauncher(true);}}>Find something… <kbd>⌘K</kbd></button><small>Updated September 2026</small></div>
+        {/* Desktop icons */}
         <div className="desk-grid">
           {DESKTOP_ICONS.map(ic=>(
             <DeskIcon key={ic.id}
