@@ -201,6 +201,9 @@
     font-weight:500;margin-bottom:20px}
   .hero .who{font-size:clamp(13px,1.1vw,16px);color:var(--muted);line-height:1.6}
   .hero .who b{color:var(--text);font-weight:600}
+  .contact-line{margin-top:16px;font-size:clamp(14px,1.2vw,17px);line-height:1.5}
+  .contact-line a{color:var(--blue,#8cbcff);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px}
+  .contact-line a:hover{color:var(--text)}
   .meta{margin-top:18px;font-size:12px;color:var(--dim);font-family:var(--mono)}
 
   /* ---- about page ------------------------------------------------------ */
@@ -2915,6 +2918,7 @@ S({
     <div class="who"><b>Ke Wang</b> · Senior Researcher, Adobe Foundation Model<br>
       PhD, UC Berkeley EECS — computer vision (MRI),<br>
       with Prof. Michael Lustig and Prof. Stella Yu</div>
+    <div class="contact-line"><a href="mailto:kewang0622@gmail.com">kewang0622@gmail.com</a></div>
     <div class="meta">v0.7.0 · MIT ·
       <a href="https://github.com/KeWang0622/mri-research-skill" target="_blank"
          rel="noopener">github.com/KeWang0622/mri-research-skill</a></div>
@@ -4025,6 +4029,7 @@ S({
   html: `<div class="closing-layout"><div class="hero">
     <div class="mark"><b>mri</b><span>-research</span></div>
     <div class="tag">Bring one MRI task. Install the skills.<br>Send back what needs correcting.</div>
+    <div class="contact-line"><a href="mailto:kewang0622@gmail.com">kewang0622@gmail.com</a></div>
     <pre style="margin-top:6px">npx skills add KeWang0622/mri-research-skill -g</pre>
     <div class="who">
       <b>github.com/KeWang0622/mri-research-skill</b> &middot; v0.7.0 &middot; MIT<br>
