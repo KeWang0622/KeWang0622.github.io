@@ -2,6 +2,8 @@
 const { useState: uS, useEffect: uE, useRef: uR, useMemo: uM } = React;
 
 const APPS = [
+  {id:'finder',title:'Ke’s HD',icon:Icons.Disk(40),kind:'finder',x:100,y:66,w:800,h:590,nopad:true},
+  {id:'help',title:'Macintosh Guide',icon:Icons.Doc(40),kind:'help',x:220,y:100,w:480,h:390},
   {id:'research',title:'MRI Research',icon:Icons.Doc(40),kind:'research',x:150,y:100,w:530,h:470},
   { id:'about',    title:"About Ke",           icon: Icons.MacFace(40),   kind:'about',    x:410, y:65,  w:560, h:540 },
   { id:'pubs',     title:"Publications",       icon: Icons.Folder(40),    kind:'pubs',     x:360, y:65,  w:620, h:570 },
@@ -22,24 +24,19 @@ const APPS = [
 ];
 
 const DESKTOP_ICONS = [
-  {id:'research_ic',x:0,y:0,icon:Icons.Doc(40),label:'MRI Research',opens:'research'},
-  { id:'disk',       x:'right-24', y:40,  icon: Icons.Disk(),      label:"Ke's HD",        opens:'about' },
-  { id:'about_ic',   x:'right-24', y:140, icon: Icons.MacFace(40), label:"About Me",       opens:'about' },
-  { id:'pubs_ic',    x:'right-24', y:240, icon: Icons.Folder(40),  label:"Publications",   opens:'pubs' },
-  { id:'metrics_ic', x:'right-24', y:340, icon: Icons.Chooser(40), label:"Citations",      opens:'metrics' },
-  { id:'cv_ic',      x:'right-24', y:440, icon: Icons.Doc(40),     label:"CV",             opens:'cv' },
-  { id:'collab_ic',  x:'right-120',y:40,  icon: Icons.Folder(40),  label:"Collaborators",  opens:'collabs' },
-  { id:'press_ic',   x:'right-120',y:140, icon: Icons.Scrapbook(40),label:"Press",         opens:'press' },
-  { id:'career_ic',  x:'right-120',y:240, icon: Icons.Doc(40),     label:"Career.log",     opens:'career' },
-  { id:'hobbies_ic', x:'right-120',y:340, icon: Icons.Paint(40),   label:"Hobbies",        opens:'hobbies' },
-  { id:'term_ic',    x:'right-120',y:440, icon: Icons.Terminal(40),label:"Terminal",       opens:'terminal' },
+ {id:'disk',icon:Icons.Disk(40),label:'Ke’s HD',opens:'finder'},
+ {id:'pubs_ic',icon:Icons.Folder(40),label:'Publications',opens:'pubs'},
+ {id:'research_ic',icon:Icons.Doc(40),label:'MRI Notebook',opens:'research'},
+ {id:'tools_ic',icon:Icons.Control(40),label:'Control Panel',opens:'tweaks'},
 ];
 
-function AppBody({ kind }){
+function AppBody({ kind, onOpen, query }){
   switch(kind){
+    case 'finder': return <Finder onOpen={onOpen}/>;
+    case 'help': return <Shortcuts/>;
     case 'research': return <ResearchLab/>;
     case 'about':     return <AboutMe/>;
-    case 'pubs':      return <Publications/>;
+    case 'pubs':      return <Publications initialQuery={query||''}/>;
     case 'metrics':   return <Metrics/>;
     case 'collabs':   return <Collaborators/>;
     case 'cv':        return <CV/>;
@@ -87,7 +84,7 @@ function MenuBar({ onCmd, openIds }){
       ['Terminal','terminal'],
     ],
     File: [
-      ['New Window','new-window'],
+      ['Open Ke’s HD','finder'],['Find…','launcher'],['New Note','new-window'],
       ['Open…','chooser'],
       ['---'],
       ['Close','close-active'],
@@ -95,32 +92,17 @@ function MenuBar({ onCmd, openIds }){
       ['---'],
       ['Print Résumé…','print'],
     ],
-    Edit: [
-      ['Undo','edit-undo'],['---'],
-      ['Cut','edit-cut'],['Copy','edit-copy'],['Paste','edit-paste'],
-      ['---'],['Select All','edit-selectall'],
-    ],
     View: [
-      ['by Icon','view-icon'],
-      ['by Small Icon','view-smicon'],
-      ['by Name','pubs'],
-      ['by Kind','pubs'],
-      ['by Date','pubs'],
+      ['Large Icons','view-icon'],['Small Icons','view-smicon'],['---'],
+      ['Arrange Windows','cleanup'],['Control Panel…','tweaks'],
     ],
-    Special: [
-      ['Clean Up Desktop','cleanup'],
-      ['Empty Trash…','trash'],
-      ['Erase Disk…','erase'],
-      ['---'],
-      ['Restart','boot'],
-      ['Shut Down','shutdown'],
-    ],
+    Special: [['Macintosh Guide','help'],['---'],['Restart','boot']],
     Windows: openIds.length ? openIds.map(([id,title])=>[title,'focus:'+id]) : [['No windows open',null,true]],
   };
 
   return (
     <div className="menubar">
-      <div className={'apple keep '+(open==='apple'?'open':'')}
+      <div role="button" tabIndex={0} aria-label="Apple menu" onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setOpen(open==='apple'?null:'apple');}}} className={'apple keep '+(open==='apple'?'open':'')}
         onClick={(e)=>{e.stopPropagation(); setOpen(open==='apple'?null:'apple');}}
         style={{display:'flex',alignItems:'center',justifyContent:'center'}}>
         <svg width="16" height="16" viewBox="0 0 16 16" shapeRendering="crispEdges">
@@ -153,20 +135,20 @@ function MenuBar({ onCmd, openIds }){
         <div className="menu-drop" style={{left:0}}>
           {menus.apple.map((r,i)=> r[0]==='---' ?
             <div key={i} className="sep"/> :
-            <div key={i} className="row" onClick={()=>{setOpen(null); onCmd(r[1]);}}>
+            <div key={i} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==='Enter'){setOpen(null);onCmd(r[1]);}}} className="row" onClick={()=>{setOpen(null); onCmd(r[1]);}}>
               <span>{r[0]}</span></div>
           )}
         </div>
       )}
       {Object.keys(menus).filter(k=>k!=='apple').map(k=>(
-        <div key={k} className={'item '+((['File','Windows'].includes(k))?'keep ':'')+(open===k?'open':'')}
+        <div key={k} role="button" tabIndex={0} aria-expanded={open===k} onKeyDown={e=>{if(e.target===e.currentTarget&&(e.key==='Enter'||e.key===' ')){e.preventDefault();setOpen(open===k?null:k);}}} className={'item '+((['File','Windows'].includes(k))?'keep ':'')+(open===k?'open':'')}
           onClick={(e)=>{e.stopPropagation(); setOpen(open===k?null:k);}}>
           {k}
           {open===k && (
             <div className="menu-drop">
               {menus[k].map((r,i)=> r[0]==='---' ?
                 <div key={i} className="sep"/> :
-                <div key={i} className={'row '+(r[2]?'dis':'')}
+                <div key={i} role="button" tabIndex={r[2]?-1:0} onKeyDown={e=>{if(e.key==='Enter'&&!r[2]){setOpen(null);onCmd(r[1]);}}} className={'row '+(r[2]?'dis':'')}
                   onClick={()=>{ if(r[2])return; setOpen(null); onCmd(r[1]); }}>
                   <span>{r[0]}</span>
                 </div>
@@ -176,7 +158,7 @@ function MenuBar({ onCmd, openIds }){
         </div>
       ))}
       <div className="spacer"/>
-      <div className="item keep" onClick={(e)=>{e.stopPropagation(); onCmd('balloon');}}>?</div>
+      <div className="item keep" onClick={(e)=>{e.stopPropagation(); onCmd('help');}}>?</div>
       <div className="clock keep">{time}</div>
     </div>
   );
@@ -189,7 +171,7 @@ function Tweaks({ onClose, onCmd, tweaks, setTweaks }){
       <div className="tweaks-win">
         <label>Desktop pattern</label>
         <div className="seg">
-          {['dots','checker','lines','solid'].map(p=>(
+          {['studio','dots','checker','solid'].map(p=>(
             <button key={p} className={tweaks.pattern===p?'sel':''}
               onClick={()=>setTweaks(t=>({...t,pattern:p}))}>{p}</button>
           ))}
@@ -201,7 +183,7 @@ function Tweaks({ onClose, onCmd, tweaks, setTweaks }){
               onClick={()=>setTweaks(t=>({...t,mode:p}))}>{p}</button>
           ))}
         </div>
-        <label>Zoom</label>
+        <label>Text size</label>
         <div className="seg">
           {['S','M','L'].map(p=>(
             <button key={p} className={tweaks.zoom===p?'sel':''}
@@ -224,32 +206,13 @@ function Tweaks({ onClose, onCmd, tweaks, setTweaks }){
 }
 
 function Launcher({ onClose, onOpen }){
-  const [q, setQ] = uS('');
-  const items = uM(()=> APPS.map(a=>({id:a.id, label:a.title})), []);
-  const filtered = items.filter(i => i.label.toLowerCase().includes(q.toLowerCase()));
-  return (
-    <div style={{position:'fixed', top:60, left:'50%', transform:'translateX(-50%)',
-      width:400, background:'#fff', border:'2px solid #000', boxShadow:'3px 3px 0 #000', zIndex:2000}}
-      className="launcher-mobile">
-      <div style={{borderBottom:'1px solid #000', padding:4, display:'flex', gap:6, alignItems:'center'}}>
-        <span style={{fontSize:14,padding:'0 6px'}}>⌘K</span>
-        <input autoFocus value={q} onChange={e=>setQ(e.target.value)}
-          placeholder="Open application or note…"
-          style={{flex:1, border:'1px solid #000', padding:'3px 8px', fontFamily:'inherit', fontSize:13, outline:'none'}}/>
-        <button onClick={onClose} style={{border:'1px solid #000',background:'#fff',padding:'3px 10px',cursor:'pointer',fontFamily:'inherit',fontSize:12}}>Esc</button>
-      </div>
-      <div style={{maxHeight:260, overflow:'auto'}}>
-        {filtered.map(i=>(
-          <div key={i.id} className="folder-row" style={{padding:'6px 10px'}}
-            role="button" tabIndex={0} onKeyDown={e=>{if(e.key==='Enter'){onOpen(i.id);onClose();}}} onClick={()=>{ onOpen(i.id); onClose(); }}>
-            <Icons.FolderSm/>
-            <span>{i.label}</span>
-          </div>
-        ))}
-        {!filtered.length && <div style={{padding:10,fontSize:12}}>No results.</div>}
-      </div>
-    </div>
-  );
+ const [q,setQ]=uS('');
+ const terms=q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+ const apps=APPS.filter(a=>terms.every(t=>a.title.toLowerCase().includes(t))).map(a=>({id:a.id,label:a.title,type:'Application'}));
+ const papers=terms.length?window.KW_DATA.publications.filter(p=>terms.every(t=>(p.title+' '+p.authors+' '+p.venue).toLowerCase().includes(t))).map(p=>({id:'pubs',query:p.title,label:p.title,type:p.venue+' · '+p.year})):[];
+ const results=[...apps,...papers];
+ const open=r=>{onOpen(r.id,r.query);onClose();};
+ return <div className="search-shade" onClick={onClose}><section role="dialog" aria-modal="true" aria-label="Find on Macintosh" className="mac-search" onClick={e=>e.stopPropagation()}><div className="search-title">Find on Macintosh <button onClick={onClose}>Esc</button></div><input autoFocus aria-label="Find applications and papers" placeholder="Try “MRI”, “PhotoFramer”, or “calculator”…" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&results.length)open(results[0]);}}/><div className="search-results">{results.map(r=><button key={r.id+r.label} onClick={()=>open(r)}>{r.query?<Icons.FolderSm/>:Icons.MacFace(20)}<span>{r.label}<small>{r.type}</small></span><span>↵</span></button>)}{!results.length&&<p>No matches. Try a title, author, venue or app name.</p>}</div><footer>{results.length} results <span>Enter opens the first result · Esc closes</span></footer></section></div>;
 }
 
 function Boot({ onDone }){
@@ -279,7 +242,9 @@ function App(){
   const [booted, setBooted] = uS(()=>{try{return sessionStorage.getItem('kw-booted')==='1';}catch{return false;}});
   const [selDesk, setSelDesk] = uS(null);
   const [launcher, setLauncher] = uS(false);
-  const [tweaks, setTweaks] = uS({ pattern:'dots', mode:'B&W', zoom:'M', crt:false });
+  const [tweaks, setTweaks] = uS(()=>{try{return {...{pattern:'studio',mode:'B&W',zoom:'M',crt:false},...JSON.parse(localStorage.getItem('kw-display')||'{}')};}catch{return {pattern:'studio',mode:'B&W',zoom:'M',crt:false};}});
+  uE(()=>{try{localStorage.setItem('kw-display',JSON.stringify(tweaks));}catch{}},[tweaks]);
+  const [iconSize,setIconSize]=uS('large');
   const [tweaksOn, setTweaksOn] = uS(false);
   const [trashFull, setTrashFull] = uS(false);
   const [vw, setVw] = uS(typeof window!=='undefined'?window.innerWidth:1200);
@@ -318,10 +283,10 @@ function App(){
     if(!booted) return;
     const isMobile = window.innerWidth < 820;
     if(isMobile) return; // mobile shows clean desktop
-    const t=setTimeout(()=>openApp('about'),80);return ()=>clearTimeout(t);
+    openApp('finder');
   },[booted]);
 
-  const openApp = (id) => {
+  const openApp = (id, query) => {
     if(!id) return;
     if(id.startsWith && id.startsWith('focus:')){ wm.focus(id.slice(6)); return; }
     if(id==='new-window'){
@@ -337,7 +302,7 @@ function App(){
     if(id==='edit-selectall'){ document.execCommand('selectAll'); return; }
     if(id==='cleanup'){ wm.wins.forEach((w,i)=>wm.update(w.id,{x:40+i*28,y:50+i*28})); return; }
     if(id==='erase'){ alert('Nice try. This disk is bolted down.'); return; }
-    if(id==='view-icon' || id==='view-smicon'){ alert('View: '+id.replace('view-','')); return; }
+    if(id==='view-icon' || id==='view-smicon'){setIconSize(id==='view-icon'?'large':'small');return;}
     if(id==='tweaks'){
       const existing = wm.wins.find(w=>w.id==='tweaks');
       if(existing){ wm.focus('tweaks'); return; }
@@ -348,12 +313,12 @@ function App(){
     if(id==='close-active'){ if(wm.active) wm.close(wm.active); return; }
     if(id==='close-all'){ wm.wins.forEach(w=>wm.close(w.id)); return; }
     if(id==='shutdown'){ if(confirm('Shut down Ke\'s Macintosh?')) document.body.style.background='#000'; return; }
-    if(id==='boot'){ setBooted(false); setTimeout(()=>setBooted(true),0); return; }
+    if(id==='boot'){wm.wins.forEach(w=>wm.close(w.id));setBooted(false);return;}
     if(id==='trash'){ setTrashFull(false); alert('Trash emptied. ✓'); return; }
     if(id==='balloon'){ alert('Ke\'s Macintosh · September 2026\nHead of Applied Research, Pika Labs.\nPress ⌘K to launch things. Drag windows by their title bars.'); return; }
     const def = APPS.find(a=>a.id===id);
     if(!def) return;
-    wm.open({...def,w:Math.min(def.w,window.innerWidth-36),h:Math.min(def.h,window.innerHeight-100),x:Math.max(18,Math.min(def.x,window.innerWidth-def.w-24)),y:Math.max(36,Math.min(def.y,window.innerHeight-def.h-60))});
+    wm.open({...def,query,w:Math.min(def.w,window.innerWidth-36),h:Math.min(def.h,window.innerHeight-100),x:Math.max(18,Math.min(def.x,window.innerWidth-def.w-24)),y:Math.max(36,Math.min(def.y,window.innerHeight-def.h-60))});
   };
 
   // resolve right-N positions
@@ -363,6 +328,7 @@ function App(){
   };
 
   const deskBg = {
+    studio: '#aebdbb',
     dots: 'repeating-conic-gradient(#b8b8b0 0% 25%, #d8d8d0 0% 50%)',
     checker: 'repeating-conic-gradient(#000 0% 25%, #fff 0% 50%)',
     lines: 'repeating-linear-gradient(45deg, #000 0 1px, #fff 1px 4px)',
@@ -387,14 +353,14 @@ function App(){
       <div className="desktop"
         style={{
           background: deskBg, backgroundSize: deskSize,
-          transform:`scale(${zoomScale})`, transformOrigin:'0 22px',
+          '--reading-size': tweaks.zoom==='L'?'15px':tweaks.zoom==='S'?'12px':'13px',
           paddingTop:22,
         }}
         onClick={()=>setSelDesk(null)}>
 
-        <div className="desktop-note"><span>KE WANG / RESEARCH DESKTOP</span><h2>Ideas, experiments,<br/>and things I build.</h2><p>Double-click to explore. On touch screens, tap once.</p><button className="mac-button" onClick={e=>{e.stopPropagation();setLauncher(true);}}>Find something… <kbd>⌘K</kbd></button><small>Updated September 2026</small></div>
+        <div className="desktop-signature" aria-hidden="true"><span>KW / PERSONAL COMPUTER</span><b>Ideas live here.</b><small>IMAGING · INTELLIGENCE · DISCOVERY</small></div>
         {/* Desktop icons */}
-        <div className="desk-grid">
+        <div className={"desk-grid "+(iconSize==='small'?'small-icons':'')}>
           {DESKTOP_ICONS.map(ic=>(
             <DeskIcon key={ic.id}
               x={0} y={0}
@@ -425,7 +391,7 @@ function App(){
             onResize={(ww,hh)=>wm.update(w.id,{w:ww, h:hh})}>
             {w.id==='tweaks'
               ? <Tweaks tweaks={tweaks} setTweaks={setTweaks} onClose={()=>wm.close('tweaks')} onCmd={openApp}/>
-              : <AppBody kind={w.kind}/>}
+              : <AppBody kind={w.kind} onOpen={openApp} query={w.query}/>}
           </Window>
         ))}
 

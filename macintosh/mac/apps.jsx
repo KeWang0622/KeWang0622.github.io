@@ -12,6 +12,25 @@ const MetricBar = ({label, value, max}) => (
   </div>
 );
 
+
+const PROJECTS = [
+ {name:'MRI Research',type:'INTERACTIVE NOTEBOOK',text:'Connect research questions, specialist knowledge and scientific tools.',app:'research',icon:'Doc'},
+ {name:'PhotoFramer',type:'CVPR 2026',text:'Learn to frame better photographs with multimodal composition guidance.',url:'https://zhiyuanyou.github.io/photoframer/',icon:'Paint'},
+ {name:'Hist2Style',type:'CVPR 2026',text:'Histogram-guided image stylization with bilateral grids.',url:'https://dgalor.github.io/hist2style/',icon:'Paint'},
+ {name:'Project Indigo',type:'COMPUTATIONAL PHOTOGRAPHY',text:'Software-defined photography. My work: burst super-resolution.',url:'https://research.adobe.com/articles/indigo/indigo.html',icon:'MacFace'},
+];
+function Finder({onOpen}){
+ const [section,setSection]=useState('Start here');
+ return <div className="finder-shell"><nav className="finder-sidebar" aria-label="Finder locations"><div className="disk-label">{Icons.Disk(28)}<b>Ke’s HD</b></div>{['Start here','Projects','Library','Desk accessories'].map(x=><button key={x} aria-pressed={section===x} onClick={()=>setSection(x)}>{x}</button>)}<div className="sidebar-foot">PERSONAL ARCHIVE<br/>San Francisco, CA<br/><br/>September 2026</div></nav><div className="finder-content">
+ <div className="finder-path">Ke’s HD <span>/ {section}</span><button aria-label="Search this Macintosh" onClick={()=>onOpen('launcher')}>Find… ⌘K</button></div>
+ {section==='Start here'&&<><div className="finder-intro"><div><span className="eyebrow">RESEARCHER · BUILDER · IMAGING</span><h1>Hello, I’m Ke.<br/>Welcome to my<br/><em>Macintosh.</em></h1><p>I work at the intersection of imaging, machine learning and tools for discovery.</p><button className="mac-button" onClick={()=>onOpen('about')}>Read my story →</button></div><img src="assets/kw_ws.jpg" alt="Ke Wang outdoors"/></div><div className="finder-section-label">OPEN A FOLDER <span>Double-click the desktop. Click anything here.</span></div><div className="finder-shortcuts">{[['pubs','Publications',`${window.KW_DATA.publications.length} papers & other works`,'Folder'],['research','MRI notebook','24 interactive slides','Doc'],['metrics','Citations',`${window.KW_DATA.metrics.citations} · Scholar snapshot`,'Chooser']].map(([id,title,sub,icon])=><button key={id} onClick={()=>onOpen(id)}>{Icons[icon](32)}<b>{title}</b><small>{sub}</small></button>)}</div><div className="finder-foot"><span>Curiosity, filed under many folders.</span><a href="/">Visit the main site ↗</a></div></>}
+ {section==='Projects'&&<><h1>Selected projects.</h1><p className="finder-deck">From computational photography to scientific research tools.</p><div className="project-files">{PROJECTS.map(x=><article key={x.name}>{Icons[x.icon](36)}<span className="eyebrow">{x.type}</span><h2>{x.name}</h2><p>{x.text}</p>{x.app?<button className="mac-button" onClick={()=>onOpen(x.app)}>Explore →</button>:<a className="mac-button" href={x.url} target="_blank" rel="noreferrer">Open project ↗</a>}</article>)}</div></>}
+ {section==='Library'&&<><h1>The research library.</h1><p className="finder-deck">Search the archive, collect a reading list, or follow the work over time.</p><div className="library-rows">{[['pubs','Publications','Search, preview, and save papers.'],['metrics','Citation metrics','A dated snapshot, with source links.'],['collabs','Collaborators','People behind the research.'],['career','Career & news','Milestones along the way.'],['cv','Curriculum vitae','Experience, education and service.'],['press','In the press','Research beyond the paper.']].map(([id,title,desc])=><button key={id} onClick={()=>onOpen(id)}>{Icons.Folder(28)}<span><b>{title}</b><small>{desc}</small></span><span>↗</span></button>)}</div></>}
+ {section==='Desk accessories'&&<><h1>A little room to play.</h1><p className="finder-deck">The small pleasures of a personal computer.</p><div className="finder-shortcuts accessories">{[['paint','MacPaint','Paint'],['notepad','Note Pad','Notepad'],['calc','Calculator','Calc'],['terminal','Terminal','Terminal'],['alarm','Clock','Clock'],['tweaks','Control Panel','Control']].map(([id,title,icon])=><button key={id} onClick={()=>onOpen(id)}>{Icons[icon](36)}<b>{title}</b></button>)}</div></>}
+ </div></div>;
+}
+function Shortcuts(){return <div><h1>Make yourself at home.</h1><p>Double-click a desktop icon, or open Ke’s HD to explore.</p><dl className="shortcut-list"><dt>⌘ / Ctrl + K</dt><dd>Find an application or paper</dd><dt>Enter</dt><dd>Open the selected desktop icon or first search result</dd><dt>Escape</dt><dd>Close the search panel</dd><dt>Window title bar</dt><dd>Drag to move; double-click to zoom</dd><dt>Bottom-right corner</dt><dd>Drag to resize a window</dd></dl><p>Saved papers and display settings stay in this browser. Citation counts are a dated snapshot, not a live feed.</p></div>}
+
 function AboutMe(){
   return (
     <div>
@@ -83,18 +102,21 @@ function AboutMe(){
   );
 }
 
-function Publications(){
+function Publications({initialQuery=''}){
   const rows=window.KW_DATA.publications;
-  const [query,setQuery]=useState(''),[sort,setSort]=useState('year'),[filter,setFilter]=useState('all'),[selected,setSelected]=useState(null),[copied,setCopied]=useState(false);
-  const sorted=useMemo(()=>rows.filter(r=>(filter==='all'||(filter==='2026'?r.year==='2026':r.role==='first author'))&&(r.title+' '+r.authors+' '+r.venue).toLowerCase().includes(query.toLowerCase())).slice().sort((x,y)=>sort==='cites'?(y.cites??-1)-(x.cites??-1):sort==='venue'?x.venue.localeCompare(y.venue):Number(y.year)-Number(x.year)),[rows,query,sort,filter]);
+  const [query,setQuery]=useState(initialQuery),[sort,setSort]=useState('year'),[filter,setFilter]=useState('all'),[selected,setSelected]=useState(null),[copied,setCopied]=useState(false);
+  const [saved,setSaved]=useState(()=>{try{return JSON.parse(localStorage.getItem('kw-reading-list')||'[]');}catch{return [];}});
+  useEffect(()=>{try{localStorage.setItem('kw-reading-list',JSON.stringify(saved));}catch{}},[saved]);
+  useEffect(()=>{setQuery(initialQuery);setFilter('all');},[initialQuery]);
+  const sorted=useMemo(()=>rows.filter(r=>(filter==='all'||(filter==='2026'?r.year==='2026':filter==='saved'?saved.includes(r.title):r.role==='first author'))&&(r.title+' '+r.authors+' '+r.venue).toLowerCase().includes(query.toLowerCase())).slice().sort((x,y)=>sort==='cites'?(y.cites??-1)-(x.cites??-1):sort==='venue'?x.venue.localeCompare(y.venue):Number(y.year)-Number(x.year)),[rows,query,sort,filter,saved]);
   const cur=sorted.find(r=>r.title===selected)||sorted[0];
   async function copyCitation(){try{await navigator.clipboard.writeText(cur.authors+'. '+cur.title+'. '+cur.venue+', '+cur.year+'. '+cur.url);setCopied(true);setTimeout(()=>setCopied(false),1800);}catch{setCopied(false);}}
   return <div className="publication-browser">
     <div className="finder-toolbar"><input aria-label="Search publications" placeholder="Find a paper, author, or venue…" value={query} onChange={e=>setQuery(e.target.value)}/><select aria-label="Sort publications" value={sort} onChange={e=>setSort(e.target.value)}><option value="year">Newest first</option><option value="cites">Most cited</option><option value="venue">By venue</option></select></div>
-    <div className="finder-filters">{[['all','All works'],['2026','CVPR 2026'],['first','First author']].map(([id,label])=><button key={id} aria-pressed={filter===id} onClick={()=>setFilter(id)}>{label}</button>)}<span>{sorted.length} items</span></div>
+    <div className="finder-filters">{[['all','All works'],['2026','CVPR 2026'],['first','First author'],['saved','Saved ('+saved.length+')']].map(([id,label])=><button key={id} aria-pressed={filter===id} onClick={()=>setFilter(id)}>{label}</button>)}<span>{sorted.length} items</span></div>
     <div className="files-scroll"><table className="files"><thead><tr><th>Name</th><th>Venue</th><th>Year</th><th>Cites*</th></tr></thead><tbody>{sorted.map(r=><tr key={r.title} className={cur?.title===r.title?'sel':''} onClick={()=>{setSelected(r.title);setCopied(false);}}><td><button className="paper-select" onClick={()=>{setSelected(r.title);setCopied(false);}}>{r.title}</button></td><td>{r.venue}</td><td>{r.year}</td><td>{r.cites??'—'}</td></tr>)}</tbody></table></div>
     {!sorted.length&&<p className="empty-state">No papers match. Try another title or clear the filter.</p>}
-    {cur&&<article className="paper-inspector"><div className="inspector-label">FILE PREVIEW · {cur.venue} {cur.year}</div><h3>{cur.title}</h3><p className="paper-authors">{cur.authors}</p><p>{cur.tldr}</p><div className="paper-actions"><a className="mac-button primary" href={cur.url} target="_blank" rel="noreferrer">Open paper ↗</a>{cur.project&&<a className="mac-button" href={cur.project} target="_blank" rel="noreferrer">Project ↗</a>}<button className="mac-button" onClick={copyCitation}>{copied?'Copied ✓':'Copy citation'}</button></div></article>}
+    {cur&&<article className="paper-inspector"><div className="inspector-label">FILE PREVIEW · {cur.venue} {cur.year}</div><h3>{cur.title}</h3><p className="paper-authors">{cur.authors}</p><p>{cur.tldr}</p><div className="paper-actions"><a className="mac-button primary" href={cur.url} target="_blank" rel="noreferrer">Open paper ↗</a>{cur.project&&<a className="mac-button" href={cur.project} target="_blank" rel="noreferrer">Project ↗</a>}<button className="mac-button" aria-pressed={saved.includes(cur.title)} onClick={()=>setSaved(v=>v.includes(cur.title)?v.filter(t=>t!==cur.title):[...v,cur.title])}>{saved.includes(cur.title)?'★ Saved':'☆ Save paper'}</button><button className="mac-button" onClick={copyCitation}>{copied?'Copied ✓':'Copy citation'}</button></div></article>}
     <p className="data-stamp">* Google Scholar snapshot · {window.KW_DATA.updated}. — means no count displayed. Curated list; duplicate records are omitted.</p>
   </div>;
 }
@@ -599,4 +621,4 @@ function Alarm(){
   );
 }
 
-Object.assign(window, { ResearchLab, AboutMe, Publications, Career, Hobbies, AboutThisMac, Notepad, Calculator, MacPaint, Chooser, Terminal, Alarm, Metrics, Collaborators, CV, Press, Services });
+Object.assign(window, { Finder, Shortcuts, ResearchLab, AboutMe, Publications, Career, Hobbies, AboutThisMac, Notepad, Calculator, MacPaint, Chooser, Terminal, Alarm, Metrics, Collaborators, CV, Press, Services });

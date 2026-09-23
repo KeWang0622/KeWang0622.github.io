@@ -14,7 +14,7 @@ function useWindows(){
       if(existing){
         setZTop(z => z+1);
         setActive(def.id);
-        return prev.map(w => w.id===def.id ? {...w, z: zTop+1, minimized:false} : w);
+        return prev.map(w => w.id===def.id ? {...w, ...(def.query!==undefined?{query:def.query}:{}), z: zTop+1, minimized:false} : w);
       }
       const newZ = zTop+1;
       setZTop(newZ);
@@ -24,7 +24,7 @@ function useWindows(){
   },[zTop]);
 
   const close = useCallback((id) => {
-    setWins(prev => prev.filter(w => w.id !== id));
+    setWins(prev => {const next=prev.filter(w=>w.id!==id);setActive(a=>a===id?(next.slice().sort((a,b)=>b.z-a.z)[0]?.id||null):a);return next;});
   },[]);
 
   const focus = useCallback((id) => {
@@ -98,7 +98,7 @@ function Window({ win, children, onFocus, onClose, onMove, onResize, active, mob
       className={'win '+(active?'active ':'')+(mobileActive?'mobile-active ':'')+(settled?'settled':'')}
       style={{ left:win.x, top:win.y, width:win.w, height:win.h, zIndex: win.z }}
       onMouseDown={onFocus}>
-      <div className="titlebar" onMouseDown={startDrag}>
+      <div className="titlebar" onMouseDown={startDrag} onDoubleClick={toggleZoom}>
         <div className="stripes"/>
         <button aria-label={"Close "+win.title} className="close" onClick={(e)=>{e.stopPropagation(); onClose();}}/>
         <div className="title">{win.title}</div>
