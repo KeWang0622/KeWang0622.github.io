@@ -4,8 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MRI Research with AI Agents — Interactive Slides | Ke Wang</title>
-<meta name="description" content="Interactive MRI research slides: agents, skills, tools and scientific simulations.">
-<link rel="canonical" href="https://kewang0622.github.io/slides/mri-research/">
 <!--
   Static, client-side, no network calls and no API keys, so it can be served as
   a side page on a GitHub Pages site or opened straight from disk.
@@ -428,7 +426,29 @@
 @media(min-width:801px) and (max-height:780px){
 .col:has(.case-logic){padding-top:9px;padding-bottom:6px}.col:has(.case-logic) h2{margin-bottom:11px}.col:has(.case-logic) .research-request{padding:9px 12px;margin:8px 0 10px}.col:has(.case-logic) .research-request p{font-size:14px!important}.skill-reasons{margin:8px 0}.skill-reasons p{padding:5px 0}.col:has(.case-logic) th,.col:has(.case-logic) td{padding-top:3px;padding-bottom:3px}
 }
+
+/* About: preserve the whole portrait and size the composition to its content. */
+.slide.about.on{grid-template-columns:minmax(210px,.82fr) minmax(0,1.12fr) minmax(0,1.06fr);align-content:center;align-items:start;gap:clamp(24px,3vw,48px);max-width:1440px;padding:24px 32px;overflow-y:auto}
+.slide.about .photo{align-self:start;padding:0;background:none;border:0;border-radius:0;overflow:visible;gap:12px}
+.slide.about .photo img{width:100%;height:auto;aspect-ratio:auto;max-height:calc(100vh - 310px);object-fit:contain;object-position:center;border-radius:6px;background:transparent}
+.slide.about .col{padding:0;overflow:visible}
+.slide.about h2{font-size:clamp(23px,2.2vw,32px);line-height:1.16;margin-bottom:16px}
+.slide.about .col>p:not(.kicker):not(.hint){font-size:15px;line-height:1.6}
+.slide.about .tl li{margin-bottom:4px;padding-bottom:12px;font-size:15px}
+.slide.about .pubs li{font-size:15px;line-height:1.5;margin-bottom:15px}
+.slide.about .photo .nm{font-size:26px}
+@media(max-width:800px){
+ .slide.about.on{display:flex;align-items:stretch;gap:28px;padding:24px 22px}
+ .slide.about .photo{display:grid;grid-template-columns:minmax(120px,42%) 1fr;column-gap:20px;row-gap:10px;align-items:start}
+ .slide.about .photo img{grid-row:1/4;max-height:none;width:100%;height:auto}
+ .slide.about .photo .nm{align-self:end;font-size:23px}
+ .slide.about .photo .lk{font-size:11px;overflow-wrap:anywhere}
+ .slide.about h2{font-size:28px}
+}
+
 </style>
+<meta name="description" content="Interactive MRI research slides: agents, skills, tools and scientific simulations.">
+<link rel="canonical" href="https://kewang0622.github.io/slides/mri-research/">
 </head>
 <body>
 
