@@ -8,7 +8,7 @@ Rebuild the committed browser scripts after editing JSX:
 npx --yes esbuild@0.28.2 macintosh/mac/wm.jsx macintosh/mac/apps.jsx macintosh/mac/main.jsx --outdir=macintosh/dist --format=iife --minify
 ```
 
-React 18.3.1 production UMD assets are self-hosted in `vendor/` (MIT license). JSX is precompiled, so the public site does not load Babel or development React.
+React 18.3.1 production UMD assets are self-hosted in `lib/` (MIT license). JSX is precompiled, so the public site does not load Babel or development React.
 
 ## Data provenance
 
