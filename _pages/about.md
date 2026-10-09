@@ -55,8 +55,8 @@ I obtained my Ph.D. degree from [Electrical Engineering and Computer Sciences at
 Feel free to reach me at **kewang0622 [at] gmail [dot] com**.
 
 <div class="mri-feature" markdown="0">
-  <a href="{{ '/slides/mri-research/' | relative_url }}" aria-label="Open MRI research interactive slides"><img src="{{ '/assets/img/mri-mascot.png' | relative_url }}" width="78" height="88" alt="Friendly MRI scanner mascot" loading="lazy"></a>
-  <div><strong>MRI research, connected.</strong><p>From a research question to skills, tools, and evidence.</p><a href="{{ '/slides/mri-research/' | relative_url }}">Explore the interactive slides ↗</a><span aria-hidden="true"> · </span><a href="https://github.com/KeWang0622/mri-research-skill">GitHub</a></div>
+  <a href="{{ '/slides/mrfoundry/' | relative_url }}" aria-label="Open the MRFoundry interactive tutorial"><img src="{{ '/assets/img/mri-mascot.png' | relative_url }}" width="78" height="88" alt="Friendly MRI scanner mascot" loading="lazy"></a>
+  <div><strong>MRFoundry</strong><p>From an MRI research question to skills, tools, and evidence.</p><a href="{{ '/slides/mrfoundry/' | relative_url }}">Explore the interactive tutorial ↗</a><span aria-hidden="true"> · </span><a href="https://github.com/KeWang0622/MRFoundry">GitHub</a></div>
 </div>
 <style>
 .mri-feature{display:flex;align-items:center;gap:18px;margin:1.5rem 0;padding:14px 0;border-top:1px solid #8883;border-bottom:1px solid #8883;clear:both}.mri-feature img{object-fit:contain;transition:transform .2s}.mri-feature a:hover img{transform:translateY(-3px) rotate(-3deg)}.mri-feature strong{font-size:1rem}.mri-feature p{font-size:.86rem;opacity:.75;margin:4px 0 7px}.mri-feature a{font-size:.82rem}@media(prefers-reduced-motion:reduce){.mri-feature img{transition:none}}

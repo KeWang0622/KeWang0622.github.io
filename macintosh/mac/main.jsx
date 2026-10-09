@@ -4,7 +4,7 @@ const { useState: uS, useEffect: uE, useRef: uR, useMemo: uM } = React;
 const APPS = [
   {id:'finder',title:'Ke’s HD',icon:Icons.Disk(40),kind:'finder',x:100,y:66,w:800,h:590,nopad:true},
   {id:'help',title:'Macintosh Guide',icon:Icons.Doc(40),kind:'help',x:220,y:100,w:480,h:390},
-  {id:'research',title:'MRI Research',icon:Icons.Doc(40),kind:'research',x:150,y:100,w:530,h:470},
+  {id:'research',title:'MRFoundry',keywords:'MRI research skills tutorial',icon:Icons.Doc(40),kind:'research',x:150,y:100,w:530,h:470},
   { id:'about',    title:"About Ke",           icon: Icons.MacFace(40),   kind:'about',    x:410, y:65,  w:560, h:540 },
   { id:'pubs',     title:"Publications",       icon: Icons.Folder(40),    kind:'pubs',     x:360, y:65,  w:620, h:570 },
   { id:'metrics',  title:"Citation Metrics",   icon: Icons.Chooser(40),   kind:'metrics',  x:220, y:140, w:420, h:460 },
@@ -26,7 +26,7 @@ const APPS = [
 const DESKTOP_ICONS = [
  {id:'disk',icon:Icons.Disk(40),label:'Ke’s HD',opens:'finder'},
  {id:'pubs_ic',icon:Icons.Folder(40),label:'Publications',opens:'pubs'},
- {id:'research_ic',icon:Icons.Doc(40),label:'MRI Notebook',opens:'research'},
+ {id:'research_ic',icon:Icons.Doc(40),label:'MRFoundry',opens:'research'},
  {id:'tools_ic',icon:Icons.Control(40),label:'Control Panel',opens:'tweaks'},
 ];
 
@@ -80,7 +80,7 @@ function MenuBar({ onCmd, openIds }){
       ['Note Pad','notepad'],
       ['Press','press'],
       ['Publications','pubs'],
-      ['MRI Research','research'],
+      ['MRFoundry','research'],
       ['Terminal','terminal'],
     ],
     File: [
@@ -208,7 +208,7 @@ function Tweaks({ onClose, onCmd, tweaks, setTweaks }){
 function Launcher({ onClose, onOpen }){
  const [q,setQ]=uS('');
  const terms=q.trim().toLowerCase().split(/\s+/).filter(Boolean);
- const apps=APPS.filter(a=>terms.every(t=>a.title.toLowerCase().includes(t))).map(a=>({id:a.id,label:a.title,type:'Application'}));
+ const apps=APPS.filter(a=>terms.every(t=>(a.title+' '+(a.keywords||'')).toLowerCase().includes(t))).map(a=>({id:a.id,label:a.title,type:'Application'}));
  const papers=terms.length?window.KW_DATA.publications.filter(p=>terms.every(t=>(p.title+' '+p.authors+' '+p.venue).toLowerCase().includes(t))).map(p=>({id:'pubs',query:p.title,label:p.title,type:p.venue+' · '+p.year})):[];
  const results=[...apps,...papers];
  const open=r=>{onOpen(r.id,r.query);onClose();};
