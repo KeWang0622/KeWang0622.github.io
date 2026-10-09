@@ -288,8 +288,8 @@ window.KW_DATA = {
   "news": [
     [
       "Sep 2026",
-      "MRI research skills and interactive slides: connecting agents, scientific tools and experimental evidence.",
-      "https://kewang0622.github.io/slides/mri-research/"
+      "MRFoundry: MRI research skills and an interactive tutorial connecting agents, scientific tools and experimental evidence.",
+      "https://kewang0622.github.io/slides/mrfoundry/"
     ],
     [
       "Jun 2026",
