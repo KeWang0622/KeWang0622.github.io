@@ -1,0 +1,8 @@
+numpy==2.5.3
+scipy==1.18.1
+sigpy==0.1.27
+pypulseq==1.5.0.post1
+Pillow==12.3.0
+matplotlib==3.11.2
+numba==0.67.0
+PyWavelets==1.10.0

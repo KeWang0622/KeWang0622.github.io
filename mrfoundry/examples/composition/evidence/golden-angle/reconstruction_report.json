@@ -1,0 +1,26 @@
+{
+  "engine": "SigPy",
+  "version": "0.1.27",
+  "shape": [
+    64,
+    64
+  ],
+  "fov_mm": 220,
+  "receive_channels": 1,
+  "method": "NUFFT conjugate-gradient least squares + L2",
+  "lambda_l2": 0.1,
+  "max_iterations": 400,
+  "coordinate_conversion": "(ky,kx) cycles/m multiplied by 0.220 m",
+  "adc_phase": "Already compensated by KomaMRI; unchanged",
+  "gridding_relative_data_residual": 0.10276854253761665,
+  "iterative_relative_data_residual": 0.06823620096213608,
+  "relative_image_change_additional_100_iterations": 0.0,
+  "same_trajectory_shepp_logan_roundtrip_error": 0.24243802805684309,
+  "same_trajectory_shepp_logan_data_residual": 0.0006609531871230145,
+  "limitations": [
+    "Coarse point-spin phantom; not spatially converged.",
+    "Static 2D Fourier model does not model spoke-dependent magnetization or within-readout relaxation/off-resonance.",
+    "No noise added, no multicoil encoding; no experimental SNR or g-factor estimate.",
+    "Phantom spin density is a spatial reference, not a GRE-contrast ground truth."
+  ]
+}

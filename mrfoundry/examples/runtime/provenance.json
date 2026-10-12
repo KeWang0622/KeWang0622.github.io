@@ -1,0 +1,12 @@
+{
+  "hyperframes_version": "0.8.150",
+  "origin": "Official npm package hyperframes, installed CLI dist",
+  "gsap_version": "3.14.2",
+  "sha256": {
+    "hyperframes-slideshow.global.js": "bd08a1b5261ae5c7f501e670298dca4a45c0c08086d41c2bc5b919846e35cb97",
+    "hyperframes-player.global.js": "44179fa8eb7f42d70edc0d7aa5470dbfd167d86a5bb76d0c3caed45c9fb3676d",
+    "gsap.min.js": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
+    "HYPERFRAMES-LICENSE": "4259155fb06f127687ee7b0a8a3682d45132db0f2da26cbc0b7a2d1e796436b8",
+    "hyperframe.runtime.iife.js": "5e5acecab6120687d5061738fa55e78cbfc0fe48f7dcbc81eb494e36ba6bcc50"
+  }
+}
