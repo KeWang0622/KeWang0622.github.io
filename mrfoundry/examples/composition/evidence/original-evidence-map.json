@@ -1,0 +1,103 @@
+{
+  "scope": "Retrospective human-in-the-loop development case, not an autonomous benchmark",
+  "sources": [
+    {
+      "path": "../golden-angle-gre/design_report.json",
+      "sha256": "a4b15628207f81b14e317bd7fccd3513f10585fd3b55c8c015a426adaf1aeb2f"
+    },
+    {
+      "path": "../golden-angle-gre/golden_angle_radial_gre.seq",
+      "sha256": "c4a48a23df86531e0c49a6246a7e39a2a98e7104cf4fb87c07d29dc9cac7b309"
+    },
+    {
+      "path": "../golden-angle-gre/trajectory.npz",
+      "sha256": "2999c9c223ea2d7bbd3e3ecf80596ce6b46ae9af8ae3cecd193cb61309f9ca9b"
+    },
+    {
+      "path": "../golden-angle-gre/koma_report.json",
+      "sha256": "648399ad74e8ce66b1764ee4133a33fbfc51332f3fb552e503cdb76045b7f4f7"
+    },
+    {
+      "path": "../golden-angle-gre/reconstruction_report.json",
+      "sha256": "f7e3ff7ce161ba7322ebdda9c040e30f348839ccb69eea8d406b3f337a2d4093"
+    },
+    {
+      "path": "../golden-angle-gre/reconstruction.npz",
+      "sha256": "ebfa1f7aff625408168fcc0aa3d5272e3b269f4e64217bce1a8a9955df61f158"
+    },
+    {
+      "path": "../golden-angle-gre/dense/signal_metal_ss0.5.npz",
+      "sha256": "448ea164e77e6063bdc6db6149578d18cc0442248c7bfa7a8828fd7adad464e4"
+    },
+    {
+      "path": "../golden-angle-gre/dense/reconstruction_ss4.npz",
+      "sha256": "b4277d6c0bc6d5cb95657f2cf35184f1a528b078d0f58fc5503cb39d512b7097"
+    },
+    {
+      "path": "../golden-angle-gre/dense/reconstruction_ss2.npz",
+      "sha256": "96be6706beafea3bc3b832c14da24980f21eb99dc82cd889854ac42e26f9010f"
+    },
+    {
+      "path": "../golden-angle-gre/dense/reconstruction_ss1.npz",
+      "sha256": "d98f16bb075aa66f068a8a0736ecff6fed51cadefce570278093bebd0393cc5c"
+    },
+    {
+      "path": "../golden-angle-gre/dense/reconstruction_ss0.5.npz",
+      "sha256": "3ec0854df5d922fc84650f74de32c58d2365a010a0413200ca1db21338cf63bb"
+    },
+    {
+      "path": "../golden-angle-gre/dense/reconstruction_report.json",
+      "sha256": "cf02c75e148b49bae24e9711bb25386a43cf1dfd1eb4c0709d8ca9c1a4295ca6"
+    },
+    {
+      "path": "../golden-angle-gre/dense/validation.json",
+      "sha256": "fa4cf2b7a7bd5e13eac3fa4004e44fc69c50345235b83b2c455acbb7e3073e45"
+    },
+    {
+      "path": "../golden-angle-gre/dense/backend_validation.json",
+      "sha256": "98dca3a2b8104716cc439145231f7ab4ca60bbce3ca155b4989366cdbf878ef8"
+    },
+    {
+      "path": "../golden-angle-gre/dense/simulation_subvoxel.json",
+      "sha256": "cb652ddac10ed44adeae90cf4be55fb8a1d12f46e077c46c026cd3d62b697a8e"
+    },
+    {
+      "path": "../golden-angle-gre/requirements.lock.txt",
+      "sha256": "cc62ed6e0ec32f024b7985aaf029a4ed6d348d146ba5cfe0f30b89cc4624556e"
+    },
+    {
+      "path": "../golden-angle-gre/JuliaManifest.toml",
+      "sha256": "53dfb32c1d260ea5436852d4773d6247a438b38e7239270d549f4336f1e11632"
+    }
+  ],
+  "display": {
+    "orientation": "simulation x/y, origin lower; no anatomical labels inferred",
+    "image_interpolation": "nearest",
+    "refinement_window": [
+      0,
+      6.442718444939094e-07
+    ],
+    "initial_window": [
+      0,
+      4.300629916740925
+    ],
+    "signal_display": "log10(|s|/max|s|), floor 1e-4; no signal modification",
+    "density": "native proton-density map on 0.5 mm grid; not GRE ground truth"
+  },
+  "measurements": {
+    "refinement_percent": [
+      10.104880056605264,
+      5.478439728632924,
+      1.600237712772769
+    ],
+    "final_signal_residual_percent": 0.7772247191098794,
+    "point_error_percent": 0.00043604670997161605,
+    "inverse_error_percent": 0.013661618731240869
+  },
+  "human_interventions": [
+    "Approved prototype defaults",
+    "Required established simulator",
+    "Rejected initial image quality"
+  ],
+  "trace_policy": "Retrospective stage descriptions; complete model/skill retrieval logs unavailable"
+}

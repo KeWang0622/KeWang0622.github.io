@@ -1,0 +1,53 @@
+[
+  {
+    "shots": 1,
+    "strokes_per_shot": 13,
+    "samples": 1300,
+    "timing_passed": true,
+    "max_gradient_mTm": 31.838594513340848,
+    "max_slew_T_m_s": 127.3543780533635,
+    "trajectory_max_error_cycles_m": 0.0004102272729156198,
+    "active_ms_per_shot": [
+      34.30000000000001
+    ],
+    "TR_s": 6.5,
+    "duration_s": 6.500000000000001,
+    "sequence_sha256": "ab07b16260e3ff23653468374a8deb66167a76601b4adbd1ebc45a30a9591cb8",
+    "scope": "Per-axis gradient/slew and PyPulseq timing checks only; no PNS, SAR, scanner or clinical validation."
+  },
+  {
+    "shots": 20,
+    "strokes_per_shot": 13,
+    "samples": 26000,
+    "timing_passed": true,
+    "max_gradient_mTm": 31.838594513340848,
+    "max_slew_T_m_s": 127.35437805637493,
+    "trajectory_max_error_cycles_m": 0.0007544591306469783,
+    "active_ms_per_shot": [
+      34.30000000000001,
+      34.30000000000177,
+      34.30000000000355,
+      34.30000000002664,
+      34.30000000002664,
+      34.29999999993072,
+      34.29999999993072,
+      34.29999999993072,
+      34.29999999993072,
+      34.29999999993072,
+      34.300000000030195,
+      34.300000000030195,
+      34.300000000030195,
+      34.300000000030195,
+      34.300000000030195,
+      34.300000000030195,
+      34.300000000030195,
+      34.300000000030195,
+      34.300000000030195,
+      34.300000000030195
+    ],
+    "TR_s": 6.5,
+    "duration_s": 130.0,
+    "sequence_sha256": "6eebe85fbbfa090881742cc04444b1e28259ac0a61cba360832f6075d5b032c5",
+    "scope": "Per-axis gradient/slew and PyPulseq timing checks only; no PNS, SAR, scanner or clinical validation."
+  }
+]

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>MRFoundry — How to use it with your agent</title>
+  <script defer src="runtime/hyperframes-player.global.js"></script>
+  <script defer src="runtime/hyperframes-slideshow.global.js"></script>
+  <script defer src="wrapper.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:#0a0c0f; }
+    hyperframes-slideshow { display:block; position:relative; width:100vw; height:100dvh; outline:none; }
+    hyperframes-player { position:absolute; inset:0; }
+    #replay-slide { position:fixed; top:18px; right:18px; z-index:10; border:1px solid #ffffff28; border-radius:7px; padding:8px 12px; background:#15191ee6; color:#d6dbe2; font:500 12px/1.2 system-ui,sans-serif; cursor:pointer; }
+    #replay-slide:hover { background:#2a3038; }
+    #replay-slide[hidden] { display:none; }
+    #replay-slide:focus-visible { outline:2px solid #4c9ffe; outline-offset:3px; }
+    @media (max-width:600px) { #replay-slide { top:8px; right:8px; font-size:11px; } }
+  </style>
+</head>
+<body>
+  <hyperframes-slideshow tabindex="0" notes-storage-key="mrfoundry-research-examples-v1">
+    <hyperframes-player interactive runtime-src="runtime/hyperframe.runtime.iife.js" src="composition/index.html"></hyperframes-player>
+    <script type="application/hyperframes-slideshow+json">{
+  "slides": [
+    {
+      "sceneId": "start",
+      "notes": "The command was verified against the current MRFoundry README on GitHub. It installs Markdown instructions and supporting helpers, not all MRI applications. The usage prompt is an illustrative request, not a quote from a historical transcript. This deck answers how an already-capable coding agent uses the project.",
+      "fragments": [
+        9.5
+      ]
+    },
+    {
+      "sceneId": "roles",
+      "notes": "This is the current documented architecture. The coding agent remains responsible for reasoning and execution. Skills supply curated methods, tool conventions, setup and evaluation guidance. Scientific software computes the outputs. The diagram is conceptual, not an assertion of a specific historical skill-loading sequence.",
+      "fragments": [
+        19.5
+      ]
+    },
+    {
+      "sceneId": "sequence",
+      "notes": "The source design configures a 220 mm FOV, 64 samples per spoke, 128 acquired spokes and 200 dummy excitations. PyPulseq writes and reads back the sequence; timing, per-axis gradient/slew and coordinate tests are recorded. Waveforms shown here are the first two acquired TRs from actual waveform JSON. The historical skill-retrieval trace was not preserved; the left panel paraphrases current skill instructions. Original method: Layton et al., Pulseq, DOI 10.1002/mrm.26235.",
+      "fragments": [
+        29.5
+      ]
+    },
+    {
+      "sceneId": "simulate",
+      "notes": "The original simulator script runs an official KomaMRI example, imports the exported .seq through komamripy, and simulates the full excitation train. The plot is actual real/imaginary ADC data from the first acquired spoke; its display trace is included separately. Early phantom sampling was coarse, so a finite signal was never sufficient validation. No new simulation is performed by this slide. Scientific tool setup is an explicit skill instruction, not a bundled simulator.",
+      "fragments": [
+        39.5
+      ]
+    },
+    {
+      "sceneId": "reconstruct",
+      "notes": "The initial reconstruction consumes actual saved KomaMRI data and the exported trajectory, converts cycles/m into SigPy grid coordinates using (ky,kx)*0.220, and uses a single uniform receive channel. KomaMRI already compensates ADC phase; double compensation would be wrong. The original script uses SigPy NUFFT, Pipe–Menon density compensation and regularized reconstruction; values were not optimized against a ground truth. The skill supplies repeatable convention checks and tool-specific guidance, not evidence of superiority over a vanilla agent.",
+      "fragments": [
+        49.5
+      ]
+    },
+    {
+      "sceneId": "review",
+      "notes": "The case evidence documents that the researcher approved defaults, required an established simulator and rejected the initial image quality. The corrected experiment explicitly changed phantom sampling and reconstruction assumptions. The left panel is current workflow guidance, not a claim that it autonomously detected the failure. Human feedback is central to this observed loop; this is not an autonomous performance benchmark.",
+      "fragments": [
+        59.5
+      ]
+    },
+    {
+      "sceneId": "iterate",
+      "notes": "Two different anatomical-grid comparisons fail a 5% magnitude-image-change threshold: 2 to 1 mm gives 10.10%; 1 to native 0.5 mm gives 5.48%. Four within-voxel samples then give 1.60% versus native voxel centers, a narrow fixed-map quadrature criterion. These are not interchangeable tests or global convergence. Original runs retained scripts, reports and failed comparisons. Current project-memory guidance specifies a private .mrfoundry notebook and explicit read/update/recheck loop; the historical notebook and skill-read trace were not recorded. No automatic model learning is claimed.",
+      "fragments": [
+        69.5
+      ]
+    },
+    {
+      "sceneId": "fun",
+      "notes": "This new run explicitly read the pulse-sequence-design and mri-reconstruction skills. PyPulseq exported three letters M,R,I as 13 strokes and 1300 samples per shot. Sequence readback, timing and per-axis gradient/slew checks passed. SigPy uses a synthetic Shepp–Logan phantom, actual exported trajectories and established unregularized CG with fixed 800 iterations. Both one/20-shot runs reached that budget; no convergence claim. The shown 20-shot image is real output with an absolute 0–1 magnitude window. It takes 20 times the sequence duration. This is a static NUFFT example, not KomaMRI/Bloch, acquired data or useful clinical acquisition.",
+      "fragments": [
+        79.5
+      ]
+    },
+    {
+      "sceneId": "addition",
+      "notes": "These are concrete contents of the installed Markdown skills: task routing, domain conventions, tested software references, expected checks, primary papers and research-memory guidance. They supply rereadable instructions alongside the model’s general capability. This retrospective example does not measure marginal benefit, agent success rates or novelty of the scientific methods. Skills do not guarantee that the agent follows every instruction.",
+      "fragments": [
+        89.5
+      ]
+    },
+    {
+      "sceneId": "open",
+      "notes": "The evidence page distinguishes artifacts from guidance and links the original software and method sources. Source/report/.seq files are included. The historical golden-angle reconstruction used KomaMRI’s BrainWeb-based phantom; public bundle does not redistribute the anatomical arrays or panels. Read original upstream terms if reproducing that run. The fun example includes original geometric synthetic data generation and is reproducible independently.",
+      "fragments": [
+        99.5
+      ]
+    }
+  ]
+}</script>
+  </hyperframes-slideshow>
+  <button id="replay-slide" type="button" hidden aria-label="Replay this slide's animation">↻ Replay</button>
+</body>
+</html>

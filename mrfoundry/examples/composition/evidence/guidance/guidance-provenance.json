@@ -1,0 +1,33 @@
+{
+  "snapshot_date": "2026-10-12",
+  "meaning": "Current installed guidance mapped to saved experiment artifacts. Original skill retrieval sequence was not logged.",
+  "skills": [
+    {
+      "skill": "mri-research",
+      "source": "https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/SKILL.md",
+      "snapshot": "guidance/mri-research/SKILL.md",
+      "sha256": "9c84eaee717bfba6d7dc4513fff4227fd8961add21c54dcde58f7a0b1d899f4f"
+    },
+    {
+      "skill": "pulse-sequence-design",
+      "source": "https://github.com/KeWang0622/MRFoundry/blob/main/skills/pulse-sequence-design/SKILL.md",
+      "snapshot": "guidance/pulse-sequence-design/SKILL.md",
+      "sha256": "54bcad0a2bad30e3677eaea65e87a1cfaf8d7ad156eee714d63d6ca187e4b520"
+    },
+    {
+      "skill": "mri-reconstruction",
+      "source": "https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-reconstruction/SKILL.md",
+      "snapshot": "guidance/mri-reconstruction/SKILL.md",
+      "sha256": "8b2a60cbcf1336366cf8215052ad2b88605b275a230d170a227b9fdce1c3584d"
+    },
+    {
+      "skill": "mri-research-workflow",
+      "source": "https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research-workflow/SKILL.md",
+      "snapshot": "guidance/mri-research-workflow/SKILL.md",
+      "sha256": "6b45bf86722b40edd1e3622f99569121d7a2598a887c82d3940482644d617f3b"
+    }
+  ],
+  "host_skill_mechanism_source": "https://learn.chatgpt.com/docs/build-skills",
+  "archive": "instruction-snapshots.zip",
+  "path_scope": "Snapshot paths are relative to the archive."
+}
