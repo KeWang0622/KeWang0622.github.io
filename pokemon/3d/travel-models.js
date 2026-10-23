@@ -8,6 +8,7 @@
 import * as THREE from './lib/three.module.js';
 import { RoundedBoxGeometry } from './lib/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
+import { createCharizardModel } from './charizard-model.js';
 
 const clamp = THREE.MathUtils.clamp;
 const standard = (color, roughness=.55, metalness=0) => new THREE.MeshStandardMaterial({color,roughness,metalness});
@@ -48,7 +49,7 @@ function carSkin(f,sections,wheels,flat=false){
     let lower=.28;for(const wz of wheels){const d=Math.abs(z-wz);if(d<.365)lower=Math.max(lower,.32+Math.sqrt(.365**2-d*d));}
     const points=[[-w,lower],[-w,y-.10],[-w*.91,y-.015],[-w*.62,y+.026],[-w*.27,y+.039],[0,y+.043],[w*.27,y+.039],[w*.62,y+.026],[w*.91,y-.015],[w,y-.10],[w,lower],[0,.265]];
     for(const [x,yy]of points)p.push(x,yy,z);
-    if(i)for(let j=0;j<ring;j++){const a=(i-1)*ring+j,b=(i-1)*ring+(j+1)%ring,c=i*ring+j,d=i*ring+(j+1)%ring;idx.push(a,c,b,b,c,d);}
+    if(i)for(let j=0;j<ring;j++){if(z>-.82&&z<.53&&j>=3&&j<=6)continue;const a=(i-1)*ring+j,b=(i-1)*ring+(j+1)%ring,c=i*ring+j,d=i*ring+(j+1)%ring;idx.push(a,c,b,b,c,d);}
   });
   // Close nose and tail with triangles; all exterior seams remain intentional.
   for(const end of [0,sections.length-1])for(let j=1;j<ring-1;j++){const a=end*ring;idx.push(...(end===0?[a,a+j,a+j+1]:[a,a+j+1,a+j]));}
@@ -102,6 +103,28 @@ function carDetails(f,{front=1.78,rear=-1.78,width=.70,doorZ=-.02,car='sedan'}={
     f.poly([[s*.29,.722,front-.20],[s*.60,.680,front-.26],[s*.59,.678,front-.21],[s*.30,.719,front-.15]],'lamp');
   }
 }
+function cockpit(f,height=.79){
+  // A real open cockpit beneath the glass, so the first-person view includes
+  // dashboard, wheel, instruments and the rider's hands rather than solid paint.
+  f.box(0,height,.57,1.08,.085,.23,'trim',.03);
+  f.box(0,.40,-.15,1.10,.07,1.35,'trim',.025);
+  for(const x of[-.29,.29]){f.box(x,.49,-.17,.42,.10,.45,'seat',.055);f.box(x,.66,-.39,.40,.40,.09,'seat',.04);}
+  const wheelHeight=height+(height>.85?.09:-.008);
+  const steering=new THREE.Group();steering.position.set(-.29,wheelHeight,.26);steering.rotation.x=-.18;f.group.add(steering);
+  f.mesh(new THREE.TorusGeometry(.142,.017,10,36),'trim',steering);
+  f.ball(0,0,0,.050,.037,.022,'trim',steering);
+  for(const x of[-1,1])f.rod([x*.027,0,0],[x*.125,.015,0],.012,'rim',steering);
+  f.rod([0,-.025,0],[0,-.126,0],.012,'rim',steering);
+  f.rod([-.29,wheelHeight,.28],[-.29,height-.035,.51],.021,'trim');
+  f.box(-.29,height+.055,.49,.27,.10,.035,'trim',.018);
+  f.box(-.29,height+.055,.469,.23,.066,.007,'glass',.008);
+  for(let i=0;i<5;i++)f.box(-.365+i*.038,height+.050,.463,.023,.005,.003,'lamp',.001);
+  f.box(.12,height+.075,.51,.25,.16,.028,'trim',.012);
+  f.box(.12,height+.075,.491,.22,.13,.008,'glass',.008);
+  f.box(.075,height+.100,.484,.085,.006,.003,'lamp',.001);
+  f.box(.105,height+.066,.484,.145,.004,.003,'rim',.001);
+  f.box(.105,height+.042,.484,.145,.004,.003,'rim',.001);
+}
 function modelS(){const f=factory('model-s');f.mats.paint.color.setHex(0x185ca4);
   const sections=[[-1.82,.49,.61],[-1.72,.65,.72],[-1.52,.73,.78],[-1.32,.76,.80],[-1.10,.76,.81],[-.94,.75,.82],[-.72,.73,.80],[-.40,.72,.79],[0,.72,.78],[.45,.73,.78],[.76,.75,.77],[.96,.76,.78],[1.15,.76,.77],[1.36,.73,.74],[1.58,.66,.67],[1.79,.50,.57]];
   carSkin(f,sections,[-1.12,1.12]);glassCabin(f,{front:.80,back:-1.18,topFront:.27,topBack:-.55,base:.795,top:1.25,width:.64,roof:.49});
@@ -110,7 +133,7 @@ function modelS(){const f=factory('model-s');f.mats.paint.color.setHex(0x185ca4)
   carDetails(f,{front:1.78,rear:-1.80,width:.735});f.box(0,.60,-1.827,.96,.026,.025,'red',.006);
   for(const s of[-1,1])f.box(s*.74,.31,0,.052,.09,1.48,'trim',.02);
   const wheels=[];for(const x of[-.74,.74])for(const z of[-1.12,1.12])wheels.push(wheel(f,x,z,.31,z>0));
-  return f.finish({seat:[-.30,.49,-.06],riderScale:.45,riderPose:'driver',length:3.64,width:1.78,update:wheelUpdate(wheels,f.shell)});
+  cockpit(f,.79);return f.finish({seat:[-.30,.49,-.06],riderScale:.45,riderPose:'driver',length:3.64,width:1.78,update:wheelUpdate(wheels,f.shell)});
 }
 function porsche(){const f=factory('porsche');f.mats.paint.color.setHex(0xe7dfc6);
   const sections=[[-1.65,.48,.62],[-1.51,.67,.77],[-1.32,.77,.79],[-1.10,.76,.80],[-.90,.74,.78],[-.66,.70,.73],[-.30,.69,.72],[.15,.70,.71],[.55,.73,.73],[.84,.75,.78],[1.07,.74,.78],[1.29,.69,.72],[1.48,.59,.60],[1.65,.45,.52]];
@@ -120,17 +143,21 @@ function porsche(){const f=factory('porsche');f.mats.paint.color.setHex(0xe7dfc6
   carDetails(f,{front:1.62,rear:-1.64,width:.70,car:'coupe'});f.box(0,.61,-1.665,.93,.028,.023,'red',.008);
   for(let i=0;i<9;i++)f.box(-.32+i*.08,.782,-1.22,.027,.012,.26,'trim',.004);
   const wheels=[];for(const x of[-.74,.74])for(const z of[-1.02,1.02])wheels.push(wheel(f,x,z,.305,z>0));
-  return f.finish({seat:[-.29,.46,-.05],riderScale:.43,riderPose:'driver',length:3.34,width:1.77,update:wheelUpdate(wheels,f.shell)});
+  cockpit(f,.76);return f.finish({seat:[-.29,.46,-.05],riderScale:.43,riderPose:'driver',length:3.34,width:1.77,update:wheelUpdate(wheels,f.shell)});
 }
 function cybertruck(){const f=factory('cybertruck');f.mats.paint.dispose();f.mats.paint=new THREE.MeshStandardMaterial({color:0xadb9bb,roughness:.42,metalness:.48,flatShading:true});
   const b=.82;
   // A folded metal shell, with its roof peak forward of the rear cargo bed.
   f.poly([[-b,.44,1.91],[b,.44,1.91],[b,.84,1.79],[-b,.84,1.79]],'paint');
-  f.poly([[-b,.84,1.79],[b,.84,1.79],[b*.84,1.46,.12],[-b*.84,1.46,.12]],'paint');
+  f.poly([[-b,.84,1.79],[b,.84,1.79],[b*.965,.97,1.48],[-b*.965,.97,1.48]],'paint');
+  f.poly([[-b*.822,1.465,.15],[b*.822,1.465,.15],[b*.84,1.46,.12],[-b*.84,1.46,.12]],'paint');
   f.poly([[-b*.84,1.46,.12],[b*.84,1.46,.12],[b,.94,-1.92],[-b,.94,-1.92]],'paint');
   f.poly([[-b,.94,-1.92],[b,.94,-1.92],[b,.43,-1.92],[-b,.43,-1.92]],'paint');
   for(const s of[-1,1]){
-    f.poly([[s*b,.43,-1.92],[s*b,.94,-1.92],[s*b*.84,1.46,.12],[s*b,.84,1.79],[s*b,.43,1.91]],'paint');
+    f.poly([[s*b,.43,-1.92],[s*b,.94,-1.92],[s*b*.94,.93,-.91],[s*b*.99,.93,.95],[s*b,.84,1.79],[s*b,.43,1.91]],'paint');
+    f.poly([[s*b,.94,-1.92],[s*b*.84,1.46,.12],[s*b*.837,1.42,.12],[s*b*.94,1.11,-.91],[s*b*.94,.93,-.91]],'paint');
+    f.poly([[s*b*.837,1.42,.12],[s*b*.84,1.46,.12],[s*b,.84,1.79],[s*b*.99,.93,.95]],'paint');
+    f.rod([s*b*.965,.97,1.48],[s*b*.822,1.465,.15],.021,'paint');
     f.poly([[s*(b*.99),.93,.95],[s*(b*.837),1.42,.12],[s*(b*.94),1.11,-.91],[s*(b*.99),.93,-.91]],'glass');
     f.rod([s*b*.99,.94,-.27],[s*b*.885,1.32,-.27],.023,'trim');
     f.box(s*(b+.008),.86,.29,.018,.025,.16,'trim',.004);f.box(s*(b+.008),.86,-.72,.018,.025,.15,'trim',.004);
@@ -145,7 +172,7 @@ function cybertruck(){const f=factory('cybertruck');f.mats.paint.dispose();f.mat
   for(let i=0;i<11;i++)f.rod([-.71,1.01-i*.004,-1.02-i*.071],[.71,1.01-i*.004,-1.02-i*.071],.009,'rim');
   f.box(0,.79,1.833,1.58,.031,.024,'lamp',.003);f.box(0,.91,-1.944,1.57,.031,.024,'red',.003);f.box(0,.37,1.92,1.64,.18,.09,'trim',.006);f.box(0,.37,-1.94,1.64,.17,.09,'trim',.006);
   const wheels=[];for(const x of[-.82,.82])for(const z of[-1.20,1.20])wheels.push(wheel(f,x,z,.36,z>0,'truck'));
-  return f.finish({seat:[-.32,.60,.10],riderScale:.45,riderPose:'driver',length:3.98,width:2.0,update:wheelUpdate(wheels,f.shell)});
+  cockpit(f,.91);return f.finish({seat:[-.32,.60,.10],riderScale:.45,riderPose:'driver',length:3.98,width:2.0,update:wheelUpdate(wheels,f.shell)});
 }
 function bicycle(){const f=factory('bicycle');f.mats.paint.color.setHex(0x4f9c91);f.mats.seat.color.setHex(0x945e3d);
   const radius=.36,rear=-.72,front=.73;const wheels=[];
@@ -190,11 +217,11 @@ function horse(){const f=factory('horse');f.mats.paint.dispose();f.mats.paint=st
  * reference: short dark hair, rectangular glasses, blue cable-knit, no hat.
  * This mesh is authored for mounting; it does not deform the walking asset. */
 export function createMountedRider(id){
-  const f=factory(`rider-${id}`),bike=id==='bicycle',horseMode=id==='horse';
-  const car=!bike&&!horseMode;
+  const f=factory(`rider-${id}`),bike=id==='bicycle',horseMode=id==='horse',dragon=id==='charizard';
+  const car=!bike&&!horseMode&&!dragon;
   for(const key of['paint','white','trim','seat','rubber','rim','gold'])f.mats[key].dispose();
   f.mats.paint=standard(0x317596,.88);f.mats.white=standard(0xe9e4d7,.78);f.mats.trim=standard(0x202c31,.8);f.mats.seat=standard(0xd5a583,.86);f.mats.rubber=standard(0x202622,.82);f.mats.rim=standard(0x415c62,.45,.3);f.mats.gold=standard(0x6294ac,.8);f.mats.skinShade=standard(0xb88265,.9);
-  const base=horseMode?new THREE.Vector3(0,1.60,-.12):bike?new THREE.Vector3(0,1.03,-.28):new THREE.Vector3(-.29,id==='cybertruck'?.61:.49,-.04);
+  const base=dragon?new THREE.Vector3(0,1.93,-.31):horseMode?new THREE.Vector3(0,1.60,-.12):bike?new THREE.Vector3(0,1.03,-.28):new THREE.Vector3(-.29,id==='cybertruck'?.61:.49,-.04);
   // Separate torso pivot permits a small forward cycling lean without tilting
   // the saddle or the pedal targets. Clothing has shoulders, cuffs and a hem.
   const upper=new THREE.Group();upper.position.copy(base);upper.rotation.x=bike?.18:car?-.06:.02;f.group.add(upper);
@@ -224,7 +251,8 @@ export function createMountedRider(id){
   f.tube([[-.040,.705,.165],[0,.697,.172],[.040,.706,.164]],.006,'skinShade',body);
   // The pelvis stays on the saddle; articulated limbs are rounded tapered
   // forms, with independently positioned elbows / knees, not straight rods.
-  f.ball(base.x,base.y+.025,base.z,.18,.10,.16,'trim');
+  const pelvis=new THREE.Group();f.group.add(pelvis);f.ball(base.x,base.y+.025,base.z,.18,.10,.16,'trim',pelvis);
+  const hands=new THREE.Group();hands.name='first-person-hands';f.group.add(hands);
   function limbSegment(width,depth,key){const g=new THREE.Group();f.group.add(g);f.mesh(new RoundedBoxGeometry(width,1,depth,3,Math.min(width,depth)*.34),key,g);return g;}
   function place(g,a,b){const va=new THREE.Vector3(...a),vb=new THREE.Vector3(...b);g.position.copy(va).add(vb).multiplyScalar(.5);g.scale.y=va.distanceTo(vb);g.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),vb.sub(va).normalize());}
   const legs=[];
@@ -233,10 +261,11 @@ export function createMountedRider(id){
     const shoe=new THREE.Group();f.group.add(shoe);f.box(0,0,.045,car?.10:.15,.082,car?.18:.24,'white',.032,shoe);f.box(0,-.035,.046,car?.103:.153,.018,car?.185:.245,'trim',.005,shoe);for(let i=0;i<3;i++)f.box(0,.043,.045+i*.025,car?.06:.09,.006,.006,'gold',.002,shoe);
     const hip=[base.x+side*(car?.10:.13),base.y+.02,base.z];
     const shoulder=[base.x+side*.225*s,base.y+.48*s,base.z+(bike?.085:0)];
-    const hand=bike?[side*.245,1.10,.455]:horseMode?[side*.16,1.64,.28]:[base.x+side*.14,base.y+.28,base.z+.28];
-    const elbow=bike?[side*.25,1.24,.12]:horseMode?[side*.245,1.78,.07]:[base.x+side*.19,base.y+.22,base.z+.08];
-    const sleeveA=limbSegment(car?.10:.135,car?.10:.14,'paint'),sleeveB=limbSegment(car?.08:.11,car?.08:.12,'paint');place(sleeveA,shoulder,elbow);place(sleeveB,elbow,hand);f.ball(...hand,car?.04:.052,car?.04:.048,car?.05:.06,'seat');
-    if(side<0)f.box(hand[0]-.005,hand[1]+.018,hand[2]-.025,.078,.024,.062,'trim',.009);
+    const hand=dragon?[side*.16,1.99,.04]:bike?[side*.245,1.10,.455]:horseMode?[side*.16,1.64,.28]:[base.x+side*.14,base.y+.28,base.z+.28];
+    const elbow=dragon?[side*.255,2.15,-.16]:bike?[side*.25,1.24,.12]:horseMode?[side*.245,1.78,.07]:[base.x+side*.19,base.y+.22,base.z+.08];
+    if(id==='cybertruck'){hand[1]+=.09;elbow[1]+=.04;}
+    const sleeveA=limbSegment(car?.10:.135,car?.10:.14,'paint'),sleeveB=limbSegment(car?.08:.11,car?.08:.12,'paint');place(sleeveA,shoulder,elbow);place(sleeveB,elbow,hand);f.ball(...hand,car?.04:.052,car?.04:.048,car?.05:.06,'seat',hands);
+    if(side<0)f.box(hand[0]-.005,hand[1]+.018,hand[2]-.025,.078,.024,.062,'trim',.009,hands);
     legs.push({side,hip,upperLeg,lowerLeg,shoe});
   }
   let phase=0;
@@ -244,22 +273,34 @@ export function createMountedRider(id){
     for(const l of legs){let knee,ankle;
       if(bike){const a=phase+(l.side<0?Math.PI:0);ankle=[l.side*.17,.41-Math.sin(a)*.14,-.145+Math.cos(a)*.14];knee=[l.side*.21,.73+Math.cos(a)*.08,.16+Math.sin(a)*.08];}
       else if(horseMode){knee=[l.side*.35,1.29,.15];ankle=[l.side*.36,1.02,-.10];}
+      else if(dragon){knee=[l.side*.42,1.59,-.16];ankle=[l.side*.43,1.29,-.24];}
       else{knee=[base.x+l.side*.11,base.y-.07,base.z+.27];ankle=[base.x+l.side*.11,base.y-.27,base.z+.34];}
       place(l.upperLeg,l.hip,knee);place(l.lowerLeg,knee,ankle);l.shoe.position.set(...ankle);
     }
   }
   animateLegs();
   // Static body details are batched, joints retain their authored pivots.
-  const model=f.finish({seat:base.toArray(),length:.8,width:.8,update(dt,{speed=0,time=0}={}){phase+=(horseMode?Math.abs(speed)*2.35:speed*2.3)*dt;animateLegs();f.group.position.y=horseMode?Math.sin(phase*2)*.028*Math.min(Math.abs(speed)/1.5,1):0;}});
+  const model=f.finish({seat:base.toArray(),length:.8,width:.8,update(dt,{speed=0,time=0}={}){phase+=(dragon?Math.abs(speed)*2.1:horseMode?Math.abs(speed)*2.35:speed*2.3)*dt;animateLegs();f.group.position.y=dragon?Math.sin(phase*2)*.021*Math.min(Math.abs(speed)/2,1):horseMode?Math.sin(phase*2)*.028*Math.min(Math.abs(speed)/1.5,1):0;}});
+  const hiddenInFirstPerson=[upper,pelvis,...legs.flatMap(l=>[l.upperLeg,l.lowerLeg,l.shoe])];
+  model.setFirstPerson=enabled=>{for(const o of hiddenInFirstPerson)o.visible=!enabled;};
+  model.camera={eye:new THREE.Vector3(0,.81*s,.185*s).applyEuler(upper.rotation).add(base),lookAhead:3};
+  // A small elevated riding view lets visitors see the road over the dragon's
+  // brow while keeping its horns/neck in frame as visual orientation cues.
+  if(dragon)model.camera.eye.set(0,3.02,-.34);
+  if(horseMode)model.camera.eye.set(0,2.63,-.10);
+  if(id==='cybertruck')model.camera.eye.y=1.23;
   model.group.name=`mounted-ke-${id}`;model.group.userData.portraitReference='assets/img/kw_ws.jpg';return model;
 }
 
 /** Fresh model instance. Caller adds group and positions a posed rider at seat. */
 export function createTravelModel(id){
-  const makers={bicycle,'model-s':modelS,cybertruck,porsche,horse};
+  const makers={bicycle,'model-s':modelS,cybertruck,porsche,horse,charizard:createCharizardModel};
   if(!makers[id])throw new Error(`Unknown travel model: ${id}`);
   const travel=makers[id](),rider=createMountedRider(id),updateTravel=travel.update,disposeTravel=travel.dispose;
   travel.group.add(rider.group);travel.hasRider=true;travel.rider=rider;
+  travel.camera=rider.camera;
+  const glass=new Set();travel.group.traverse(o=>{if(o.isMesh&&o.material?.isMeshPhysicalMaterial&&o.material.color.getHex()===0x254a5b)glass.add(o.material);});
+  travel.setFirstPerson=enabled=>{rider.setFirstPerson(enabled);for(const m of glass){m.transparent=enabled;m.opacity=enabled?.08:1;m.depthWrite=!enabled;m.needsUpdate=true;}};
   travel.update=(dt,state={})=>{updateTravel(dt,state);rider.update(dt,state);};
   // Rider geometry is inside travel.group and disposed by the factory traversal.
   travel.dispose=()=>{travel.group.remove(rider.group);rider.dispose();disposeTravel();};

@@ -76,7 +76,7 @@ test('a long frame cannot jump a vehicle or walker across closed water',()=>{
   }
 });
 
-test('all six route footprints use a valid bridge rather than crossing the water directly',()=>{
+test('all travel route footprints use a valid bridge rather than crossing the water directly',()=>{
   for(const [name,shape]of Object.entries(TRAVEL))for(const b of bridges){
     const from={x:b.x,z:b.z+6,yaw:Math.PI},to={x:b.x,z:b.z-6};
     const route=findWalkingRoute(from,to,{shape,walkable,min:-64,max:64,step:.6});

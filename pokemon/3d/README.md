@@ -9,6 +9,10 @@ come from `../data.js`; the renderer does not invent biographical facts.
 - `interface.js`: accessible portfolio content, links, session-only discovery state and focus handling.
 - `world.js`: terrain, water, asset loading, instanced foliage, lighting, ray picking,
   A* walking, animation and the follow/orbit/map camera.
+- `navigation.js`, `companion-navigation.js`, `world-surfaces.js`: swept vehicle footprints, routes, followers and shared bridge geometry/collision.
+- `travel-models.js`, `charizard-model.js`: original ride meshes, articulated riders, and first-person visibility/camera anchors.
+- `travel-ui.js`, `travel-catalog.js`, `travel.css`: the permanent seven-mode travel rail, perspective switch and touch driving controls.
+- `ride-camera.js`, `village-sky.js`: seat-relative first-person view and a lightweight painted daylight sky.
 - `ground.js`: batched paving, gravel paths, stone edges and planted arrival beds.
 - `details.js`: material-batched benches, bicycle, drainage, compass and bridge-side reeds.
 - `outdoor-extension.js`: connected walking trails, a third river bridge, and
@@ -63,6 +67,20 @@ and walking shortcuts. Exhibit windows offer previous/next arrows and thumbnails
 left/right keys browse the current room's collection. The HTML field guide opens every
 chapter and image directly, without requiring gameplay.
 
+The left travel rail offers walking, bicycle, blue Model S, Cybertruck, Porsche
+911, horse and an original Charizard fan-art ride. Rides stay outside; a room uses
+walking and restores the selected ride when there is enough clearance outside.
+Charizard follows ground routes with folded wings, rather than bypassing obstacles.
+
+The view switch or **V** toggles third and first person. Third person retains
+screen-direction movement. In first person **W/S** move forward/back and **A/D**
+turn; drag to look around independently of the steering. Touch screens have a
+four-button driving pad. Mounted rearward input reverses, and **R** or the
+hold-to-reverse button backs straight out at the current heading. Every movement
+and turn checks the full ride footprint, including animated wings and the rider.
+First person keeps hands and the handlebars/reins in view, hides the rider's head,
+and uses transparent car glazing. The camera keeps the horizon level on ramps.
+
 Music starts only after selecting its control; it loads on demand, plays quietly,
 and pauses when the tab is hidden. Credits and the track license are included.
 
@@ -106,3 +124,17 @@ existing −60° visual-facing calibration is retained.
 The 3D scene requires WebGL2. Mobile GPU performance varies; the complete HTML field
 guide and classic portfolio remain available. Architecture and landscape are playful
 interpretations, not exact reconstructions of the institutions or workplaces.
+
+
+Navigation and camera regression checks run in CI before the Jekyll build:
+
+```sh
+node --test pokemon/3d/*.test.mjs
+```
+
+The 54 checks include animated ride meshes inside their collision envelopes,
+every ride crossing all three bridges, rear-diagonal and explicit reverse escape,
+relative first-person controls, unchanged room routes, and clear central camera
+sightlines through each cockpit or above each mount. Browser verification covers
+actual forward/reverse bridge crossings, switching views and rides, and the
+mobile driving pad at 390px and 320px widths.

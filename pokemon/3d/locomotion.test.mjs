@@ -25,6 +25,14 @@ const bridgeWalkable=(x,z,r)=>!bridge.blocks(x,z,r)&&
   (Math.abs(z-bridge.z)>=1.45+r||bridge.supports(x,z,r));
 
 for(const id of ['model-s','cybertruck','porsche']){
+  test(`${id}: rearward input reverses on an open road without beginning a U-turn`,()=>{
+    const shape=TRAVEL[id],state=harness(shape,()=>true,{yaw:.41});
+    const reverse=new THREE.Vector3(-Math.sin(.41),0,-Math.cos(.41));
+    for(let i=0;i<12;i++)state.advance(reverse,.05);
+    assert.ok(Math.abs(angleDelta(.41,state.trainer.rotation.y))<1e-9,'room for a U-turn does not change reverse behavior');
+    assert.ok(state.trainer.position.dot(new THREE.Vector3(Math.sin(.41),0,Math.cos(.41)))<-1,'reverse makes useful progress');
+  });
+
   test(`${id}: reversing on the real bridge preserves heading and rail clearance`,()=>{
     const shape=TRAVEL[id],state=harness(shape,bridgeWalkable,{x:bridge.x,z:bridge.z});
     assert.ok(footprintClear(bridge.x,bridge.z,0,shape,bridgeWalkable));
@@ -43,6 +51,67 @@ for(const id of ['model-s','cybertruck','porsche']){
     assert.ok(state.trainer.position.z<bridge.z-1,'reverse makes useful progress rather than freezing');
   });
 }
+
+test('a rear-diagonal input backs away from a rail when steering is blocked',()=>{
+  const shape=TRAVEL.cybertruck,x=bridge.x+.40,state=harness(shape,bridgeWalkable,{x,z:0});
+  assert.ok(footprintClear(x,0,0,shape,bridgeWalkable));
+  assert.equal(turnClear(x,0,0,-shape.turn*.05,shape,bridgeWalkable),false,'rear-right corner would hit the rail during a left turn');
+  const rearDiagonal=new THREE.Vector3(1,0,-1).normalize();
+  for(let i=0;i<6;i++){
+    state.advance(rearDiagonal,.05);
+    assert.ok(footprintClear(state.trainer.position.x,state.trainer.position.z,state.trainer.rotation.y,shape,bridgeWalkable));
+    assert.ok(Math.abs(state.trainer.rotation.y)<1e-9,'blocked steering cannot prevent straight backing');
+  }
+  assert.ok(state.trainer.position.z<-.7,'a135-degree input escapes instead of waiting for a full turn');
+  assert.ok(Math.abs(state.trainer.position.x-x)<1e-9);
+});
+
+test('reverse restores the old heading when a new angle would trap the rear corner',()=>{
+  const shape=TRAVEL['model-s'],corner={x:.40,z:-2.44};
+  const free=(x,z,r)=>Math.hypot(x-corner.x,z-corner.z)>r+.06;
+  const dt=.05,requestedYaw=-shape.turn*dt,distance=shape.speed*dt*.55;
+  assert.ok(turnClear(0,0,0,requestedYaw,shape,free),'rotation itself is physically clear');
+  assert.equal(motionClear({x:0,z:0},{x:-Math.sin(requestedYaw)*distance,z:-Math.cos(requestedYaw)*distance},requestedYaw,shape,free),false,'the rotated rear corner hits the obstacle when backing');
+  assert.ok(motionClear({x:0,z:0},{x:0,z:-distance},0,shape,free),'the original straight backward escape is clear');
+  const state=harness(shape,free);
+  state.advance(new THREE.Vector3(),dt,Infinity,false,{throttle:-1,turn:-1});
+  assert.ok(Math.abs(state.trainer.rotation.y)<1e-9,'failed steered reverse does not leave the car at the trapping angle');
+  assert.ok(Math.abs(state.trainer.position.z+distance)<1e-9,'the clear backward escape is taken');
+  assert.ok(footprintClear(state.trainer.position.x,state.trainer.position.z,0,shape,free));
+});
+
+test('the explicit back-up command works without a world vector and still sweeps obstacles',()=>{
+  const shape=TRAVEL.cybertruck,yaw=.72,state=harness(shape,()=>true,{yaw});
+  state.advance(new THREE.Vector3(),.05,Infinity,false,{forceReverse:true});
+  assert.equal(state.trainer.rotation.y,yaw);
+  assert.ok(state.trainer.position.dot(new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)))<0);
+  const water=(x,z,r)=>Math.abs(z)>1+r,blocked=harness(shape,water,{z:4});
+  blocked.advance(new THREE.Vector3(),4,Infinity,false,{forceReverse:true});
+  assert.equal(blocked.trainer.position.z,4,'explicit reverse does not override water collision');
+});
+
+test('relative controls turn in place and walk backward without flipping the view',()=>{
+  for(const id of ['walk','model-s']){
+    const shape=TRAVEL[id],state=harness(shape,()=>true);
+    state.advance(new THREE.Vector3(),.05,Infinity,false,{throttle:0,turn:1});
+    const yaw=state.trainer.rotation.y;
+    assert.ok(yaw>0,'steering-only input changes orientation');
+    assert.ok(state.trainer.position.length()<1e-12,'steering-only input does not translate');
+    state.advance(new THREE.Vector3(),.05,Infinity,false,{throttle:-1,turn:0});
+    assert.equal(state.trainer.rotation.y,yaw,'backing preserves the current facing');
+    assert.ok(state.trainer.position.dot(new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)))<0);
+  }
+  const state=harness(TRAVEL.cybertruck,bridgeWalkable,{x:bridge.x+.4});
+  state.advance(new THREE.Vector3(),.05,Infinity,false,{throttle:0,turn:-1});
+  assert.equal(state.trainer.rotation.y,0,'steering-only input cannot rotate through the railing');
+});
+
+test('a queued route remains forward-driven even if its next point is behind the car',()=>{
+  const state=harness(TRAVEL['model-s'],()=>true);
+  state.advance(new THREE.Vector3(0,0,-1),.05,10,true,{forceReverse:true,throttle:-1});
+  assert.ok(state.trainer.rotation.y>0,'route starts its validated forward turn');
+  assert.ok(state.trainer.position.length()<1e-12,'route waits for the intended heading rather than auto-reversing');
+});
 
 test('a queued route cannot move a car sideways through a narrow passage',()=>{
   const shape=TRAVEL['model-s'];
