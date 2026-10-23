@@ -163,36 +163,50 @@
           </div>
 
           <div class="clearfix">
-            <div class="mac-cta"><div class="mac-window">
+            <div class="portfolio-entrances">
+<div class="mac-cta"><div class="mac-window">
 <div class="mac-titlebar">
 <span class="mac-close"></span><span class="mac-title">Ke’s Macintosh</span><span class="mac-stripes" aria-hidden="true"></span>
 </div>
 <div class="mac-body">
 <div class="mac-icon" aria-hidden="true"><svg viewbox="0 0 64 64" width="46" height="46" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="4" width="52" height="46" rx="4" ry="4" fill="#fafaf5" stroke="#111" stroke-width="2.5"></rect><rect x="11" y="9" width="42" height="26" fill="#cfeee8" stroke="#111" stroke-width="2"></rect><circle cx="18" cy="16" r="1.8" fill="#111"></circle><rect x="24" y="14" width="24" height="2.2" fill="#111"></rect><rect x="15" y="21" width="33" height="2" fill="#111"></rect><rect x="15" y="25" width="22" height="2" fill="#111"></rect><rect x="15" y="29" width="28" height="2" fill="#111"></rect><circle cx="18" cy="42" r="1.8" fill="#111"></circle><rect x="24" y="40" width="14" height="4" fill="#111"></rect><rect x="10" y="52" width="44" height="8" rx="2" ry="2" fill="#e8e4d6" stroke="#111" stroke-width="2.5"></rect></svg></div>
 <div class="mac-text">
-<a class="mac-link" href="/macintosh/" target="_blank" rel="noopener"><strong>Step inside Ke’s Macintosh →</strong></a><small>A playful retro desktop with my projects, papers &amp; story. Double‑click anywhere.</small>
+<a class="mac-link" href="/macintosh/" target="_blank" rel="noopener"><strong>Open the desktop →</strong></a><small>My projects, papers &amp; story, in a classic Mac desktop.</small>
 </div>
 <span class="mac-arrow" aria-hidden="true">▸</span>
 </div>
 </div></div>
+<div class="world-cta">
+  <img class="world-cta-image" src="/pokemon/3d/assets/world-teaser.webp" width="320" height="240" alt="Ke’s 3D research village with its MRI scanner companion" decoding="async">
+  <div class="world-cta-copy">
+    <span class="world-cta-eyebrow">3D adventure</span>
+    <a class="world-cta-link" href="/pokemon/3d/"><strong>Ke’s Pokémon World <span aria-hidden="true">↗</span></strong></a>
+    <small>Explore seven rooms of research and projects with my MRI companion.</small>
+  </div>
+</div>
+</div>
 
 <style>
-.mac-cta{position:relative;margin:0 0 1.6rem 0;}
-.mac-window{border:2px solid #111;border-radius:8px;background:#fff;box-shadow:5px 5px 0 #111;overflow:hidden;transition:transform .12s ease,box-shadow .12s ease;}
+.portfolio-entrances{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 1.6rem;overflow:visible;}
+.mac-cta{position:relative;min-width:0;margin:0;}
+.mac-window{height:100%;display:flex;flex-direction:column;border:2px solid #111;border-radius:8px;background:#fff;box-shadow:5px 5px 0 #111;overflow:hidden;transition:transform .12s ease,box-shadow .12s ease;}
 .mac-cta:hover .mac-window{transform:translate(-2px,-2px);box-shadow:8px 8px 0 #111;}
 .mac-cta:active .mac-window{transform:translate(2px,2px);box-shadow:2px 2px 0 #111;}
 .mac-titlebar{display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:2px solid #111;background:#fff;position:relative;}
 .mac-stripes{flex:1;height:10px;background:repeating-linear-gradient(to bottom,#111 0 1.5px,#fff 1.5px 3.5px);border-left:2px solid #fff;border-right:2px solid #fff;margin:0 4px;}
 .mac-close{width:12px;height:12px;border:2px solid #111;background:#fff;display:inline-block;flex-shrink:0;}
 .mac-title{font-weight:700;font-family:"Chicago","Charcoal","Helvetica Neue",sans-serif;letter-spacing:.02em;background:#fff;padding:0 8px;z-index:1;color:#111;}
-.mac-body{display:flex;align-items:center;gap:16px;padding:14px 18px;background:#f4f1e6;}
+.mac-body{display:flex;flex:1;align-items:center;gap:12px;padding:12px;background:#f4f1e6;}
 .mac-icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .mac-text{flex:1;min-width:0;line-height:1.35;}
 .mac-link{text-decoration:none!important;color:inherit!important;}
 .mac-link:hover{text-decoration:none!important;}
 .mac-link::before{content:"";position:absolute;inset:0;z-index:2;}
-.mac-text strong{display:block;font-size:1.02rem;color:#111;margin-bottom:2px;font-family:"Chicago","Charcoal","Helvetica Neue",sans-serif;}
-.mac-text small{display:block;color:#4a4a4a;font-size:.86rem;}
+.mac-text strong{display:block;font-size:.94rem;color:#111;margin-bottom:2px;font-family:"Chicago","Charcoal","Helvetica Neue",sans-serif;}
+.mac-text small{display:block;color:#4a4a4a;font-size:.8rem;}
+.portfolio-entrances .mac-icon svg{width:36px;height:36px;}
+.portfolio-entrances .mac-arrow{display:none;}
+.mac-cta:focus-within .mac-window{outline:3px solid var(--global-theme-color,#0076df);outline-offset:4px;}
 .mac-arrow{font-size:1.6rem;color:#111;flex-shrink:0;transition:transform .12s ease;}
 .mac-cta:hover .mac-arrow{transform:translateX(4px);}
 html[data-theme="dark"] .mac-window{background:#1a1a1a;border-color:#f5f5f5;box-shadow:5px 5px 0 #f5f5f5;}
@@ -205,6 +219,23 @@ html[data-theme="dark"] .mac-body{background:#262626;}
 html[data-theme="dark"] .mac-text strong{color:#f5f5f5;}
 html[data-theme="dark"] .mac-text small{color:#c7c7c7;}
 html[data-theme="dark"] .mac-arrow{color:#f5f5f5;}
+
+.world-cta{position:relative;display:flex;align-items:center;gap:12px;min-width:0;padding:12px;border:1px solid #cbd8d2;border-radius:8px;background:#f4f8f5;color:#243c34;transition:border-color .15s ease,box-shadow .15s ease;}
+.world-cta-image{display:block;flex:0 0 76px;width:76px;height:104px;object-fit:cover;object-position:center;border-radius:5px;background:#d9e5da;}
+.world-cta-copy{min-width:0;line-height:1.35;}
+.world-cta-eyebrow{display:block;margin-bottom:5px;color:#52695e;font-size:.64rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
+.world-cta-link{color:inherit!important;text-decoration:none!important;}
+.world-cta-link::after{content:"";position:absolute;inset:0;}
+.world-cta-link strong{display:block;margin-bottom:5px;font-size:.98rem;font-weight:600;}
+.world-cta-copy small{display:block;color:#53675d;font-size:.8rem;}
+.world-cta:hover{border-color:#7a9b85;box-shadow:0 3px 12px #243c3410;}
+.world-cta:focus-within{outline:3px solid var(--global-theme-color,#0076df);outline-offset:4px;}
+html[data-theme="dark"] .world-cta{background:#1c2824;border-color:#42574c;color:#e7f1eb;}
+html[data-theme="dark"] .world-cta-eyebrow,html[data-theme="dark"] .world-cta-copy small{color:#b3c8bb;}
+html[data-theme="dark"] .world-cta:hover{border-color:#92b49d;}
+@media(max-width:1100px){.portfolio-entrances{grid-template-columns:1fr;gap:12px;}.world-cta-image{flex-basis:112px;width:112px;height:76px;}.world-cta-eyebrow{margin-bottom:3px;}.world-cta-link strong{margin-bottom:3px;}}
+@media(max-width:575.98px){.portfolio-entrances{clear:both;width:100%;}}
+@media(prefers-reduced-motion:reduce){.portfolio-entrances *{transition:none!important;}.mac-cta:hover .mac-window,.mac-cta:active .mac-window,.mac-cta:hover .mac-arrow{transform:none;}}
 </style>
 
 <p>I am a <strong>Senior Applied Scientist</strong> on the <strong>Adobe Foundation Model team</strong>, working on <strong>reinforcement learning and post-training for multimodal foundation models</strong>. Previously, I was Head of Applied Research at <a href="https://pika.art/" rel="external nofollow noopener" target="_blank">Pika Labs</a>. Earlier, I worked on computational photography with <a href="https://graphics.stanford.edu/~levoy/" rel="external nofollow noopener" target="_blank">Marc Levoy</a>’s team at Adobe and was a senior research engineer at Samsung Research America’s MPI Lab.</p>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4efe4">
+<meta name="description" content="Explore Ke Wang’s research, career, open-source projects, and summer 2027 internship invitation in a playable miniature world.">
+<title>Ke’s Pokémon World · Explore Ke Wang’s work</title>
+<link rel="stylesheet" href="./style.css">
+<link rel="icon" href="/assets/img/kw.ico">
+</head>
+<body>
+<a class="skip-link" href="#guide">Skip to the field guide</a>
+<header class="topbar">
+  <a class="wordmark" href="/" aria-label="Ke Wang’s personal website"><span class="capture-ball" aria-hidden="true"></span><span>Ke’s Pokémon World<small>THE 3D EDITION</small></span></a>
+  <nav aria-label="Portfolio views"><a href="/macintosh/">Macintosh <span aria-hidden="true">↗</span></a><a href="/">Classic website <span aria-hidden="true">↗</span></a><button id="help-button" aria-label="How to explore">?</button></nav>
+</header>
+<main>
+  <a class="identity-chip" href="/cv/" aria-label="Ke Wang, Senior Applied Scientist at Adobe. Read my CV."><img src="/assets/img/kw_ws.jpg" width="42" height="46" alt="Ke Wang"><span><strong>Ke Wang</strong><span>Adobe · Senior Applied Scientist</span><small>RL &amp; multimodal foundation models</small></span><b aria-hidden="true">↗</b></a>
+  <section id="world-stage" aria-label="Interactive three-dimensional research village">
+    <canvas id="world" aria-label="Ke’s research village. Use the destinations below, or focus here and use arrow keys or WASD to walk." tabindex="0"></canvas>
+    <div id="room-toolbar" class="room-toolbar" hidden>
+      <button id="leave-room"><span aria-hidden="true">←</span> Village</button>
+      <div class="room-heading"><span class="eyebrow">STEP INSIDE</span><strong id="room-name"></strong><span id="room-subtitle">Walk around. Select a picture to explore.</span></div>
+      <button id="room-story" aria-label="Read about this chapter">About this chapter <span aria-hidden="true">↗</span></button>
+    </div>
+    <div class="view-controls" aria-label="World view controls"><button id="zoom-out" aria-label="Zoom out">−</button><button id="view-overview" aria-label="Show village map" aria-pressed="false">Map</button><button id="zoom-in" aria-label="Zoom in toward the trainer">+</button></div>
+    <div id="landmark-labels" aria-label="Places in the village"></div>
+    <div id="room-loading" role="status" hidden><span aria-hidden="true">✦</span><span id="room-loading-text">Opening the door…</span></div>
+    <div id="loading" role="status"><span class="loading-mark">✦</span><p>Opening the research village…</p></div>
+    <div id="render-fallback" hidden><h2>The field guide is ready.</h2><p>This device couldn’t open the 3D world. Every place, project and contact is available below.</p><a href="#guide">Explore the field guide ↓</a><a href="/">Read the classic portfolio ↗</a></div>
+  </section>
+  <div class="explore-bar">
+    <p id="walk-hint"><span class="keycap">W</span><span class="keycap">A</span><span class="keycap">S</span><span class="keycap">D</span><span class="desktop-hint">click to walk · drag to look</span><span class="mobile-hint">Tap a place to visit</span></p>
+    <div class="adventure-actions"><button id="bag-toggle" aria-label="Open your companion backpack"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 6V4a4 4 0 0 1 8 0v2M6 8v11h12V8a3 3 0 0 0-3-3H9a3 3 0 0 0-3 3Zm2 5h8v6H8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 11v7m16-7v7" stroke="currentColor" stroke-width="1.5"/></svg> Backpack <span id="party-count">1</span></button><button id="guide-toggle" aria-label="Open the field journal"><span class="book-icon" aria-hidden="true">▤</span> <span class="journal-label">Field journal</span> <span id="progress">0 / 7</span><span aria-hidden="true">↗</span></button></div>
+    <div class="motion-controls"><button id="music-toggle" aria-pressed="false" aria-label="Play gentle background music" title="Play gentle background music"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 17V5l11-2v12M9 9l11-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><ellipse cx="6" cy="18" rx="3" ry="2" fill="currentColor"/><ellipse cx="17" cy="16" rx="3" ry="2" fill="currentColor"/></svg><span data-music-label>Music</span></button><button id="quiet-mode" aria-pressed="false" title="Pause ambient animation">Ⅱ <span>Pause motion</span></button><button id="reset-view" title="Return to the central plaza" aria-label="Return to the central plaza">⌂ <span>Home base</span></button></div>
+  </div>
+  <section id="guide" class="field-guide" aria-labelledby="guide-title">
+    <div class="guide-heading"><div><h2 id="guide-title">Explore Ke’s work</h2></div><p>Every door opens a different story.<br>Explore a room, or read a chapter here.</p></div>
+    <div id="destination-list" class="destination-grid"></div>
+    <footer><span>Made for the joy of exploring. An unofficial, Pokémon-inspired personal portfolio.</span><span><a href="/">Main website</a> · <a href="/macintosh/">Ke’s Macintosh</a> · <a href="./credits.html">Credits</a></span></footer>
+  </section>
+</main>
+<button id="interact-prompt" hidden><span class="keycap">E</span> <span id="interact-text">Open field note</span> <span aria-hidden="true">→</span></button>
+<div id="live-status" class="sr-only" aria-live="polite"></div>
+<dialog id="place-dialog" aria-labelledby="place-title"><button class="dialog-close" aria-label="Close this field note">×</button><div class="note-number" id="note-number"></div><p class="eyebrow" id="place-kicker"></p><h2 id="place-title"></h2><p id="place-summary"></p><p id="place-body"></p><div id="place-gallery" class="place-gallery" aria-label="Pictures and projects from this chapter" hidden></div><div id="place-links" class="note-links"></div><div class="note-bottom"><span id="place-badge"></span><button id="next-place">Next chapter <span aria-hidden="true">→</span></button></div></dialog>
+<dialog id="exhibit-dialog" aria-labelledby="exhibit-title">
+  <button class="dialog-close" aria-label="Close this picture">×</button>
+  <figure class="exhibit-image-wrap"><div class="exhibit-toolbar"><span id="exhibit-position">A closer look</span><div><button id="exhibit-prev" aria-label="Previous exhibit">←</button><button id="exhibit-next" aria-label="Next exhibit">→</button></div></div><img id="exhibit-image" alt=""><figcaption id="exhibit-credit"></figcaption><div id="exhibit-strip" aria-label="More exhibits in this room"></div></figure>
+  <div class="exhibit-copy"><p class="eyebrow" id="exhibit-kicker">FROM KE’S FIELD NOTES</p><h2 id="exhibit-title"></h2><p id="exhibit-description"></p><div class="note-links" id="exhibit-links"></div><button id="exhibit-return" class="exhibit-return">Back to exploring <span aria-hidden="true">↗</span></button></div>
+</dialog>
+<dialog id="backpack-dialog" aria-labelledby="backpack-title">
+ <header class="bag-header"><div class="bag-owner"><img src="/assets/img/kw_ws.jpg" alt="Ke Wang" width="42" height="42"><div><span>Ke’s collection</span><h2 id="backpack-title">Backpack</h2></div></div><button class="dialog-close" aria-label="Close your backpack">×</button></header>
+ <div class="bag-workspace">
+  <section class="bag-collection" aria-labelledby="collection-title"><div class="bag-section-heading"><h3 id="collection-title">Your companions</h3><span>5 friends</span></div><div id="companion-picker" class="bag-slots" aria-label="Choose a companion"></div><p class="bag-instruction">Choose a companion to take along.</p></section>
+  <section class="bag-detail" aria-labelledby="buddy-name">
+   <div class="buddy-view"><div id="buddy-preview-fallback" aria-hidden="true">MRI</div><canvas id="buddy-preview" tabindex="0" aria-label="Rotate the selected companion with left and right arrow keys"></canvas><div class="buddy-turn"><button id="buddy-turn-left" aria-label="Rotate companion left">↶</button><span>Drag to turn</span><button id="buddy-turn-right" aria-label="Rotate companion right">↷</button></div></div>
+   <div class="buddy-copy"><div class="buddy-title-row"><h3 id="buddy-name">MRI Scout</h3><span id="buddy-kind">MRFoundry</span></div><p id="buddy-description">The little scanner from MRFoundry.</p><button id="buddy-toggle" aria-pressed="true"><span id="buddy-toggle-icon" aria-hidden="true">−</span><span id="buddy-toggle-text">Put in backpack</span></button></div>
+  </section>
+ </div>
+ <section class="bag-party" aria-labelledby="party-heading"><div class="bag-section-heading"><h3 id="party-heading">Walking with you <span id="party-status-text">1 of 5</span></h3><button id="party-recall">Put all away</button></div><div id="party-line" aria-label="Current walking companions"></div><p id="backpack-message" role="status">Select a companion below to put it away.</p></section>
+ <footer class="bag-footer"><span><kbd>B</kbd> Backpack <kbd>Esc</kbd> Close</span><div><button id="party-all">Take everyone</button><button id="backpack-done">Let’s go <span aria-hidden="true">↗</span></button></div></footer>
+</dialog>
+<dialog id="journal-dialog" aria-labelledby="journal-title">
+  <button class="dialog-close" aria-label="Close the field journal">×</button>
+  <div class="journal-heading"><div><h2 id="journal-title">Places to explore</h2><p>Visit a room, or open its story here.</p></div><div class="journal-passport"><span id="journal-count">0 / 7</span><span>places discovered</span><div class="passport-track"><i id="passport-fill"></i></div></div></div>
+  <div class="journal-filters" aria-label="Filter destinations"><button data-journal-filter="all" aria-pressed="true">All places</button><button data-journal-filter="new" aria-pressed="false">Still to explore</button><button data-journal-filter="visited" aria-pressed="false">Discovered</button></div>
+  <div id="journal-places"></div><p id="journal-empty" hidden>You’ve explored every place. Revisit a favorite, or open the full portfolio.</p>
+  <footer class="journal-footer"><span>Click a door to walk there. Your companions come too.</span><a href="/">Classic portfolio ↗</a></footer>
+</dialog>
+<div id="discovery-toast" role="status" hidden><span aria-hidden="true">✦</span><div><strong id="discovery-name"></strong><span>A new chapter in your field journal</span></div></div>
+<dialog id="help-dialog" aria-labelledby="help-title"><button class="dialog-close" aria-label="Close instructions">×</button><span class="eyebrow">WELCOME, EXPLORER</span><h2 id="help-title">Take the scenic route.</h2><p>Walk up to a door to enter, and walk to the room’s exit to leave. You can also click a building to walk there. Each room has photographs, projects and research to discover. Your little MRI companion comes along.</p><p>Click the ground to walk, drag to look around, and scroll or pinch to zoom. You can also use <strong>WASD</strong> or the <strong>arrow keys</strong> while the world is focused. The camera follows you.</p><p>Select a framed picture to look closer, or press <strong>E</strong> or <strong>Enter</strong> beside it. <strong>Village</strong> is a shortcut back outside; <strong>Escape</strong> closes a note.</p><p>Press <strong>B</strong> for your companion backpack, or <strong>J</strong> for the field journal. MRI Scout follows by default; take other companions along whenever you like.</p><p>Turn on <strong>Music</strong> for a gentle soundtrack. It pauses when you switch away from this tab.</p><button id="start-exploring" class="primary-button">Let’s explore <span aria-hidden="true">→</span></button></dialog>
+<noscript><div class="noscript-note"><h2>Explore Ke’s work</h2><p>Ke Wang is a Senior Applied Scientist on Adobe’s Foundation Model team, working on reinforcement learning and post-training for multimodal foundation models.</p><p>Visit the <a href="/cv/">CV</a>, <a href="/publications/">publications</a>, <a href="/slides/mrfoundry/">MRFoundry tutorial</a>, or <a href="mailto:kewang@adobe.com">email Ke about summer 2027 internships</a>.</p></div></noscript>
+<script src="../data.js"></script>
+<script src="./companion-catalog.js"></script>
+<script src="./interface.js"></script>
+<script type="module" src="./world.js"></script>
+<script type="module">import {initAmbientAudio} from "./ambient-audio.js"; initAmbientAudio(document.getElementById("music-toggle"));</script>
+</body>
+</html>
