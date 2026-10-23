@@ -327,3 +327,6 @@ dialog h2{text-wrap:balance}
 @media(max-width:600px){#music-toggle{min-width:35px;padding:4px}#guide-toggle .journal-label{font-size:0}#guide-toggle .journal-label:after{content:"Journal";font-size:11px}}
 
 @media(max-width:360px){#guide-toggle .journal-label{display:none}#guide-toggle{min-width:38px;justify-content:center}.motion-controls{flex-shrink:0}}
+/* Map labels are positioned by their center/bottom anchor. Keep that anchor
+   while pressed so the release cannot fall through onto the terrain. */
+.landmark-label:active{transform:translate(-50%,-100%)}
