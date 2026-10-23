@@ -52,7 +52,7 @@ I am a **Senior Applied Scientist** on the **Adobe Foundation Model team**, work
 
 I obtained my Ph.D. degree from [Electrical Engineering and Computer Sciences at UC Berkeley](https://eecs.berkeley.edu/), working with [Prof. Miki Lustig](http://people.eecs.berkeley.edu/~mlustig/) and [Prof. Stella Yu](https://web.eecs.umich.edu/~stellayu/). I was a member of [Berkeley Artificial Intelligence Research (BAIR)](https://bair.berkeley.edu/). I graduated with honors from the department of [Biomedical Engineering](http://www.med.tsinghua.edu.cn/) in [Tsinghua University](http://www.tsinghua.edu.cn/publish/thu2018en/index.html/). My research interests lie in **computational imaging, computational photography, deep learning, signal processing, inverse problems, medical imaging and computer vision**. I am an enthusiast of science, engineering, music, ice skating, rock climbing and everything related to medicine and healthcare! My name in Chinese is 王可.
 
-**Summer 2027 research internships:** I’m actively looking to host research interns at Adobe, working on reinforcement learning and post-training for multimodal foundation models. Feel free to reach out at [kewang@adobe.com](mailto:kewang@adobe.com).
+**Summer 2027 research internships:** I’m actively looking to host research interns at Adobe, working on reinforcement learning and post-training for multimodal foundation models. Feel free to reach out at **kewang [at] adobe [dot] com**.
 
 Personal contact: **kewang0622 [at] gmail [dot] com**.
 
