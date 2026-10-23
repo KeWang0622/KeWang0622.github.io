@@ -272,7 +272,7 @@ window.KW_DATA = {
   ],
   "timeline": [
     [
-      "Present",
+      "Sep 2026 — present",
       "Senior Applied Scientist",
       "Adobe · Foundation Model team",
       "Reinforcement learning and post-training for multimodal foundation models. Hosting research interns for summer 2027; reach out at kewang@adobe.com."
