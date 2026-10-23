@@ -54,7 +54,7 @@ I obtained my Ph.D. degree from [Electrical Engineering and Computer Sciences at
 
 **Summer 2027 research internships:** I’m actively looking to host research interns at Adobe, working on reinforcement learning and post-training for multimodal foundation models. Feel free to reach out at [kewang@adobe.com](mailto:kewang@adobe.com).
 
-Personal contact: [kewang0622@gmail.com](mailto:kewang0622@gmail.com).
+Personal contact: **kewang0622 [at] gmail [dot] com**.
 
 <div class="mri-feature" markdown="0">
   <a class="mri-feature-mascot" href="{{ '/slides/mrfoundry/' | relative_url }}" aria-label="Open the MRFoundry interactive tutorial"><img src="{{ '/assets/img/mri-mascot.png' | relative_url }}" width="78" height="88" alt="Friendly MRI scanner mascot" loading="lazy"></a>

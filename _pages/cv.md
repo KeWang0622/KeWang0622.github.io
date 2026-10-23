@@ -9,4 +9,5 @@ description: >-
   Senior Applied Scientist, Adobe Foundation Model team. Reinforcement learning and
   post-training for multimodal foundation models. Hosting research interns for
   summer 2027 — <a href="mailto:kewang@adobe.com">kewang@adobe.com</a>.
+  The CV below reflects my current role; the downloadable PDF is a January 2026 snapshot.
 ---
