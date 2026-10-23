@@ -10,7 +10,12 @@ import { buildSecondaryLandmarks } from './landmarks.js';
 import { buildVillageDetails } from './details.js';
 import { createCameraCompanion } from './camera-companion.js';
 import { createMacCompanion, createPrismCompanion, createMusicCompanion } from './companion-models.js';
-import { WORLD_LIMIT, BRIDGE_XS, pondRadius, SCENIC_PLACES, extensionRoadPoints, buildOutdoorExtension } from './outdoor-extension.js';
+import { WORLD_LIMIT, pondRadius, SCENIC_PLACES, extensionRoadPoints, buildOutdoorExtension } from './outdoor-extension.js';
+import { createBridgeSurfaces, WALKER_RADIUS } from './world-surfaces.js';
+import { TRAVEL, angleDelta, footprintOffsets, footprintClear, turnClear, motionClear, findWalkingRoute } from './navigation.js';
+import { stepCompanion } from './companion-navigation.js';
+import { createTravelModel } from './travel-models.js';
+import { createWorldMaterials } from './world-materials.js';
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
 
 const data = window.KE_WORLD;
@@ -62,6 +67,7 @@ async function init(){
   composer.addPass(new RenderPass(scene,camera));
   const bloom=new UnrealBloomPass(new THREE.Vector2(1,1),.12,.45,1.1);composer.addPass(bloom);composer.addPass(new OutputPass());
   const loader=new GLTFLoader();
+  const surfaces=createWorldMaterials(renderer);
   const mats=new Map(), targets=[], blockers=[], flagCloths=[], waterGlints=[], distantBuildings=[];
   const windUniform={value:0};
   let activeRoom=null,roomPlaceId=null,roomLoading=false,outdoorReturn=null;
@@ -80,11 +86,11 @@ async function init(){
   const roads=[
     [[-44,14],[-30,11],[-21,10],[-13,9],[-4,9],[5,10],[14,10],[28,8],[44,14]],
     [[-18,9],[-25,7],[-33,6.5]],
-    [[-13,9],[-10,1],[-9,riverZ(-9)],[-13,-13],[-24,-19.4]],
+    [[-13,9],[-10,1],[-9,riverZ(-9)+3.7],[-9,riverZ(-9)],[-9,riverZ(-9)-3.7],[-13,-13],[-24,-19.4]],
     [[-3,9],[-4,7],[-4,5.7]],
-    [[6,10],[8,4],[9,riverZ(9)],[16,-10],[22,-14.45]],
+    [[6,10],[8,4],[7.25,riverZ(7.25)+3.7],[7.25,riverZ(7.25)],[7.25,riverZ(7.25)-3.7],[16,-10],[22,-14.45]],
     [[8,4],[10,5],[13,5]],
-    [[9,riverZ(9)],[6,-13],[4,-23],[2,-30.5]],
+    [[7.25,riverZ(7.25)],[7.25,riverZ(7.25)-3.7],[6,-13],[4,-23],[2,-30.5]],
     [[-19,10],[-23,17],[-22,27.9]],
     ...extensionRoadPoints(riverZ)
   ].map(points=>new THREE.CatmullRomCurve3(points.map(([x,z])=>new THREE.Vector3(x,0,z))));
@@ -121,7 +127,7 @@ async function init(){
     tint.multiplyScalar(.97+rand()*.06);tint.toArray(colors,i*3);
   }
   terrainGeometry.setAttribute('color',new THREE.BufferAttribute(colors,3));terrainGeometry.computeVertexNormals();
-  const terrain=new THREE.Mesh(terrainGeometry,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));terrain.receiveShadow=true;scene.add(terrain);
+  const terrain=new THREE.Mesh(terrainGeometry,surfaces.terrainGrass);terrain.receiveShadow=true;scene.add(terrain);
   // The playable village remains finite, but distant land continues beyond it.
   // A light outer ring avoids the square-board silhouette in the map overview.
   const backdropParts=[],edges=[-600,-75,75,600];
@@ -145,16 +151,31 @@ async function init(){
   waterMaterial.onBeforeCompile=shader=>{shader.uniforms.uTime=windUniform;shader.vertexShader='uniform float uTime;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.y+=sin(position.x*1.5+uTime*.8)*.025+sin(position.z*3.+uTime)*.02;');};
   const water=new THREE.Mesh(riverGeometry,waterMaterial);water.receiveShadow=true;scene.add(water);
   for(let i=0;i<35;i++){const x=-40+rand()*80;const m=box(scene,x,-.315,riverZ(x)+(rand()-.5)*2,.3+rand()*.55,.006,.016,0xa3d3ce);m.castShadow=false;m.userData.seed=rand()*10;waterGlints.push(m);}
-  function bridge(x){
-    const z=riverZ(x),g=new THREE.Group();g.position.set(x,.04,z);scene.add(g);
-    for(let i=0;i<18;i++){const a=i/17;box(g,0,.14+Math.sin(a*Math.PI)*.22,-2.2+a*4.4,2.65,.15,.23,0xb39564);}
-    for(const sign of [-1,1]){
-      for(const zz of [-2.1,0,2.1]){cyl(g,sign*1.3,.65,zz,.07,.08,1.25,0x705e48,8);sphere(g,sign*1.3,1.29,zz,.095,0x9b7c50);}
-      lineBetween(g,[sign*1.3,1.0,-2.1],[sign*1.3,1.2,0],.055,0x9b7c50);lineBetween(g,[sign*1.3,1.2,0],[sign*1.3,1.0,2.1],.055,0x9b7c50);
+  const bridges=createBridgeSurfaces(riverZ,groundHeight);
+  const bridgeFloors=[];
+  for(const bridge of bridges){
+    const {x,z,halfWidth,halfLength,rampLength,railX,railHalfLength}=bridge;
+    const g=new THREE.Group();g.name=`bridge-${x}`;scene.add(g);
+    // The same height function shapes every plank and positions actors' feet.
+    const sections=[[-halfLength-rampLength,-halfLength,5],[-halfLength,halfLength,18],[halfLength,halfLength+rampLength,5]];
+    for(const [start,end,count]of sections)for(let i=0;i<count;i++){
+      const depth=(end-start)/count,center=start+(i+.5)*depth;
+      const geometry=new THREE.BoxGeometry(halfWidth*2,.12,depth-.012,16,1,4);
+      const vertices=geometry.attributes.position;
+      for(let v=0;v<vertices.count;v++){
+        const px=x+vertices.getX(v),pz=z+center+vertices.getZ(v);
+        vertices.setXYZ(v,px,bridge.height(px,pz)-(vertices.getY(v)<0?.12:0),pz);
+      }
+      geometry.computeVertexNormals();
+      const plank=new THREE.Mesh(geometry,i%3?surfaces.bridgeWood:surfaces.bridgeWoodLight);plank.castShadow=plank.receiveShadow=true;g.add(plank);bridgeFloors.push(plank);
     }
-  }BRIDGE_XS.forEach(bridge);
+    for(const sign of [-1,1]){
+      for(const zz of [-railHalfLength,0,railHalfLength]){cyl(g,x+sign*railX,.69,z+zz,.07,.08,1.25,0x705e48,8);sphere(g,x+sign*railX,1.33,z+zz,.095,0x9b7c50);}
+      lineBetween(g,[x+sign*railX,1.04,z-railHalfLength],[x+sign*railX,1.24,z],.055,0x9b7c50);lineBetween(g,[x+sign*railX,1.24,z],[x+sign*railX,1.04,z+railHalfLength],.055,0x9b7c50);
+    }
+  }
 
-  const gardenBeds=buildArrivalGround({scene,roads,groundHeight,riverZ,rand});
+  const gardenBeds=buildArrivalGround({scene,roads,groundHeight,riverZ,rand,surfaceMaterials:surfaces});
   for(const bed of gardenBeds)blockers.push({x:bed.x,z:bed.z,w:bed.w/2,d:bed.d/2});
 
   // Load one authored workshop family and genuine CC0 textured vegetation.
@@ -189,9 +210,13 @@ async function init(){
   function addInstances(name,placements){
     const source=foliage?.children.find(child=>child.name.startsWith(name));if(!source||!placements.length)return;
     source.updateMatrixWorld(true);const inverse=new THREE.Matrix4().copy(source.matrixWorld).invert();
+    if(/^Rock/.test(name)){
+      const bounds=new THREE.Box3();source.traverse(mesh=>{if(mesh.isMesh){mesh.geometry.computeBoundingBox();bounds.union(mesh.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverse,mesh.matrixWorld)));}});
+      for(const v of placements){const transform=new THREE.Matrix4().compose(new THREE.Vector3(v.x,0,v.z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),v.r),new THREE.Vector3(v.s,v.s,v.s));const b=bounds.clone().applyMatrix4(transform),center=b.getCenter(new THREE.Vector3()),size=b.getSize(new THREE.Vector3());blockers.push({x:center.x,z:center.z,w:size.x/2,d:size.z/2});}
+    }
     source.traverse(mesh=>{if(!mesh.isMesh)return;
       const geometry=mesh.geometry.clone();const local=new THREE.Matrix4().multiplyMatrices(inverse,mesh.matrixWorld);geometry.applyMatrix4(local);
-      const material=mesh.material.clone();const leaves=/leaf|leaves|grass|flower/i.test(material.name);
+      const material=mesh.material.clone();if(/^Rock/.test(name)&&surfaces.stoneBump){material.bumpMap=surfaces.stoneBump;material.bumpScale=.018;material.roughnessMap=surfaces.stoneRoughness;material.roughness=.95;}const leaves=/leaf|leaves|grass|flower/i.test(material.name);
       if(leaves){
         material.side=THREE.DoubleSide;material.alphaTest=Math.max(material.alphaTest,.3);material.transparent=false;material.customProgramCacheKey=()=>material.name;
         material.onBeforeCompile=shader=>{shader.uniforms.uWind=windUniform;shader.vertexShader='uniform float uWind;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat sway=sin(uWind*.8+position.x*.7+position.z*.5)*.022; transformed.x += sway*max(position.y,0.);');if(/TwistedTree/i.test(material.name))shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.rgb=vec3(.22,.38,.11);');};
@@ -278,18 +303,21 @@ async function init(){
 
 
   // Character and scanner companion. Character asset is optional during authoring.
-  const trainer=new THREE.Group();trainer.position.set(-2,groundHeight(-2,10),10);scene.add(trainer);
-  let mixer=null,idleAction=null,walkAction=null,trainerBody=null,limbs=[];
+  const trainer=new THREE.Group();trainer.position.set(-3.2,groundHeight(-3.2,9.8),9.8);scene.add(trainer);
+  let mixer=null,idleAction=null,walkAction=null,trainerBody=null,avatar=null,limbs=[];
+  let selectedTravel='walk',travelModel=null;
+  const travelCache=new Map();
+  const travelShape=()=>TRAVEL[activeRoom?'walk':selectedTravel];
   try{
     const gltf=await loader.loadAsync('./assets/trainer.glb');prepareModel(gltf.scene);const bounds=new THREE.Box3().setFromObject(gltf.scene),size=bounds.getSize(new THREE.Vector3());const scale=1.8/size.y;gltf.scene.scale.setScalar(scale);gltf.scene.position.y=-bounds.min.y*scale;
     // The exported face points 60° right of +Z in Idle and Walk. Correct the
     // visual model, leaving the navigation heading and MRI companion at +Z.
-    gltf.scene.rotation.y=-Math.PI/3;trainer.add(gltf.scene);
+    gltf.scene.rotation.y=-Math.PI/3;trainer.add(gltf.scene);avatar=gltf.scene;
     mixer=new THREE.AnimationMixer(gltf.scene);const idle=gltf.animations.find(a=>/idle/i.test(a.name))||gltf.animations[0],walk=gltf.animations.find(a=>a.name==='Walk')||gltf.animations.find(a=>/walk|run/i.test(a.name));if(idle)idleAction=mixer.clipAction(idle).play();if(walk){walkAction=mixer.clipAction(walk);walkAction.timeScale=1.65;}
   }catch{
-    trainerBody=new THREE.Group();trainer.add(trainerBody);
+    trainerBody=new THREE.Group();trainer.add(trainerBody);avatar=trainerBody;
     const torso=box(trainerBody,0,.95,0,.46,.65,.33,0x477c91);sphere(trainerBody,0,1.48,0,.25,0xe1b18b,1,1.12,.95);
-    sphere(trainerBody,0,1.64,-.04,.26,0x243d40,1,.66,1);sphere(trainerBody,0,1.75,.0,.28,0xb95446,1,.4,1);box(trainerBody,0,1.72,.25,.4,.045,.27,0xc4654e);
+    sphere(trainerBody,0,1.64,-.04,.26,0x243d40,1,.66,1);
     for(const s of [-1,1])sphere(trainerBody,s*.085,1.48,.232,.024,0x253b3d,1,1.3,1);
     box(trainerBody,0,1.0,-.25,.38,.49,.2,0xae7f42);
     for(const s of [-1,1]){const arm=new THREE.Group();arm.position.set(s*.29,1.12,0);trainerBody.add(arm);cyl(arm,0,-.19,0,.075,.063,.41,0x477c91,12);sphere(arm,0,-.43,0,.066,0xe1b18b);limbs.push(arm);const leg=new THREE.Group();leg.position.set(s*.13,.64,0);trainerBody.add(leg);box(leg,0,-.21,0,.15,.42,.18,0x2d4653);box(leg,0,-.48,.05,.19,.14,.29,0xe8dac1);limbs.push(leg);}
@@ -312,20 +340,22 @@ async function init(){
   const marker=new THREE.Mesh(new THREE.RingGeometry(.28,.34,40),new THREE.MeshBasicMaterial({color:0xf3d17b,transparent:true,opacity:.85,depthWrite:false}));marker.rotation.x=-Math.PI/2;destinationMarker.add(marker);
 
   // Movement follows the same accessible place IDs, over a navigation grid.
-  const keys=new Set();let path=[],pathIndex=0,arrivalId=null,arrivalAction=null,navigationRevision=0,paused=false,nearest=null,time=0,lastTime=0,previousMoving=false;
+  const keys=new Set();let path=[],pathIndex=0,arrivalId=null,arrivalAction=null,navigationRevision=0,paused=false,nearest=null,time=0,lastTime=0,previousMoving=false,routeTimedOut=false;
   const STEP=.6,MIN=-WORLD_LIMIT,MAX=WORLD_LIMIT,N=Math.ceil((MAX-MIN)/STEP)+1;
-  function walkable(x,z){
-    if(activeRoom){const b=activeRoom.bounds;if(x<b.minX+.22||x>b.maxX-.22||z<b.minZ+.22||z>b.maxZ-.22)return false;return !activeRoom.blockers.some(b=>Math.abs(x-b.x)<b.w+.22&&Math.abs(z-b.z)<b.d+.22);}
-    if(x<MIN||x>MAX||z<MIN||z>MAX)return false;
-    if(blockers.some(b=>Math.abs(x-b.x)<b.w+.22&&Math.abs(z-b.z)<b.d+.22))return false;
-    if(pondRadius(x,z)<1.12)return false;
-    if(Math.abs(x-54)<3.95&&Math.abs(z+9)<2.3)return true;
-    if(Math.abs(z-riverZ(x))<1.6&&!BRIDGE_XS.some(bx=>Math.abs(x-bx)<1.05))return false;
+  function walkable(x,z,radius=WALKER_RADIUS){
+    if(activeRoom){const b=activeRoom.bounds;if(x<b.minX+radius||x>b.maxX-radius||z<b.minZ+radius||z>b.maxZ-radius)return false;return !activeRoom.blockers.some(b=>Math.abs(x-b.x)<b.w+radius&&Math.abs(z-b.z)<b.d+radius);}
+    if(x<MIN+radius||x>MAX-radius||z<MIN+radius||z>MAX-radius)return false;
+    if(blockers.some(b=>Math.abs(x-b.x)<b.w+radius&&Math.abs(z-b.z)<b.d+radius))return false;
+    if(pondRadius(x,z)<1.08+radius/5.5)return false;
+    if(Math.abs(x-54)<3.95-radius&&Math.abs(z+9)<2.3-radius)return true;
+    if(bridges.some(bridge=>bridge.blocks(x,z,radius)))return false;
+    if(Math.abs(z-riverZ(x))<1.45+radius&&!bridges.some(bridge=>bridge.supports(x,z,radius)))return false;
     return true;
   }
   function groundForWalk(x,z){
     if(activeRoom)return 0;
-    if(Math.abs(z-riverZ(x))<2.2&&BRIDGE_XS.some(bx=>Math.abs(x-bx)<1.3))return .18+Math.cos((z-riverZ(x))/2.2*Math.PI/2)*.22;
+    const bridge=bridges.find(bridge=>bridge.contains(x,z));
+    if(bridge)return bridge.height(x,z);
     const base=groundHeight(x,z);
     if(Math.abs(x-54)<3.95&&Math.abs(z+9)<2.3)return groundHeight(54,-9)+.14;
     if(Math.hypot(x+49,z-41)<4.55||Math.hypot(x-17,z+53)<4.1)return base+.065;
@@ -334,17 +364,20 @@ async function init(){
 
   // All companions follow the same travelled polyline in single file. Arc-length
   // spacing prevents sideways formation, corner cutting and delayed overshoot.
-  const followerLead=1.4,followerSpacing=1.3;
-  const trailLength=followerLead+(followers.length-1)*followerSpacing+1.2;
+  let followerLead=1.4;const followerSpacing=1.3;
+  const trailLength=11;
   const trailCapacity=1024,trailX=new Float64Array(trailCapacity),trailZ=new Float64Array(trailCapacity),trailArc=new Float64Array(trailCapacity);
   let trailFirst=0,trailLast=0,trailDistance=0;
   function followerArc(rank){return Math.max(trailArc[trailFirst],trailDistance-followerLead-rank*followerSpacing);}
-  function placeFollower(f,animate,dt){
+  function placeFollower(f,animate,dt,occupants=[]){
     let first=trailFirst;
     while(first!==trailLast&&trailArc[(first+1)%trailCapacity]<f.arc)first=(first+1)%trailCapacity;
     const next=first===trailLast?first:(first+1)%trailCapacity,span=trailArc[next]-trailArc[first];
     const t=span>1e-6?THREE.MathUtils.clamp((f.arc-trailArc[first])/span,0,1):0;
-    const x=THREE.MathUtils.lerp(trailX[first],trailX[next],t),z=THREE.MathUtils.lerp(trailZ[first],trailZ[next],t),dx=x-f.model.position.x,dz=z-f.model.position.z;
+    let x=THREE.MathUtils.lerp(trailX[first],trailX[next],t),z=THREE.MathUtils.lerp(trailZ[first],trailZ[next],t);
+    if(animate){const resolved=stepCompanion({current:f.model.position,desired:{x,z},occupants,walkable:(x,z)=>walkable(x,z),dt,radius:.34,footprintRadius:.12,maxSpeed:Math.max(5.2,travelShape().speed*1.2),state:f.navigationState||{}});x=resolved.x;z=resolved.z;f.navigationState=resolved.state;}
+    const dx=x-f.model.position.x,dz=z-f.model.position.z;
+    if(animate)occupants.push({x,z,radius:.34,vx:dt?dx/dt:0,vz:dt?dz/dt:0});
     const walking=animate&&dx*dx+dz*dz>1e-8;
     if(walking){const goal=Math.atan2(dx,dz),turn=Math.atan2(Math.sin(goal-f.model.rotation.y),Math.cos(goal-f.model.rotation.y));f.model.rotation.y+=turn*Math.min(1,dt*16);}
     else if(!animate&&span>1e-6)f.model.rotation.y=Math.atan2(trailX[next]-trailX[first],trailZ[next]-trailZ[first]);
@@ -386,17 +419,19 @@ async function init(){
     const seed=seedCompanionTrail();trailFirst=0;trailLast=seed.length-1;trailDistance=0;
     seed.forEach((p,i)=>{if(i)trailDistance+=Math.hypot(p.x-seed[i-1].x,p.z-seed[i-1].z);trailX[i]=p.x;trailZ[i]=p.z;trailArc[i]=trailDistance;});
     let rank=0;
-    for(const f of followers){f.arc=followerArc(rank);if(f.enabled)rank++;placeFollower(f,false,0);}
+    for(const f of followers){f.navigationState={};f.arc=followerArc(rank);if(f.enabled)rank++;placeFollower(f,false,0);}
   }
   function updateCompanion(dt){
     const step=Math.hypot(trainer.position.x-trailX[trailLast],trainer.position.z-trailZ[trailLast]);
     if(step>1e-6){trailDistance+=step;trailLast=(trailLast+1)%trailCapacity;if(trailLast===trailFirst)trailFirst=(trailFirst+1)%trailCapacity;trailX[trailLast]=trainer.position.x;trailZ[trailLast]=trainer.position.z;trailArc[trailLast]=trailDistance;}
     while(trailFirst!==trailLast&&trailArc[(trailFirst+1)%trailCapacity]<trailDistance-trailLength)trailFirst=(trailFirst+1)%trailCapacity;
+    const shape=travelShape(),offsets=footprintOffsets(shape);
+    const occupants=offsets.map(offset=>({x:trainer.position.x+Math.sin(trainer.rotation.y)*offset,z:trainer.position.z+Math.cos(trainer.rotation.y)*offset,radius:shape.radius,vx:dt?direction.x/dt:0,vz:dt?direction.z/dt:0}));
     let rank=0;
     for(const f of followers){
       if(!f.enabled)continue;
       const target=followerArc(rank++);
-      f.arc+=THREE.MathUtils.clamp(target-f.arc,-dt*5,dt*5);placeFollower(f,true,dt);
+      const pace=Math.max(5,shape.speed*1.25);f.arc+=THREE.MathUtils.clamp(target-f.arc,-dt*pace,dt*pace);placeFollower(f,true,dt,occupants);
       if(f.deploy<1){f.deploy=Math.min(1,f.deploy+dt/.4);const t=1-(1-f.deploy)**3;f.model.scale.setScalar(reducedMotion?1:Math.max(.001,t));}
     }
   }
@@ -414,16 +449,28 @@ async function init(){
     document.dispatchEvent(new CustomEvent('world:companions-changed',{detail:getCompanions()}));
   }
   resetCompanionTrail();
-  function coord(ix,iz){return new THREE.Vector3(MIN+ix*STEP,0,MIN+iz*STEP);}
-  function closest(x,z){const ax=Math.round((x-MIN)/STEP),az=Math.round((z-MIN)/STEP);for(let r=0;r<8;r++)for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){if(r&&Math.abs(dx)!==r&&Math.abs(dz)!==r)continue;const ix=ax+dx,iz=az+dz,p=coord(ix,iz);if(ix>=0&&ix<N&&iz>=0&&iz<N&&walkable(p.x,p.z))return[ix,iz];}return null;}
-  function route(from,to){
-    const a=closest(from.x,from.z),b=closest(to.x,to.z);if(!a||!b)return[];const key=(x,z)=>x+z*N,start=key(...a),end=key(...b),open=new Set([start]),came=new Map(),scores=new Map([[start,0]]),f=new Map([[start,0]]),dirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];let loops=0;
-    while(open.size&&loops++<N*N){let curr=-1,best=Infinity;for(const n of open){const v=f.get(n)??Infinity;if(v<best){best=v;curr=n;}}if(curr===end){const result=[];let n=end;while(n!==start){result.push(coord(n%N,Math.floor(n/N)));n=came.get(n);if(n==null)break;}return result.reverse();}open.delete(curr);const cx=curr%N,cz=Math.floor(curr/N);
-      for(const[dx,dz]of dirs){const ix=cx+dx,iz=cz+dz,p=coord(ix,iz);if(ix<0||ix>=N||iz<0||iz>=N||!walkable(p.x,p.z))continue;if(dx&&dz&&(!walkable(MIN+(cx+dx)*STEP,MIN+cz*STEP)||!walkable(MIN+cx*STEP,MIN+(cz+dz)*STEP)))continue;const nk=key(ix,iz),score=scores.get(curr)+Math.hypot(dx,dz);if(score>=(scores.get(nk)??Infinity))continue;came.set(nk,curr);scores.set(nk,score);f.set(nk,score+Math.hypot(ix-b[0],iz-b[1]));open.add(nk);}}
-    return[];
+  function updateTravelVisual(){
+    if(travelModel)travelModel.group.visible=false;
+    const mounted=!activeRoom&&selectedTravel!=='walk';
+    avatar.visible=!mounted;
+    if(mounted){
+      if(!travelCache.has(selectedTravel)){const model=createTravelModel(selectedTravel);travelCache.set(selectedTravel,model);trainer.add(model.group);}
+      travelModel=travelCache.get(selectedTravel);travelModel.group.visible=true;
+    }
+    followerLead=mounted?travelShape().axle+travelShape().radius+.85:1.4;
+    document.dispatchEvent(new CustomEvent('world:travel-changed',{detail:{id:selectedTravel,indoors:Boolean(activeRoom)}}));
   }
+  function setTravel(id){
+    if(!TRAVEL[id]||activeRoom)return;
+    if(!footprintClear(trainer.position.x,trainer.position.z,trainer.rotation.y,TRAVEL[id],walkable)){
+      ui.announce('This ride needs more space. Move onto an open path first.');updateTravelVisual();return;
+    }
+    clearMovement();selectedTravel=id;updateTravelVisual();resetCompanionTrail();canvas.focus({preventScroll:true});
+  }
+  document.addEventListener('world:travel-select',event=>setTravel(event.detail?.id));
+  function route(from,to){routeTimedOut=false;return findWalkingRoute({...from,yaw:trainer.rotation.y},to,{shape:travelShape(),walkable,min:MIN,max:MAX,onBudgetExceeded:()=>{routeTimedOut=true;}});}
   let overview=false,cameraYaw=.44,cameraPitch=.64,zoom=1,targetZoom=1,actualDistance=24,actualPitch=.64;
-  const focus=new THREE.Vector3(-2,1.5,5.5),focusTarget=focus.clone();
+  const focus=new THREE.Vector3(-3.2,1.5,5.5),focusTarget=focus.clone();
   const zoomOut=document.getElementById('zoom-out'),zoomIn=document.getElementById('zoom-in'),overviewButton=document.getElementById('view-overview');
   function updateOverviewButton(){overviewButton.textContent=overview?'Explore':'Map';overviewButton.setAttribute('aria-pressed',String(overview));overviewButton.setAttribute('aria-label',overview?'Return to the trainer':'Show village map');}
   function setZoom(v){targetZoom=THREE.MathUtils.clamp(v,.6,1.7);overview=false;updateOverviewButton();zoomIn.disabled=targetZoom>=1.7;zoomOut.disabled=targetZoom<=.6;}
@@ -431,11 +478,12 @@ async function init(){
   updateOverviewButton();overviewButton.addEventListener('click',()=>{overview=!overview;updateOverviewButton();});
   function queueArrival(id,action){const revision=navigationRevision;setTimeout(()=>{if(revision!==navigationRevision||paused||roomLoading)return;if(action)action();else if(id)enterInterior(id);},150);}
   function moveTo(point,id=null,action=null){
+    if(id&&selectedTravel!=='walk'&&!activeRoom)point=point.clone().add(new THREE.Vector3(0,0,travelShape().axle+travelShape().radius));
     navigationRevision++;path=route(trainer.position,point);pathIndex=0;arrivalId=id;arrivalAction=action;overview=false;updateOverviewButton();
-    if(!path.length){destinationMarker.visible=false;const distance=Math.hypot(trainer.position.x-point.x,trainer.position.z-point.z),steps=Math.max(1,Math.ceil(distance/.16));let direct=true;for(let i=0;i<=steps;i++){const t=i/steps;if(!walkable(THREE.MathUtils.lerp(trainer.position.x,point.x,t),THREE.MathUtils.lerp(trainer.position.z,point.z,t))){direct=false;break;}}if(distance<(activeRoom?1.65:2.15)&&direct)queueArrival(id,action);else ui.announce('That route is blocked. Try approaching from the path, or open the chapter in the field guide.');return;}
+    if(!path.length){destinationMarker.visible=false;const distance=Math.hypot(trainer.position.x-point.x,trainer.position.z-point.z),steps=Math.max(1,Math.ceil(distance/.16));let direct=true;for(let i=0;i<=steps;i++){const t=i/steps;if(!walkable(THREE.MathUtils.lerp(trainer.position.x,point.x,t),THREE.MathUtils.lerp(trainer.position.z,point.z,t))){direct=false;break;}}if(distance<(activeRoom?1.65:2.15)&&direct)queueArrival(id,action);else ui.announce(routeTimedOut?'Choose a nearer point along the path, then continue to your destination.':'That route is blocked. Try approaching from the path, or open the chapter in the field guide.');return;}
     const p=path.at(-1);destinationMarker.position.set(p.x,groundForWalk(p.x,p.z)+.06,p.z);destinationMarker.visible=true;
     landmarkState.forEach(s=>s.label.classList.toggle('active',s.place.id===id));
-    if(id)ui.announce(`Walking to ${data.places.find(p=>p.id===id).title}.`);
+    if(id)ui.announce(`Heading to ${data.places.find(p=>p.id===id).title}.`);
   }
   function walkToScenic(id){if(activeRoom)exitInterior();const s=scenicState.find(s=>s.place.id===id);if(s)moveTo(s.entry,null,()=>ui.announce(`${s.place.title}. ${s.place.note}`));}
   function walkTo(id){if(activeRoom)exitInterior();const s=landmarkState.find(s=>s.place.id===id);if(s)moveTo(s.entry,id);}
@@ -451,11 +499,13 @@ async function init(){
     if(blockedDoorId){const s=landmarkState.find(s=>s.place.id===blockedDoorId);if(!s||Math.hypot(trainer.position.x-s.entry.x,trainer.position.z-s.entry.z)>2.8)blockedDoorId=null;}
     if(!moving)return;
     for(const s of landmarkState){
+      // A planned trip may pass another front porch; only its destination opens.
+      if(pathIndex<path.length&&arrivalId!==s.place.id)continue;
       const dx=trainer.position.x-s.entry.x,dz=trainer.position.z-s.entry.z;
       // A broad front porch accepts an off-centre approach; walking past the
       // side or away from a door must never pull the visitor into the building.
       const approaching=dx*direction.x+dz*direction.z<-1e-6&&direction.z<-1e-6&&-direction.z>Math.abs(direction.x)*.28;
-      if(s.place.id!==blockedDoorId&&dz>-.75&&Math.abs(dx)<2.1&&Math.hypot(dx,dz)<2.5&&(approaching||Math.hypot(dx,dz)<.9)){queueDoorTransition(s.place.id,now);break;}
+      if(s.place.id!==blockedDoorId&&dz>-.75&&Math.abs(dx)<2.1&&Math.hypot(dx,dz)<2.5+travelShape().axle&&(approaching||Math.hypot(dx,dz)<.9)){queueDoorTransition(s.place.id,now);break;}
     }
   }
   function queueDoorTransition(id,now){
@@ -477,7 +527,7 @@ async function init(){
       if(entryRevision!==navigationRevision||paused)return;
       outdoorReturn={position:trainer.position.clone(),yaw:cameraYaw,pitch:cameraPitch,zoom:targetZoom};
       activeRoom=room;roomPlaceId=id;roomExitArmed=false;doorCooldownUntil=performance.now()+800;showExterior(false);room.group.visible=true;
-      trainer.position.copy(room.spawn);if(walkable(trainer.position.x,trainer.position.z-1.4))trainer.position.z-=1.4;trainer.rotation.y=Math.PI;resetCompanionTrail();
+      trainer.position.copy(room.spawn);if(walkable(trainer.position.x,trainer.position.z-1.4))trainer.position.z-=1.4;trainer.rotation.y=Math.PI;updateTravelVisual();resetCompanionTrail();
       cameraYaw=room.camera.yaw??.15;cameraPitch=room.camera.pitch??.66;zoom=targetZoom=1;overview=false;updateOverviewButton();overviewButton.disabled=true;
       focus.copy(room.camera.target);focus.x+=trainer.position.x*indoorFollow;focus.z+=trainer.position.z*indoorFollow;focusTarget.copy(focus);actualDistance=room.camera.distance||19;actualPitch=cameraPitch;
       scene.background.set(0xd6e0d8);scene.fog=null;sun.intensity=1.1;hemi.intensity=1.2;skyFill.intensity=.25;
@@ -491,7 +541,9 @@ async function init(){
     trainer.position.copy(outdoorReturn.position);trainer.rotation.y=0;
     // Step clear of the doorway so the scanner can emerge immediately behind.
     let stepOut=0;for(let d=.1;d<=3.0;d+=.1){if(!walkable(trainer.position.x,trainer.position.z+d))break;stepOut=d;}trainer.position.z+=stepOut;
-    trainer.position.y=groundForWalk(trainer.position.x,trainer.position.z);resetCompanionTrail();
+    trainer.position.y=groundForWalk(trainer.position.x,trainer.position.z);
+    if(!footprintClear(trainer.position.x,trainer.position.z,trainer.rotation.y,TRAVEL[selectedTravel],walkable))selectedTravel='walk';
+    updateTravelVisual();resetCompanionTrail();
     cameraYaw=outdoorReturn.yaw;cameraPitch=outdoorReturn.pitch;zoom=targetZoom=outdoorReturn.zoom;overview=false;overviewButton.disabled=false;updateOverviewButton();
     focus.set(trainer.position.x,trainer.position.y+1.25,trainer.position.z-4);focusTarget.copy(focus);actualDistance=(innerWidth<600?28:24)/zoom;actualPitch=cameraPitch;
     scene.background.set(0xc5dfdd);scene.fog=outdoorFog;sun.intensity=2.65;hemi.intensity=1.85;skyFill.intensity=.6;
@@ -513,7 +565,7 @@ async function init(){
     if(downPoint&&Math.hypot(e.clientX-downPoint.x,e.clientY-downPoint.y)>8)dragged=true;
     if(dragged){cameraYaw-=(e.clientX-old.x)*.006;cameraPitch=THREE.MathUtils.clamp(cameraPitch+(e.clientY-old.y)*.002,.42,.95);}
   });
-  canvas.addEventListener('pointerup',e=>{const beganOnCanvas=pointers.has(e.pointerId);pointers.delete(e.pointerId);if(!beganOnCanvas)return;if(dragged||paused){if(!pointers.size)downPoint=null;return;}const rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(activeRoom?activeRoom.targets:targets,false)[0];if(hit){if(activeRoom){if(hit.object.userData.exit){moveTo(activeRoom.exit.approach,null,exitInterior);return;}const exhibit=activeRoom.exhibits.find(e=>e.id===hit.object.userData.exhibitId);if(exhibit)moveTo(exhibit.approach,null,()=>ui.openExhibit?.(exhibit));}else walkTo(hit.object.userData.placeId);return;}const ground=raycaster.intersectObject(activeRoom?activeRoom.floor:terrain,false)[0];if(ground)moveTo(ground.point);downPoint=null;});
+  canvas.addEventListener('pointerup',e=>{const beganOnCanvas=pointers.has(e.pointerId);pointers.delete(e.pointerId);if(!beganOnCanvas)return;if(dragged||paused){if(!pointers.size)downPoint=null;return;}const rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(activeRoom?activeRoom.targets:targets,false)[0];if(hit){if(activeRoom){if(hit.object.userData.exit){moveTo(activeRoom.exit.approach,null,exitInterior);return;}const exhibit=activeRoom.exhibits.find(e=>e.id===hit.object.userData.exhibitId);if(exhibit)moveTo(exhibit.approach,null,()=>ui.openExhibit?.(exhibit));}else walkTo(hit.object.userData.placeId);return;}const ground=raycaster.intersectObjects(activeRoom?[activeRoom.floor]:[terrain,...bridgeFloors],false)[0];if(ground)moveTo(ground.point);downPoint=null;});
   canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);downPoint=null;});
   canvas.addEventListener('wheel',e=>{e.preventDefault();setZoom(targetZoom-e.deltaY*.001);},{passive:false});
   canvas.addEventListener('keydown',e=>{if(paused)return;const k=e.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)){e.preventDefault();keys.add(k);navigationRevision++;path=[];arrivalId=null;arrivalAction=null;
@@ -521,7 +573,7 @@ async function init(){
       overview=false;updateOverviewButton();destinationMarker.visible=false;}if((k==='e'||k==='enter')&&nearest){e.preventDefault();interact();}});
   window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>keys.clear());
   document.addEventListener('world:pause',()=>{paused=true;clearMovement();});document.addEventListener('world:resume',()=>{paused=false;});
-  document.getElementById('reset-view').addEventListener('click',()=>{if(activeRoom)exitInterior();cameraYaw=.44;cameraPitch=.64;setZoom(1);moveTo(new THREE.Vector3(-2,0,10));canvas.focus({preventScroll:true});window.scrollTo({top:0,behavior:reducedMotion?'instant':'smooth'});});
+  document.getElementById('reset-view').addEventListener('click',()=>{if(activeRoom)exitInterior();cameraYaw=.44;cameraPitch=.64;setZoom(1);moveTo(new THREE.Vector3(-3.2,0,9.8));canvas.focus({preventScroll:true});window.scrollTo({top:0,behavior:reducedMotion?'instant':'smooth'});});
   const projection=new THREE.Vector3();
   function updateLabels(){const w=stage.clientWidth,h=stage.clientHeight;
     mapStates.forEach(s=>{if(activeRoom){s.label.hidden=true;return;}projection.copy(s.anchor).project(camera);const distance=trainer.position.distanceTo(s.entry);const visible=projection.z<1&&projection.x>-.95&&projection.x<.95&&projection.y>-.85&&projection.y<.8&&(overview||distance<13||arrivalId===s.place.id);s.label.hidden=!visible;if(visible){s.label.style.left=`${(projection.x*.5+.5)*w}px`;s.label.style.top=`${(-projection.y*.5+.5)*h}px`;}});
@@ -542,6 +594,30 @@ async function init(){
   let hidden=false,inView=true;document.addEventListener('visibilitychange',()=>{hidden=document.hidden;lastTime=0;keys.clear();});
   new IntersectionObserver(([entry])=>{inView=entry.isIntersecting;lastTime=0;if(!inView){keys.clear();interactPrompt.hidden=true;}},{rootMargin:'100px'}).observe(stage);
   const direction=new THREE.Vector3(),delta=new THREE.Vector3(),moveStart=new THREE.Vector3(),viewProjection=new THREE.Matrix4();
+  let steering=0;
+  function advance(vector,dt,remaining=Infinity,followingRoute=false){
+    if(vector.lengthSq()<1e-10)return;
+    const shape=travelShape(),mounted=shape.axle>0,goal=Math.atan2(vector.x,vector.z);
+    const originalTurn=angleDelta(trainer.rotation.y,goal);
+    // Decide to reverse before rotating: a narrow bridge is not a turning circle.
+    const reversing=mounted&&!followingRoute&&Math.abs(originalTurn)>2.5&&!turnClear(trainer.position.x,trainer.position.z,trainer.rotation.y,goal,shape,walkable);
+    const steeringGoal=reversing?goal+Math.PI:goal,turn=angleDelta(trainer.rotation.y,steeringGoal);
+    const nextYaw=trainer.rotation.y+THREE.MathUtils.clamp(turn,-shape.turn*dt,shape.turn*dt);
+    steering=THREE.MathUtils.clamp(turn,-.55,.55);
+    let heading=goal,pace=1;
+    if(mounted){
+      if(turnClear(trainer.position.x,trainer.position.z,trainer.rotation.y,nextYaw,shape,walkable))trainer.rotation.y=nextYaw;
+      if(followingRoute){if(Math.abs(angleDelta(trainer.rotation.y,goal))>.025)return;trainer.rotation.y=goal;}
+      heading=trainer.rotation.y;pace=Math.max(0,Math.cos(angleDelta(heading,steeringGoal)))*(reversing?-.45:1);
+    }else trainer.rotation.y+=turn*Math.min(1,dt*shape.turn);
+    const amount=Math.min(remaining,dt*shape.speed*Math.abs(pace))*Math.sign(pace);
+    const next={x:trainer.position.x+Math.sin(heading)*amount,z:trainer.position.z+Math.cos(heading)*amount};
+    if(motionClear(trainer.position,next,mounted?trainer.rotation.y:goal,shape,walkable)){trainer.position.x=next.x;trainer.position.z=next.z;}
+    else if(!mounted){
+      const slideX={x:next.x,z:trainer.position.z};if(motionClear(trainer.position,slideX,goal,shape,walkable))trainer.position.x=slideX.x;
+      const slideZ={x:trainer.position.x,z:next.z};if(motionClear(trainer.position,slideZ,goal,shape,walkable))trainer.position.z=slideZ.z;
+    }
+  }
   function tick(now){requestAnimationFrame(tick);if(hidden||!inView)return;const dt=Math.min((now-(lastTime||now))/1000,.05);lastTime=now;time+=dt;let moving=false,manualInput=false;
     if(!paused&&!roomLoading){
       moveStart.copy(trainer.position);
@@ -556,21 +632,32 @@ async function init(){
         const slopeX=activeRoom?0:(groundForWalk(x+.04,z)-groundForWalk(x-.04,z))/.08;
         const slopeZ=activeRoom?0:(groundForWalk(x,z+.04)-groundForWalk(x,z-.04))/.08;
         screenGroundDirection(direction,sx,sy,viewProjection.elements,trainer.position,camera.aspect,slopeX,slopeZ);
-        const nx=x+direction.x*dt*3.6,nz=z+direction.z*dt*3.6;
-        if(walkable(nx,z))trainer.position.x=nx;
-        if(walkable(trainer.position.x,nz))trainer.position.z=nz;
+        advance(direction,dt);
       }
-      else if(pathIndex<path.length){delta.copy(path[pathIndex]).sub(trainer.position);delta.y=0;const d=delta.length();direction.copy(delta).normalize();const amount=Math.min(d,dt*4.1);trainer.position.addScaledVector(direction,amount);moving=true;if(d<.06||amount>=d){pathIndex++;if(pathIndex>=path.length){destinationMarker.visible=false;const id=arrivalId,action=arrivalAction;arrivalId=null;arrivalAction=null;queueArrival(id,action);}}}
+      else if(pathIndex<path.length){
+        const waypoint=path[pathIndex];delta.set(waypoint.x-trainer.position.x,0,waypoint.z-trainer.position.z);
+        const distance=delta.length();direction.copy(delta).normalize();
+        if(distance<.07){pathIndex++;}
+        else advance(direction,dt,distance,true);
+        if(pathIndex>=path.length){destinationMarker.visible=false;const id=arrivalId,action=arrivalAction;arrivalId=null;arrivalAction=null;queueArrival(id,action);}
+      }
       trainer.position.y=groundForWalk(trainer.position.x,trainer.position.z);
       direction.subVectors(trainer.position,moveStart);direction.y=0;moving=direction.lengthSq()>1e-10;
-      if(moving){const goal=Math.atan2(direction.x,direction.z);const d=Math.atan2(Math.sin(goal-trainer.rotation.y),Math.cos(goal-trainer.rotation.y));trainer.rotation.y+=d*Math.min(1,dt*13);}
     }
+    if(travelModel&&!activeRoom&&selectedTravel!=='walk'){
+      const shape=travelShape(),dx=Math.sin(trainer.rotation.y)*shape.axle,dz=Math.cos(trainer.rotation.y)*shape.axle;
+      const front=groundForWalk(trainer.position.x+dx,trainer.position.z+dz),rear=groundForWalk(trainer.position.x-dx,trainer.position.z-dz);
+      travelModel.group.rotation.x=shape.axle?Math.atan2(rear-front,shape.axle*2):0;
+      travelModel.group.position.y=(front+rear)/2-trainer.position.y;
+      travelModel.update(quietMotion&&!moving?0:dt,{speed:moving?(direction.x*Math.sin(trainer.rotation.y)+direction.z*Math.cos(trainer.rotation.y))/Math.max(dt,.001):0,time:quietMotion?windUniform.value:time,steer:steering});
+    }
+
     if(mixer){if(moving!==previousMoving&&idleAction&&walkAction){if(moving){walkAction.reset().fadeIn(.2).play();idleAction.fadeOut(.2);}else{idleAction.reset().fadeIn(.25).play();walkAction.fadeOut(.25);}}mixer.update(quietMotion&&!moving?0:dt);}
     if(trainerBody){const swing=moving?Math.sin(time*14):0;trainerBody.position.y=moving?Math.abs(swing)*.04:0;limbs.forEach((l,i)=>{l.rotation.x=swing*.5*(i===0||i===3?1:-1);});}
     if(!paused&&!roomLoading)updateDoorCrossings(moving,now);
     previousMoving=moving;
     if(!paused&&!roomLoading)updateCompanion(dt);
-    if(moving){footTime+=dt;if(footTime>.16){footTime=0;const f=footprints[footIndex++%footprints.length];f.m.position.set(trainer.position.x+.1*(footIndex%2?1:-1),trainer.position.y+.025,trainer.position.z);f.m.rotation.z=-trainer.rotation.y;f.age=0;f.m.visible=true;}}
+    if(moving&&(activeRoom||selectedTravel==='walk')){footTime+=dt;if(footTime>.16){footTime=0;const f=footprints[footIndex++%footprints.length];f.m.position.set(trainer.position.x+.1*(footIndex%2?1:-1),trainer.position.y+.025,trainer.position.z);f.m.rotation.z=-trainer.rotation.y;f.age=0;f.m.visible=true;}}
     for(const f of footprints){f.age+=dt;f.m.material.opacity=Math.max(0,.19-f.age*.08);if(f.age>2.4)f.m.visible=false;}
     nearest=null;let nearDistance=activeRoom?1.6:2.15;
     if(activeRoom){
@@ -595,7 +682,7 @@ async function init(){
     sun.position.set(focus.x-18,34,focus.z+20);sun.target.position.set(focus.x,0,focus.z);sun.target.updateMatrixWorld();
     renderer.info.reset();composer.render();
   }
-  window.KE_WORLD_SCENE={ready:true,walkTo,walkToScenic,scenicPlaces:()=>SCENIC_PLACES.map(({id,title})=>({id,title})),enterInterior,exitInterior,setCompanion,getCompanions,getRoom:()=>roomPlaceId,reset:()=>{if(activeRoom)exitInterior();moveTo(new THREE.Vector3(-2,0,10));},renderer,camera,scene,trainer};
+  window.KE_WORLD_SCENE={ready:true,walkTo,walkToScenic,scenicPlaces:()=>SCENIC_PLACES.map(({id,title})=>({id,title})),enterInterior,exitInterior,setCompanion,getCompanions,getRoom:()=>roomPlaceId,reset:()=>{if(activeRoom)exitInterior();moveTo(new THREE.Vector3(-3.2,0,9.8));},renderer,camera,scene,trainer};
   document.dispatchEvent(new CustomEvent('world:ready'));
   document.getElementById('loading').classList.add('loaded');document.getElementById('render-fallback').hidden=true;
   document.getElementById('world').setAttribute('aria-label','Explore Ke’s research village. Click to walk, drag to look around, or use WASD and arrow keys.');
@@ -613,6 +700,12 @@ function screenGroundDirection(out,sx,sy,m,p,aspect,slopeX=0,slopeZ=0){
   const b=((m[8]+m[4]*slopeZ)*cw-cx*(m[11]+m[7]*slopeZ))*aspect;
   const c=(m[1]+m[5]*slopeX)*cw-cy*(m[3]+m[7]*slopeX);
   const d=(m[9]+m[5]*slopeZ)*cw-cy*(m[11]+m[7]*slopeZ),det=a*d-b*c;
+  if(slopeX||slopeZ){
+    const fa=(m[0]*cw-cx*m[3])*aspect,fb=(m[8]*cw-cx*m[11])*aspect;
+    const fc=m[1]*cw-cy*m[3],fd=m[9]*cw-cy*m[11],flatDet=fa*fd-fb*fc;
+    // Small stair/platform seams must not invert screen-relative controls.
+    if(det*flatDet<=0||Math.abs(det)<Math.abs(flatDet)*.2)return screenGroundDirection(out,sx,sy,m,p,aspect,0,0);
+  }
   if(Math.abs(det)<1e-8)return out.set(0,0,0);
   const x=(d*sx-b*sy)/det,z=(a*sy-c*sx)/det,length=Math.hypot(x,z);
   return length>1e-12?out.set(x/length,0,z/length):out.set(0,0,0);
