@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#f4efe4">
 <meta name="description" content="Explore Ke Wang’s research, career, open-source projects, and summer 2027 internship invitation in a playable miniature world.">
 <title>Ke’s Pokémon World · Explore Ke Wang’s work</title>
-<link rel="stylesheet" href="./style.css?v=20261023-map-labels">
-<link rel="stylesheet" href="./travel.css?v=20261023-travel-rail">
+<link rel="stylesheet" href="./style.css?v=20261023-view-controls">
+<link rel="stylesheet" href="./travel.css?v=20261023-rides-perspective">
 <link rel="icon" href="/assets/img/kw.ico">
 </head>
 <body>
@@ -70,13 +70,13 @@
   <footer class="journal-footer"><span>Click a door to walk there. Your companions come too.</span><a href="/">Classic portfolio ↗</a></footer>
 </dialog>
 <div id="discovery-toast" role="status" hidden><span aria-hidden="true">✦</span><div><strong id="discovery-name"></strong><span>A new chapter in your field journal</span></div></div>
-<dialog id="help-dialog" aria-labelledby="help-title"><button class="dialog-close" aria-label="Close instructions">×</button><span class="eyebrow">WELCOME, EXPLORER</span><h2 id="help-title">Take the scenic route.</h2><p>Walk up to a door to enter, and walk to the room’s exit to leave. You can also click a building to walk there. Each room has photographs, projects and research to discover. Your little MRI companion comes along.</p><p>Click the ground to walk, drag to look around, and scroll or pinch to zoom. You can also use <strong>WASD</strong> or the <strong>arrow keys</strong> while the world is focused. The camera follows you.</p><p>Select a framed picture to look closer, or press <strong>E</strong> or <strong>Enter</strong> beside it. <strong>Village</strong> is a shortcut back outside; <strong>Escape</strong> closes a note.</p><p>Press <strong>B</strong> for your companion backpack, or <strong>J</strong> for the field journal. MRI Scout follows by default; take other companions along whenever you like.</p><p>Use the <strong>Travel</strong> choices on the left to walk, cycle, drive or ride a horse. Rides park at the door; explore rooms on foot. Your companions follow along.</p><p>Turn on <strong>Music</strong> for a gentle soundtrack. It pauses when you switch away from this tab.</p><button id="start-exploring" class="primary-button">Let’s explore <span aria-hidden="true">→</span></button></dialog>
+<dialog id="help-dialog" aria-labelledby="help-title"><button class="dialog-close" aria-label="Close instructions">×</button><span class="eyebrow">WELCOME, EXPLORER</span><h2 id="help-title">Take the scenic route.</h2><p>Walk up to a door to enter, and walk to the room’s exit to leave. You can also click a building to walk there. Each room has photographs, projects and research to discover. Your little MRI companion comes along.</p><p>Click the ground to walk, drag to look around, and scroll or pinch to zoom. You can also use <strong>WASD</strong> or the <strong>arrow keys</strong> while the world is focused. The camera follows you.</p><p>Select a framed picture to look closer, or press <strong>E</strong> or <strong>Enter</strong> beside it. <strong>Village</strong> is a shortcut back outside; <strong>Escape</strong> closes a note.</p><p>Press <strong>B</strong> for your companion backpack, or <strong>J</strong> for the field journal. MRI Scout follows by default; take other companions along whenever you like.</p><p>Use the <strong>Travel</strong> choices on the left to walk, cycle, drive, ride a horse or travel with Charizard. Rides park at the door; explore rooms on foot. Your companions follow along.</p><p>Choose <strong>First person</strong> or <strong>Third person</strong> at the top right, or press <strong>V</strong>. In first person, <strong>W/S</strong> move forward/back, <strong>A/D</strong> turn, and dragging looks around. On a phone, use the on-screen arrows to move and turn. When riding, hold <strong>R</strong> or the <strong>Hold to reverse</strong> button to back up.</p><p>Turn on <strong>Music</strong> for a gentle soundtrack. It pauses when you switch away from this tab.</p><button id="start-exploring" class="primary-button">Let’s explore <span aria-hidden="true">→</span></button></dialog>
 <noscript><div class="noscript-note"><h2>Explore Ke’s work</h2><p>Ke Wang is a Senior Applied Scientist on Adobe’s Foundation Model team, working on reinforcement learning and post-training for multimodal foundation models.</p><p>Visit the <a href="/cv/">CV</a>, <a href="/publications/">publications</a>, <a href="/slides/mrfoundry/">MRFoundry tutorial</a>, or <a href="mailto:kewang@adobe.com">email Ke about summer 2027 internships</a>.</p></div></noscript>
 <script src="../data.js"></script>
 <script src="./companion-catalog.js"></script>
 <script src="./interface.js"></script>
-<script type="module" src="./world.js?v=20261023-travel-rail"></script>
-<script type="module">import {initTravelUI} from './travel-ui.js'; initTravelUI();</script>
+<script type="module" src="./world.js?v=20261023-rides-perspective"></script>
+<script type="module">import {initTravelUI} from './travel-ui.js?v=20261023-rides-perspective'; initTravelUI();</script>
 <script type="module">import {initAmbientAudio} from "./ambient-audio.js"; initAmbientAudio(document.getElementById("music-toggle"));</script>
 </body>
 </html>
