@@ -22,6 +22,7 @@ layout: default
         </header>
 
         <article>
+          {% if page.portfolio_entrances %}<div class="profile-intro">{% endif %}
           {% if page.profile -%}
           <div class="profile float-{%- if page.profile.align == 'left' -%}left{%- else -%}right{%- endif -%}">
             {%- if page.profile.image %}
@@ -46,6 +47,11 @@ layout: default
             {%- endif %}
           </div>
           {%- endif %}
+
+          {% if page.portfolio_entrances %}
+            {% include portfolio-entrances.html %}
+          </div>
+          {% endif %}
 
           <div class="clearfix">
             {{ content }}
