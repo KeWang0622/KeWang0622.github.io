@@ -20,7 +20,7 @@
     <title>publications | Ke  Wang</title>
     <meta name="author" content="Ke  Wang">
     <meta name="description" content="publications">
-    <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website">
+    <meta name="keywords" content="Ke Wang, Adobe, multimodal foundation models, reinforcement learning, post-training, computational imaging, MRI, MRFoundry, UC Berkeley">
 
 
     <!-- Bootstrap & MDB -->
@@ -138,8 +138,224 @@
 <p>An up-to-date list is available on <a href="https://scholar.google.com/citations?user=Iz3m3v4AAAAJ&amp;hl=en" target="_blank" rel="noopener noreferrer">Google Scholar</a>.</p>
 
 <div class="publications">
-  <h2 class="year">2023</h2>
-  <ol class="bibliography">
+
+<h2 class="bibliography">2026</h2>
+<ol class="bibliography">
+<li>
+<!-- _layouts/bib.html -->
+<div class="row">
+  <div class="col-sm-2 abbr"><abbr class="badge">CVPR</abbr></div>
+
+  <!-- Entry bib key -->
+  <div id="you2025photoframer" class="col-sm-8 col-md-9">
+    <!-- Title -->
+    <div class="title">PhotoFramer: Multi-modal Image Composition Instruction</div>
+    <!-- Author -->
+    <div class="author">
+      
+
+      Zhiyuan You, <em>Ke Wang</em>, He Zhang, Xin Cai, and
+      <span class="more-authors" title="click to view 4 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '4 more authors' ? 'Jinjin Gu, Tianfan Xue, Chao Dong, Zhoutong Zhang' : '4 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">4 more authors</span>
+</div>
+
+    <!-- Journal/Book title and date -->
+    
+    
+    <div class="periodical">
+      <em>In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</em>, Jun 2026
+    </div>
+    <div class="periodical">
+      
+    </div>
+
+    <!-- Links/Buttons -->
+    <div class="links">
+      <a class="abstract btn btn-sm z-depth-0" role="button">Abs</a>
+      <a href="https://zhiyuanyou.github.io/photoframer/" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Project Page</a>
+      <a href="https://openaccess.thecvf.com/content/CVPR2026/html/You_PhotoFramer_Multi-modal_Image_Composition_Instruction_CVPR_2026_paper.html" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">URL</a>
+      <a href="http://arxiv.org/abs/2512.00993" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
+      <a href="https://openaccess.thecvf.com/content/CVPR2026/papers/You_PhotoFramer_Multi-modal_Image_Composition_Instruction_CVPR_2026_paper.pdf" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">PDF</a>
+      <a href="https://github.com/zhiyuanyou/PhotoFramer-Code" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Code</a>
+    </div>
+    
+    <div class="badges">
+    </div>
+
+    <!-- Hidden abstract block -->
+    <div class="abstract hidden">
+      <p>Composition matters during the photo-taking process, yet many casual users struggle to frame well-composed images. To provide composition guidance, we introduce PhotoFramer, a multi-modal composition instruction framework. Given a poorly composed image, PhotoFramer first describes how to improve the composition in natural language and then generates a well-composed example image. To train such a model, we curate a large-scale dataset. Inspired by how humans take photos, we organize composition guidance into a hierarchy of sub-tasks: shift, zoom-in, and view-change tasks. Shift and zoom-in data are sampled from existing cropping datasets, while view-change data are obtained via a two-stage pipeline. First, we sample pairs with varying viewpoints from multi-view datasets, and train a degradation model to transform well-composed photos into poorly composed ones. Second, we apply this degradation model to expert-taken photos to synthesize poor images to form training pairs. Using this dataset, we finetune a model that jointly processes and generates both text and images, enabling actionable textual guidance with illustrative examples. Extensive experiments demonstrate that textual instructions effectively steer image composition, and coupling them with exemplars yields consistent improvements over exemplar-only baselines. PhotoFramer offers a practical step toward composition assistants that make expert photographic priors accessible to everyday users.</p>
+    </div>
+  </div>
+</div>
+</li>
+<li>
+<!-- _layouts/bib.html -->
+<div class="row">
+  <div class="col-sm-2 abbr"><abbr class="badge">CVPR</abbr></div>
+
+  <!-- Entry bib key -->
+  <div id="galor2026hist2style" class="col-sm-8 col-md-9">
+    <!-- Title -->
+    <div class="title">Hist2Style: Histogram-Guided Stylization with Bilateral Grids</div>
+    <!-- Author -->
+    <div class="author">
+      
+
+      Dekel Galor, Adam Pikielny, Zhoutong Zhang, <em>Ke Wang</em>, and
+      <span class="more-authors" title="click to view 3 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '3 more authors' ? 'Laura Waller, Jiawen Chen, Ilya Chugunov' : '3 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">3 more authors</span>
+</div>
+
+    <!-- Journal/Book title and date -->
+    
+    
+    <div class="periodical">
+      <em>In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</em>, Jun 2026
+    </div>
+    <div class="periodical">
+      
+    </div>
+
+    <!-- Links/Buttons -->
+    <div class="links">
+      <a href="https://dgalor.github.io/hist2style/" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Project Page</a>
+      <a href="http://arxiv.org/abs/2606.01819" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
+      <a href="https://openaccess.thecvf.com/content/CVPR2026/papers/Galor_Hist2Style_Histogram-Guided_Stylization_with_Bilateral_Grids_CVPR_2026_paper.pdf" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">PDF</a>
+    </div>
+    
+    <div class="badges">
+    </div>
+
+    
+  </div>
+</div>
+</li>
+<li>
+<!-- _layouts/bib.html -->
+<div class="row">
+  <div class="col-sm-2 abbr"><abbr class="badge">CVPR</abbr></div>
+
+  <!-- Entry bib key -->
+  <div id="rim2026gyro" class="col-sm-8 col-md-9">
+    <!-- Title -->
+    <div class="title">Gyro-based Deep Video Deblurring</div>
+    <!-- Author -->
+    <div class="author">
+      
+
+      Jaesung Rim, Woohyeok Kim, Haeyun Lee, Heemin Yang, and
+      <span class="more-authors" title="click to view 2 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '2 more authors' ? 'Ke Wang, Sunghyun Cho' : '2 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">2 more authors</span>
+</div>
+
+    <!-- Journal/Book title and date -->
+    
+    
+    <div class="periodical">
+      <em>In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</em>, 2026
+    </div>
+    <div class="periodical">
+      
+    </div>
+
+    <!-- Links/Buttons -->
+    <div class="links">
+      <a href="https://cg.postech.ac.kr/researches/GyroDVD/" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Project Page</a>
+      <a href="https://github.com/rimchang/GyroDVD" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Code</a>
+    </div>
+    
+    <div class="badges">
+    </div>
+
+    
+  </div>
+</div>
+</li>
+</ol>
+<h2 class="bibliography">2024</h2>
+<ol class="bibliography"><li>
+<!-- _layouts/bib.html -->
+<div class="row">
+  <div class="col-sm-2 abbr"><abbr class="badge">ICME</abbr></div>
+
+  <!-- Entry bib key -->
+  <div id="liu2024imatting" class="col-sm-8 col-md-9">
+    <!-- Title -->
+    <div class="title">I-Matting: Improved Trimap-Free Image Matting</div>
+    <!-- Author -->
+    <div class="author">
+      
+
+      Zichuan Liu, <em>Ke Wang</em>, Mingyuan Wu, Lantao Yu, and
+      <span class="more-authors" title="click to view 2 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '2 more authors' ? 'Klara Nahrstedt, Xin Lu' : '2 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">2 more authors</span>
+</div>
+
+    <!-- Journal/Book title and date -->
+    
+    
+    <div class="periodical">
+      <em>In 2024 IEEE International Conference on Multimedia and Expo (ICME)</em>
+    </div>
+    <div class="periodical">
+      
+    </div>
+
+    <!-- Links/Buttons -->
+    <div class="links">
+      <a href="https://doi.org/10.1109/ICME57554.2024.10687689" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">URL</a>
+    </div>
+    
+    <div class="badges">
+    </div>
+
+    
+  </div>
+</div>
+</li></ol>
+<h2 class="bibliography">2023</h2>
+<ol class="bibliography">
 <li>
 <!-- _layouts/bib.html -->
 <div class="row">
@@ -176,7 +392,7 @@
   <!-- Entry bib key -->
   <div id="phdthesiskw" class="col-sm-8 col-md-9">
     <!-- Title -->
-    <div class="title">PhD Thesis: Magnetic Resonance Imaging with Greater Fidelity and Efficiency</div>
+    <div class="title">Magnetic Resonance Image Reconstruction with Greater Fidelity and Efficiency</div>
     <!-- Author -->
     <div class="author">
       
@@ -366,7 +582,7 @@
       <a href="https://kewang0622.github.io/sprih/" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Project Page</a>
       <a href="https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_Semi-Supervised_Parametric_Real-World_Image_Harmonization_CVPR_2023_paper.pdf" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">PDF</a>
       <a href="https://github.com/adobe/PIH/" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Code</a>
-      <a href="http://127.0.0.1:4000/cvpr23_poster_8236.pdf" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Poster</a>
+      <a href="https://kewang0622.github.io/cvpr23_poster_8236.pdf" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Poster</a>
     </div>
     
     <div class="badges">
@@ -449,7 +665,7 @@
     <div class="links">
       <a class="abstract btn btn-sm z-depth-0" role="button">Abs</a>
       <a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/mrm.29766" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">URL</a>
-      <a href="http://arxiv.org/abs/https://arxiv.org/abs/2212.10817" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
+      <a href="http://arxiv.org/abs/2212.10817" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
     </div>
     
     <div class="badges">
@@ -499,9 +715,8 @@
 </div>
 </li>
 </ol>
-
-  <h2 class="year">2022</h2>
-  <ol class="bibliography">
+<h2 class="bibliography">2022</h2>
+<ol class="bibliography">
 <li>
 <!-- _layouts/bib.html -->
 <div class="row">
@@ -572,7 +787,7 @@
     <div class="links">
       <a class="abstract btn btn-sm z-depth-0" role="button">Abs</a>
       <a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/mrm.29227" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">URL</a>
-      <a href="http://arxiv.org/abs/https://arxiv.org/abs/2108.12460" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
+      <a href="http://arxiv.org/abs/2108.12460" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
       <a href="https://github.com/mikgroup/UFLoss" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Code</a>
     </div>
     
@@ -729,7 +944,7 @@
       <a class="abstract btn btn-sm z-depth-0" role="button">Abs</a>
       <a href="https://www.youtube.com/watch?v=sGJQqqpOwNs&amp;t=68s&amp;ab_channel=ESMRMB" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Video</a>
       <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9060447/" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">URL</a>
-      <a href="http://arxiv.org/abs/https://arxiv.org/abs/2109.08237" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
+      <a href="http://arxiv.org/abs/2109.08237" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
       <a href="https://github.com/mikgroup/data_crimes" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Code</a>
     </div>
     
@@ -842,9 +1057,8 @@
 </div>
 </li>
 </ol>
-
-  <h2 class="year">2021</h2>
-  <ol class="bibliography">
+<h2 class="bibliography">2021</h2>
+<ol class="bibliography">
 <li>
 <!-- _layouts/bib.html -->
 <div class="row">
@@ -916,7 +1130,7 @@
       <a class="abstract btn btn-sm z-depth-0" role="button">Abs</a>
       <a href="https://www.youtube.com/watch?v=zkCjlOnURSc" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Video</a>
       <a href="https://link.springer.com/chapter/10.1007/978-3-030-87231-1_45" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">URL</a>
-      <a href="http://arxiv.org/abs/https://arxiv.org/abs/2103.04003" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
+      <a href="http://arxiv.org/abs/2103.04003" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
       <a href="https://github.com/mikgroup/MEL_MRI" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">Code</a>
       <a href="/assets/pdf/MICCAI.pdf" class="btn btn-sm z-depth-0" role="button" target="_blank" rel="noopener noreferrer">Poster</a>
     </div>
@@ -1166,7 +1380,7 @@
 
     <!-- Links/Buttons -->
     <div class="links">
-      <a href="http://arxiv.org/abs/https://arxiv.org/pdf/2103.04566.pdf" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
+      <a href="http://arxiv.org/abs/2103.04566" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
     </div>
     
     <div class="badges">
@@ -1177,9 +1391,8 @@
 </div>
 </li>
 </ol>
-
-  <h2 class="year">2020</h2>
-  <ol class="bibliography"><li>
+<h2 class="bibliography">2020</h2>
+<ol class="bibliography"><li>
 <!-- _layouts/bib.html -->
 <div class="row">
   <div class="col-sm-2 preview">
@@ -1261,9 +1474,8 @@
   </div>
 </div>
 </li></ol>
-
-  <h2 class="year">2019</h2>
-  <ol class="bibliography">
+<h2 class="bibliography">2019</h2>
+<ol class="bibliography">
 <li>
 <!-- _layouts/bib.html -->
 <div class="row">
@@ -1370,9 +1582,8 @@
 </div>
 </li>
 </ol>
-
-  <h2 class="year">2018</h2>
-  <ol class="bibliography">
+<h2 class="bibliography">2018</h2>
+<ol class="bibliography">
 <li>
 <!-- _layouts/bib.html -->
 <div class="row">
@@ -1413,7 +1624,7 @@
 
     <!-- Links/Buttons -->
     <div class="links">
-      <a href="http://arxiv.org/abs/https://arxiv.org/abs/1809.01318" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
+      <a href="http://arxiv.org/abs/1809.01318" class="btn btn-sm z-depth-0" role="button" rel="external nofollow noopener" target="_blank">arXiv</a>
     </div>
     
     <div class="badges">
@@ -1473,9 +1684,8 @@
 </div>
 </li>
 </ol>
-
-  <h2 class="year">2017</h2>
-  <ol class="bibliography"><li>
+<h2 class="bibliography">2017</h2>
+<ol class="bibliography"><li>
 <!-- _layouts/bib.html -->
 <div class="row">
   <div class="col-sm-2 abbr"><abbr class="badge">ISMRM</abbr></div>
@@ -1525,7 +1735,6 @@
 </div>
 </li></ol>
 
-
 </div>
 
     </article>
@@ -1538,7 +1747,7 @@
     <footer class="fixed-bottom">
       <div class="container mt-0">
         © Copyright 2026 Ke  Wang. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>.
-Last updated: October 12, 2026.
+Last updated: October 23, 2026.
       </div>
     </footer>
 
