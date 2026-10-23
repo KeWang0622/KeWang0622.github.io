@@ -83,7 +83,7 @@ window.KW_DATA = {
       "title": "I-Matting: Improved trimap-free image matting",
       "authors": "Z Liu, K Wang, M Wu, L Yu, K Nahrstedt, X Lu",
       "role": "co-author",
-      "url": "https://ieeexplore.ieee.org/document/10687801",
+      "url": "https://doi.org/10.1109/ICME57554.2024.10687689",
       "tldr": "Trimap-free matting improvements."
     },
     {

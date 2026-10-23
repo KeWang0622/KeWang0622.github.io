@@ -3,7 +3,7 @@ layout: default
 ---
 
 <!-- about.html -->
-      <div class="post">
+      <div class="post about-page">
         <header class="post-header">
           <h1 class="post-title">
             {% if site.title == "blank" -%}
@@ -26,6 +26,7 @@ layout: default
           <div class="profile float-{%- if page.profile.align == 'left' -%}left{%- else -%}right{%- endif -%}">
             {%- if page.profile.image %}
               {%- assign profile_image_path = page.profile.image | prepend: 'assets/img/' -%}
+              {%- assign profile_image_alt = site.first_name | append: ' ' | append: site.last_name -%}
 
               {% if page.profile.image_circular %}
                 {%- assign profile_image_class = "img-fluid z-depth-1 rounded-circle" -%}
@@ -36,7 +37,8 @@ layout: default
               {% include figure.html
               path=profile_image_path
               class=profile_image_class
-              alt=page.profile.image -%}
+              responsive=false
+              alt=profile_image_alt -%}
             {% endif -%}
             {%- if page.profile.address %}
             <div class="address d-none d-md-block">

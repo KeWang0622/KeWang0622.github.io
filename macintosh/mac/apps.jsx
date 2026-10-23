@@ -121,7 +121,7 @@ function Publications({initialQuery=''}){
   </div>;
 }
 
-function ResearchLab(){return <div className="research-lab"><div className="lab-hero"><img src="/assets/img/mri-mascot.png" alt="MRFoundry MRI scanner mascot"/><div style={{minWidth:0}}><div className="inspector-label">OPEN THE RESEARCH NOTEBOOK</div><h1><img src="/assets/img/mrfoundry-wordmark-light.svg" width="260" height="48" alt="MRFoundry" style={{display:'block',width:260,maxWidth:'100%',height:'auto',objectFit:'contain',filter:'none'}}/></h1><p>A question. Several skills. Scientific evidence.</p></div></div><p>Explore how an agent connects acquisition, reconstruction and quantitative analysis. The slides include interactive coil maps, echo simulations and radial reconstruction.</p><div className="paper-actions"><a className="mac-button primary" href="/slides/mrfoundry/">Open interactive tutorial ↗</a><a className="mac-button" href="https://github.com/KeWang0622/MRFoundry" target="_blank" rel="noreferrer">GitHub ↗</a></div><div className="lab-index"><span>01 / Agent + skills</span><span>02 / Acquisition + reconstruction</span><span>03 / Experiments + evidence</span></div><p className="data-stamp">Interactive tutorial · runs in your browser · analytic teaching simulations</p></div>;}
+function ResearchLab(){return <div className="research-lab"><div className="lab-hero"><img src="/assets/img/mri-mascot.png" alt="MRFoundry MRI scanner mascot"/><div style={{minWidth:0}}><div className="inspector-label">MRI KNOWLEDGE FOR CODING AGENTS</div><h1><img src="/assets/img/mrfoundry-wordmark-light.svg" width="260" height="48" alt="MRFoundry" style={{display:'block',width:260,maxWidth:'100%',height:'auto',objectFit:'contain',filter:'none'}}/></h1><p>A question. Several skills. Scientific evidence.</p></div></div><p>Start with a research question. An agent consults the relevant MRI skills, uses established tools, and brings the results back for review.</p><div className="paper-actions"><a className="mac-button primary" href="/mrfoundry/examples/">See it in action ↗</a><a className="mac-button" href="/slides/mrfoundry/">Interactive tutorial ↗</a><a className="mac-button" href="https://github.com/KeWang0622/MRFoundry" target="_blank" rel="noreferrer">GitHub ↗</a></div><div className="lab-index"><span>01 / Ask a research question</span><span>02 / Connect skills and scientific tools</span><span>03 / Inspect evidence, refine, and record lessons</span></div><p className="data-stamp">Tutorial: interactive teaching models. Examples: recorded workflows with linked code and evidence.</p></div>;}
 
 function Metrics(){
   const m = window.KW_DATA.metrics;
@@ -363,7 +363,7 @@ function AboutThisMac(){
         <div className="row"><span>Largest Unused Block</span><span>6,144 K</span></div>
         <div className="row"><span>Applied Research</span><span>∞ K</span></div>
         <div className="row"><span>Citations</span><span>{window.KW_DATA.metrics.citations}</span></div>
-        <div className="row"><span>h-index</span><span>10</span></div>
+        <div className="row"><span>h-index</span><span>{window.KW_DATA.metrics.h_index}</span></div>
         <div className="row"><span>Coffee</span><span>2,048 K</span></div>
         <div style={{marginTop:14, fontSize:11, textAlign:'center'}}>
           © Ke Wang · 2018–2026 · Tsinghua → Berkeley → Samsung → Adobe → Pika

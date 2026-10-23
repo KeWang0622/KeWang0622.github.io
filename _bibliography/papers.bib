@@ -5,7 +5,7 @@
 
 @phdthesis{phdthesiskw,
   author = {Wang, Ke},
-  title = {PhD Thesis: Magnetic Resonance Imaging with Greater Fidelity and Efficiency},
+  title = {Magnetic Resonance Image Reconstruction with Greater Fidelity and Efficiency},
   school = {University of California, Berkeley},
   abbr = "Thesis",
   abstract = {Magnetic Resonance Imaging (MRI) is an effective medical imaging modality, offering excellent soft tissue contrast, versatile orientation capabilities, and no ionizing radiation exposure. However, its inherent physics constraints lead to time-consuming data acquisition and prolonged scan times. To reduce scan time, recently, deep learning (DL) has achieved notable success in reconstructing high-quality MR images from under-sampled data, surpassing conventional non-learned approaches. Despite this progress, challenges such as hand-crafted loss functions, high computational costs, and limited training data remain. In this dissertation, I will present a series of projects focused on enhancing fidelity and efficiency in MRI reconstruction. I will first introduce a supervised learning method that synthesizes multi-contrast MR images from a single MRF scan. Next, I will present a novel feature loss designed to preserve perceptual similarity, demonstrating its effectiveness in high-fidelity image reconstruction. Following that, I will touch upon memory-efficient learning for high-dimensional MRI reconstruction and present a novel framework for rigorous uncertainty estimation. Lastly, I will introduce a novel complex-valued representation tailored for tasks with limited training data.},
@@ -15,15 +15,56 @@
   url= "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2023/EECS-2023-178.html"
 }
 
-@article{you2025photoframer,
+@inproceedings{you2025photoframer,
   title={PhotoFramer: Multi-modal Image Composition Instruction},
   author={You, Zhiyuan and Wang, Ke and Zhang, He and Cai, Xin and Gu, Jinjin and Xue, Tianfan and Dong, Chao and Zhang, Zhoutong},
-  journal={arXiv preprint arXiv:2512.00993},
-  year={2025},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2026},
+  month={June},
+  pages={10197--10207},
+  abbr={CVPR},
   selected={true},
-  arxiv="https://arxiv.org/abs/2512.00993",
+  arxiv={2512.00993},
+  url={https://openaccess.thecvf.com/content/CVPR2026/html/You_PhotoFramer_Multi-modal_Image_Composition_Instruction_CVPR_2026_paper.html},
+  pdf={https://openaccess.thecvf.com/content/CVPR2026/papers/You_PhotoFramer_Multi-modal_Image_Composition_Instruction_CVPR_2026_paper.pdf},
+  code={https://github.com/zhiyuanyou/PhotoFramer-Code},
   project="https://zhiyuanyou.github.io/photoframer/",
   abstract={Composition matters during the photo-taking process, yet many casual users struggle to frame well-composed images. To provide composition guidance, we introduce PhotoFramer, a multi-modal composition instruction framework. Given a poorly composed image, PhotoFramer first describes how to improve the composition in natural language and then generates a well-composed example image. To train such a model, we curate a large-scale dataset. Inspired by how humans take photos, we organize composition guidance into a hierarchy of sub-tasks: shift, zoom-in, and view-change tasks. Shift and zoom-in data are sampled from existing cropping datasets, while view-change data are obtained via a two-stage pipeline. First, we sample pairs with varying viewpoints from multi-view datasets, and train a degradation model to transform well-composed photos into poorly composed ones. Second, we apply this degradation model to expert-taken photos to synthesize poor images to form training pairs. Using this dataset, we finetune a model that jointly processes and generates both text and images, enabling actionable textual guidance with illustrative examples. Extensive experiments demonstrate that textual instructions effectively steer image composition, and coupling them with exemplars yields consistent improvements over exemplar-only baselines. PhotoFramer offers a practical step toward composition assistants that make expert photographic priors accessible to everyday users.}
+}
+
+@inproceedings{galor2026hist2style,
+  title={Hist2Style: Histogram-Guided Stylization with Bilateral Grids},
+  author={Galor, Dekel and Pikielny, Adam and Zhang, Zhoutong and Wang, Ke and Waller, Laura and Chen, Jiawen and Chugunov, Ilya},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2026},
+  month={June},
+  pages={29717--29726},
+  abbr={CVPR},
+  selected={true},
+  project={https://dgalor.github.io/hist2style/},
+  pdf={https://openaccess.thecvf.com/content/CVPR2026/papers/Galor_Hist2Style_Histogram-Guided_Stylization_with_Bilateral_Grids_CVPR_2026_paper.pdf},
+  arxiv={2606.01819}
+}
+
+@inproceedings{rim2026gyro,
+  title={Gyro-based Deep Video Deblurring},
+  author={Rim, Jaesung and Kim, Woohyeok and Lee, Haeyun and Yang, Heemin and Wang, Ke and Cho, Sunghyun},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2026},
+  abbr={CVPR},
+  selected={true},
+  project={https://cg.postech.ac.kr/researches/GyroDVD/},
+  code={https://github.com/rimchang/GyroDVD}
+}
+
+@inproceedings{liu2024imatting,
+  title={I-Matting: Improved Trimap-Free Image Matting},
+  author={Liu, Zichuan and Wang, Ke and Wu, Mingyuan and Yu, Lantao and Nahrstedt, Klara and Lu, Xin},
+  booktitle={2024 IEEE International Conference on Multimedia and Expo (ICME)},
+  year={2024},
+  abbr={ICME},
+  doi={10.1109/ICME57554.2024.10687689},
+  url={https://doi.org/10.1109/ICME57554.2024.10687689}
 }
 
 @inproceedings{de2023resonet,
@@ -49,7 +90,7 @@
   code = "https://github.com/adobe/PIH/",
   pdf= "https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_Semi-Supervised_Parametric_Real-World_Image_Harmonization_CVPR_2023_paper.pdf",
   project= "https://kewang0622.github.io/sprih/",
-  poster="http://127.0.0.1:4000/cvpr23_poster_8236.pdf",
+  poster="https://kewang0622.github.io/cvpr23_poster_8236.pdf",
   video="https://www.youtube.com/watch?v=SGAyDbJPyps",
   abstract={Learning-based image harmonization techniques are usually trained to undo synthetic random global transformations applied to a masked foreground in a single ground truth photo. This simulated data does not model many of the important appearance mismatches (illumination, object boundaries, etc.) between foreground and background in real composites, leading to models that do not generalize well and cannot model complex local changes. We propose a new semi-supervised training strategy that addresses this problem and lets us learn complex local appearance harmonization from unpaired real composites, where foreground and background come from different images. Our model is fully parametric. It uses RGB curves to correct the global colors and tone and a shading map to model local variations. Our method outperforms previous work on established benchmarks and real composites, as shown in a user study, and processes high-resolution images interactively.},
 }
@@ -63,7 +104,7 @@
   year={2023},
   publisher={Wiley Online Library},
   url= "https://onlinelibrary.wiley.com/doi/abs/10.1002/mrm.29766",
-  arxiv="https://arxiv.org/abs/2212.10817",
+  arxiv={2212.10817},
   abstract={Magnetic Resonance Fingerprinting (MRF) is an efficient quantitative MRI technique that can extract important tissue and system parameters such as T1, T2, B0, and B1 from a single scan. This property also makes it attractive for retrospectively synthesizing contrast-weighted images. In general, contrast-weighted images like T1-weighted, T2-weighted, etc., can be synthesized directly from parameter maps through spin-dynamics simulation (i.e., Bloch or Extended Phase Graph models). However, these approaches often exhibit artifacts due to imperfections in the mapping, the sequence modeling, and the data acquisition. Here we propose a supervised learning-based method that directly synthesizes contrast-weighted images from the MRF data without going through the quantitative mapping and spin-dynamics simulation. To implement our direct contrast synthesis (DCS) method, we deploy a conditional Generative Adversarial Network (GAN) framework and propose a multi-branch U-Net as the generator. The input MRF data are used to directly synthesize T1-weighted, T2-weighted, and fluid-attenuated inversion recovery (FLAIR) images through supervised training on paired MRF and target spin echo-based contrast-weighted scans. In-vivo experiments demonstrate excellent image quality compared to simulation-based contrast synthesis and previous DCS methods, both visually as well as by quantitative metrics. We also demonstrate cases where our trained model is able to mitigate in-flow and spiral off-resonance artifacts that are typically seen in MRF reconstructions and thus more faithfully represent conventional spin echo-based contrast-weighted images.}
 }
 
@@ -80,7 +121,7 @@
   selected={true},
   code = "https://github.com/mikgroup/UFLoss",
   url= "https://onlinelibrary.wiley.com/doi/abs/10.1002/mrm.29227",
-  arxiv="https://arxiv.org/abs/2108.12460",
+  arxiv={2108.12460},
   abstract="Purpose: To improve reconstruction fidelity of fine structures and textures in deep learning (DL) based reconstructions.
   Methods: A novel patch-based Unsupervised Feature Loss (UFLoss) is proposed and incorporated into the training of DL-based reconstruction frameworks in order to preserve perceptual similarity and high-order statistics. The UFLoss provides instance-level discrimination by mapping similar instances to similar low-dimensional feature vectors and is trained without any human annotation. By adding an additional loss function on the low-dimensional feature space during training, the reconstruction frameworks from under-sampled or corrupted data can reproduce more realistic images that are closer to the original with finer textures, sharper edges, and improved overall image quality. The performance of the proposed UFLoss is demonstrated on unrolled networks for accelerated 2D and 3D knee MRI reconstruction with retrospective under-sampling. Quantitative metrics including NRMSE, SSIM, and our proposed UFLoss were used to evaluate the performance of the proposed method and compare it with others.
   Results: In-vivo experiments indicate that adding the UFLoss encourages sharper edges and more faithful contrasts compared to traditional and learning-based methods with pure l2 loss. More detailed textures can be seen in both 2D and 3D knee MR images. Quantitative results indicate that reconstruction with UFLoss can provide comparable NRMSE and a higher SSIM while achieving a much lower UFLoss value.
@@ -95,7 +136,7 @@
   year={2021},
   organization={Springer},
   url={https://link.springer.com/chapter/10.1007/978-3-030-87231-1_45},
-  arxiv="https://arxiv.org/abs/2103.04003",
+  arxiv={2103.04003},
   abstract="Deep learning (DL) based unrolled reconstructions have shown state-of-the-art performance for under-sampled magnetic resonance imaging (MRI). Similar to compressed sensing, DL can leverage high-dimensional data (e.g. 3D, 2D+time, 3D+time) to further improve performance. However, network size and depth are currently limited by the GPU memory required for backpropagation. Here we use a memory-efficient learning (MEL) framework which favorably trades off storage with a manageable increase in computation during training. Using MEL with multi-dimensional data, we demonstrate improved image reconstruction performance for in-vivo 3D MRI and 2D+time cardiac cine MRI. MEL uses far less GPU memory while marginally increasing the training time, which enables new applications of DL to high-dimensional MRI.",
   video="https://www.youtube.com/watch?v=zkCjlOnURSc",
   poster="MICCAI.pdf",
@@ -130,7 +171,7 @@
   code="https://github.com/mikgroup/data_crimes",
   url="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9060447/",
   abstract="Although open databases are an important resource in the current deep learning (DL) era, they are sometimes used “off label”: Data published for one task are used to train algorithms for a different one. This work aims to highlight that this common practice may lead to biased, overly optimistic results. We demonstrate this phenomenon for inverse problem solvers and show how their biased performance stems from hidden data-processing pipelines. We describe two processing pipelines typical of open-access databases and study their effects on three well-established algorithms developed for MRI reconstruction: compressed sensing, dictionary learning, and DL. Our results demonstrate that all these algorithms yield systematically biased results when they are naively trained on seemingly appropriate data: The normalized rms error improves consistently with the extent of data processing, showing an artificial improvement of 25 to 48% in some cases. Because this phenomenon is not widely known, biased results sometimes are published as state of the art; we refer to that as implicit “data crimes.” This work hence aims to raise awareness regarding naive off-label usage of big data and reveal the vulnerability of modern inverse problem solvers to the resulting bias.",
-  arxiv="https://arxiv.org/abs/2109.08237",
+  arxiv={2109.08237},
   video="https://www.youtube.com/watch?v=sGJQqqpOwNs&t=68s&ab_channel=ESMRMB",
   }
 
@@ -231,7 +272,7 @@
   author={Wang, Ke and Gong, Enhao and Zhang, Yuxin and Banerjee, Suchadrima and Zaharchuk, Greg and Pauly, John},
   journal={arXiv preprint arXiv:2103.04566},
   year={2021},
-  arxiv={https://arxiv.org/pdf/2103.04566.pdf},
+  arxiv={2103.04566},
   preview = "outcomes.jpg",
 }
 @article{wang2018reconstruction,
@@ -240,7 +281,7 @@
   Wang, Ke and Song, Han and Zhang, Jiahui and Zhang, Xinran and Liao, Hongen},
   journal={arXiv preprint arXiv:1809.01318},
   year={2018},
-  arxiv={https://arxiv.org/abs/1809.01318},
+  arxiv={1809.01318},
   abbr = "ACCAS"
 }
 

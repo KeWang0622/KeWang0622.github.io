@@ -29,6 +29,13 @@ jobs:
       run: |
         npm install -g mermaid.cli
         bundle exec jekyll build
+    - name: Save pull request preview
+      if: github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: website-preview
+        path: _site
+        retention-days: 7
     - name: Deploy 🚀
       if: github.event_name != 'pull_request'
       uses: JamesIves/github-pages-deploy-action@v4
