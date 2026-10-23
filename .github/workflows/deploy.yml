@@ -20,6 +20,12 @@ jobs:
     steps:
     - name: Checkout 🛎️
       uses: actions/checkout@v3
+    - name: Set up navigation checks
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Check world movement and collision geometry
+      run: node --test pokemon/3d/*.test.mjs
     - name: Setup Ruby
       uses: ruby/setup-ruby@v1
       with:

@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from './lib/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
 
 export const WORLD_LIMIT=64;
-export const BRIDGE_XS=[-9,9,47];
+export { BRIDGE_XS } from './world-surfaces.js';
 export const POND={x:35,z:23,rx:6.2,rz:4.2,waterY:-.15};
 export function pondRadius(x,z){const dx=(x-POND.x)/POND.rx,dz=(z-POND.z)/POND.rz,a=Math.atan2(dz,dx);return Math.hypot(dx,dz)/(1+.08*Math.sin(a*3)+.04*Math.cos(a*5));}
 export const SCENIC_PLACES=[
@@ -13,7 +13,7 @@ export const SCENIC_PLACES=[
   {id:'terrace',title:'Hilltop Terrace',x:17,z:-53,w:9,d:7,height:2.48,entry:[17,-49.4],color:'#ad8960',note:'A lookout at the end of the northern walking trail.'}
 ];
 export function extensionRoadPoints(riverZ){return[
-  [[28,8],[42,9],[48,5],[47,riverZ(47)+3],[47,riverZ(47)],[47,riverZ(47)-3],[51.8,-11.6],[54,-11.6]],
+  [[28,8],[42,9],[48,5],[47,riverZ(47)+3.7],[47,riverZ(47)],[47,riverZ(47)-3.7],[51.8,-11.6],[54,-11.6]],
   [[22,-14.45],[32,-18],[43,-17],[51.8,-11.6]],
   [[-44,14],[-51,22],[-54,31],[-48,37.4]],
   [[-22,27.9],[-31,34],[-41,37],[-48,37.4]],
