@@ -3,7 +3,7 @@ import * as THREE from './lib/three.module.js';
 import { RoundedBoxGeometry } from './lib/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
 
-export function buildArrivalGround({scene,roads,groundHeight,riverZ,rand}) {
+export function buildArrivalGround({scene,roads,groundHeight,riverZ,rand,surfaceMaterials}) {
   const buckets=new Map();
   function stone(x,z,w,d,color,angle=0,height=.09){
     const g=new RoundedBoxGeometry(w,height,d,1,.025);
@@ -30,7 +30,7 @@ export function buildArrivalGround({scene,roads,groundHeight,riverZ,rand}) {
       if(i&&Math.abs(p.z-riverZ(p.x))>2.2){const j=i*2;ix.push(j-2,j-1,j,j-1,j+1,j);}
     }
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();
-    const path=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0xd7c4a1,map:gravel,roughness:1}));path.receiveShadow=true;scene.add(path);
+    const path=new THREE.Mesh(g,surfaceMaterials?.pathGravel||new THREE.MeshStandardMaterial({color:0xd7c4a1,map:gravel,roughness:1}));path.receiveShadow=true;scene.add(path);
     // Uneven dressed-stone edging on the arrival routes; distant paths stay quiet.
     const steps=Math.ceil(curve.getLength()/.54);
     for(let i=0;i<=steps;i++){
