@@ -6,6 +6,8 @@ window.KW_DATA = {
   "cn": "王 可",
   "email": "kewang0622@gmail.com",
   "workEmail": "kewang@adobe.com",
+  "workEmailDisplay": "kewang [at] adobe [dot] com",
+  "personalEmailDisplay": "kewang0622 [at] gmail [dot] com",
   "role": "Senior Applied Scientist",
   "team": "Adobe Foundation Model team",
   "focus": "Reinforcement learning and post-training for multimodal foundation models",
@@ -275,7 +277,7 @@ window.KW_DATA = {
       "Sep 2026 — present",
       "Senior Applied Scientist",
       "Adobe · Foundation Model team",
-      "Reinforcement learning and post-training for multimodal foundation models. Hosting research interns for summer 2027; reach out at kewang@adobe.com."
+      "Reinforcement learning and post-training for multimodal foundation models. Hosting research interns for summer 2027; reach out at kewang [at] adobe [dot] com."
     ],
     [
       "Former",

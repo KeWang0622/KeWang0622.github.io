@@ -83,7 +83,7 @@ function AboutMe(){
       <p><b>Summer 2027 research internships:</b> I’m actively looking to host
       research interns at Adobe, working on reinforcement learning and post-training
       for multimodal foundation models. Feel free to reach out at
-      {' '}<a href="mailto:kewang@adobe.com">kewang@adobe.com</a>.</p>
+      {' '}<a href="mailto:kewang@adobe.com">kewang [at] adobe [dot] com</a>.</p>
 
       <div className="statcards">
         <div className="sc"><b>{window.KW_DATA.metrics.citations}</b><span>CITATIONS</span></div>
@@ -109,8 +109,8 @@ function AboutMe(){
       <p style={{fontSize:12}}>
         <b>Scholar:</b> <a href="https://scholar.google.com/citations?user=Iz3m3v4AAAAJ" target="_blank">scholar.google.com/…/Iz3m3v4AAAAJ</a><br/>
         <b>Site:</b> <a href="https://kewang0622.github.io/" target="_blank">kewang0622.github.io</a><br/>
-        <b>Work / internships:</b> <a href="mailto:kewang@adobe.com">kewang@adobe.com</a><br/>
-        <b>Personal:</b> <a href="mailto:kewang0622@gmail.com">kewang0622@gmail.com</a>
+        <b>Work / internships:</b> <a href="mailto:kewang@adobe.com">kewang [at] adobe [dot] com</a><br/>
+        <b>Personal:</b> <a href="mailto:kewang0622@gmail.com">kewang0622 [at] gmail [dot] com</a>
       </p>
     </div>
   );
@@ -202,7 +202,7 @@ function CV(){
         <h1 style={{fontSize:22}}>KE WANG  ·  王 可</h1>
         <div style={{fontSize:12, marginTop:4}}>
           {d.role} · {d.team}<br/>
-          <a href={'mailto:'+d.workEmail}>{d.workEmail}</a> · kewang0622.github.io
+          <a href={'mailto:'+d.workEmail}>{d.workEmailDisplay}</a> · kewang0622.github.io
         </div>
       </div>
 
@@ -574,12 +574,12 @@ function Terminal(){
     let out = [];
     if(cmd==='help') out = ['commands: whoami, now, pubs, cites, advisors, stack, contact, fortune, clear'];
     else if(cmd==='whoami') out = [window.KW_DATA.name+' — '+window.KW_DATA.role+' · '+window.KW_DATA.team];
-    else if(cmd==='now') out = [window.KW_DATA.focus+'.', 'Hosting research interns for summer 2027. Reach out: '+window.KW_DATA.workEmail];
+    else if(cmd==='now') out = [window.KW_DATA.focus+'.', 'Hosting research interns for summer 2027. Reach out: '+window.KW_DATA.workEmailDisplay];
     else if(cmd==='pubs') out = [window.KW_DATA.publications.length+' curated works · CVPR, NeurIPS, PNAS, MRM, MICCAI, IEEE SPM'];
     else if(cmd==='cites') out = [window.KW_DATA.metrics.citations+' total · h-index '+window.KW_DATA.metrics.h_index+' · Google Scholar snapshot '+window.KW_DATA.updated];
     else if(cmd==='advisors') out = ['PhD: Miki Lustig (Berkeley EECS), Stella Yu (Michigan)', 'Earlier computational photography work: Marc Levoy’s team at Adobe'];
     else if(cmd==='stack') out = ['PyTorch · JAX · CUDA · Metal · Swift · Python · C++'];
-    else if(cmd==='contact') out = ['Work / internships: '+window.KW_DATA.workEmail, 'Personal: '+window.KW_DATA.email];
+    else if(cmd==='contact') out = ['Work / internships: '+window.KW_DATA.workEmailDisplay, 'Personal: '+window.KW_DATA.personalEmailDisplay];
     else if(cmd==='fortune') {
       const f = [
         'the best camera is the one you have trained.',
