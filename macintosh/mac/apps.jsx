@@ -15,16 +15,17 @@ const MetricBar = ({label, value, max}) => (
 
 const PROJECTS = [
  {name:'MRFoundry',type:'MRI RESEARCH SKILLS',text:'Connect research questions, specialist knowledge and scientific tools.',app:'research',icon:'Doc'},
+ ...window.KW_DATA.personalProjects.map(x=>({name:x.name,type:'PERSONAL OPEN SOURCE',text:x.description,url:x.url,icon:'Doc'})),
  {name:'PhotoFramer',type:'CVPR 2026',text:'Learn to frame better photographs with multimodal composition guidance.',url:'https://zhiyuanyou.github.io/photoframer/',icon:'Paint'},
  {name:'Hist2Style',type:'CVPR 2026',text:'Histogram-guided image stylization with bilateral grids.',url:'https://dgalor.github.io/hist2style/',icon:'Paint'},
  {name:'Project Indigo',type:'COMPUTATIONAL PHOTOGRAPHY',text:'Software-defined photography. My work: burst super-resolution.',url:'https://research.adobe.com/articles/indigo/indigo.html',icon:'MacFace'},
 ];
 function Finder({onOpen}){
  const [section,setSection]=useState('Start here');
- return <div className="finder-shell"><nav className="finder-sidebar" aria-label="Finder locations"><div className="disk-label">{Icons.Disk(28)}<b>Ke’s HD</b></div>{['Start here','Projects','Library','Desk accessories'].map(x=><button key={x} aria-pressed={section===x} onClick={()=>setSection(x)}>{x}</button>)}<div className="sidebar-foot">PERSONAL ARCHIVE<br/>San Francisco, CA<br/><br/>September 2026</div></nav><div className="finder-content">
+ return <div className="finder-shell"><nav className="finder-sidebar" aria-label="Finder locations"><div className="disk-label">{Icons.Disk(28)}<b>Ke’s HD</b></div>{['Start here','Projects','Library','Desk accessories'].map(x=><button key={x} aria-pressed={section===x} onClick={()=>setSection(x)}>{x}</button>)}<div className="sidebar-foot">PERSONAL ARCHIVE<br/>San Francisco, CA<br/><br/>October 2026</div></nav><div className="finder-content">
  <div className="finder-path">Ke’s HD <span>/ {section}</span><button aria-label="Search this Macintosh" onClick={()=>onOpen('launcher')}>Find… ⌘K</button></div>
- {section==='Start here'&&<><div className="finder-intro"><div><span className="eyebrow">RESEARCHER · BUILDER · IMAGING</span><h1>Hello, I’m Ke.<br/>Welcome to my<br/><em>Macintosh.</em></h1><p>I work at the intersection of imaging, machine learning and tools for discovery.</p><button className="mac-button" onClick={()=>onOpen('about')}>Read my story →</button></div><img src="assets/kw_ws.jpg" alt="Ke Wang outdoors"/></div><div className="finder-section-label">OPEN A FOLDER <span>Double-click the desktop. Click anything here.</span></div><div className="finder-shortcuts">{[['pubs','Publications',`${window.KW_DATA.publications.length} papers & other works`,'Folder'],['research','MRFoundry','Interactive MRI tutorial','Doc'],['metrics','Citations',`${window.KW_DATA.metrics.citations} · Scholar snapshot`,'Chooser']].map(([id,title,sub,icon])=><button key={id} onClick={()=>onOpen(id)}>{Icons[icon](32)}<b>{title}</b><small>{sub}</small></button>)}</div><div className="finder-foot"><span>Curiosity, filed under many folders.</span><a href="/">Visit the main site ↗</a></div></>}
- {section==='Projects'&&<><h1>Selected projects.</h1><p className="finder-deck">From computational photography to scientific research tools.</p><div className="project-files">{PROJECTS.map(x=><article key={x.name}>{Icons[x.icon](36)}<span className="eyebrow">{x.type}</span><h2>{x.name}</h2><p>{x.text}</p>{x.app?<button className="mac-button" onClick={()=>onOpen(x.app)}>Explore →</button>:<a className="mac-button" href={x.url} target="_blank" rel="noreferrer">Open project ↗</a>}</article>)}</div></>}
+ {section==='Start here'&&<><div className="finder-intro"><div><span className="eyebrow">RESEARCHER · BUILDER · IMAGING</span><h1>Hello, I’m Ke.<br/>Welcome to my<br/><em>Macintosh.</em></h1><p>Senior Applied Scientist at Adobe. I work on reinforcement learning and post-training for multimodal foundation models.</p><button className="mac-button" onClick={()=>onOpen('about')}>Read my story →</button></div><img src="assets/kw_ws.jpg" alt="Ke Wang outdoors"/></div><div className="finder-section-label">OPEN A FOLDER <span>Double-click the desktop. Click anything here.</span></div><div className="finder-shortcuts">{[['pubs','Publications',`${window.KW_DATA.publications.length} papers & other works`,'Folder'],['research','MRFoundry','Interactive MRI tutorial','Doc'],['metrics','Citations',`${window.KW_DATA.metrics.citations} · Scholar snapshot`,'Chooser']].map(([id,title,sub,icon])=><button key={id} onClick={()=>onOpen(id)}>{Icons[icon](32)}<b>{title}</b><small>{sub}</small></button>)}</div><div className="finder-foot"><span>Curiosity, filed under many folders.</span><a href="/">Visit the main site ↗</a></div></>}
+ {section==='Projects'&&<><h1>Selected projects.</h1><p className="finder-deck">Personal open-source projects, research, and computational photography.</p><div className="project-files">{PROJECTS.map(x=><article key={x.name}>{Icons[x.icon](36)}<span className="eyebrow">{x.type}</span><h2>{x.name}</h2><p>{x.text}</p>{x.app?<button className="mac-button" onClick={()=>onOpen(x.app)}>Explore →</button>:<a className="mac-button" href={x.url} target="_blank" rel="noreferrer">Open project ↗</a>}</article>)}</div></>}
  {section==='Library'&&<><h1>The research library.</h1><p className="finder-deck">Search the archive, collect a reading list, or follow the work over time.</p><div className="library-rows">{[['pubs','Publications','Search, preview, and save papers.'],['metrics','Citation metrics','A dated snapshot, with source links.'],['collabs','Collaborators','People behind the research.'],['career','Career & news','Milestones along the way.'],['cv','Curriculum vitae','Experience, education and service.'],['press','In the press','Research beyond the paper.']].map(([id,title,desc])=><button key={id} onClick={()=>onOpen(id)}>{Icons.Folder(28)}<span><b>{title}</b><small>{desc}</small></span><span>↗</span></button>)}</div></>}
  {section==='Desk accessories'&&<><h1>A little room to play.</h1><p className="finder-deck">The small pleasures of a personal computer.</p><div className="finder-shortcuts accessories">{[['paint','MacPaint','Paint'],['notepad','Note Pad','Notepad'],['calc','Calculator','Calc'],['terminal','Terminal','Terminal'],['alarm','Clock','Clock'],['tweaks','Control Panel','Control']].map(([id,title,icon])=><button key={id} onClick={()=>onOpen(id)}>{Icons[icon](36)}<b>{title}</b></button>)}</div></>}
  </div></div>;
@@ -37,7 +38,7 @@ function AboutMe(){
       <div className="hero-title">
         <div className="inner">
           <h1>Ke Wang  ·  王 可</h1>
-          <div className="sub">Head of Applied Research · Pika Labs</div>
+          <div className="sub">Senior Applied Scientist · Adobe Foundation Model team</div>
         </div>
       </div>
 
@@ -62,18 +63,27 @@ function AboutMe(){
         <div>
           <h2 className="sec">README.txt</h2>
           <p>I build systems that let machines <b>see, reason about, and create</b> images
-          and video. Today I lead applied research at <b>Pika Labs</b>, working on the
-          next generation of generative AI applications, including agent research behind <a href="https://www.pika.me/" target="_blank" rel="noreferrer">Pika.me</a>. Before Pika I shipped
-          computational-photography features with <b>Marc Levoy</b>'s team at Adobe
-          (<a href="https://research.adobe.com/articles/indigo/indigo.html" target="_blank">Project Indigo</a>),
-          and before that I was a senior research engineer at Samsung's MPI Lab.</p>
+          and video. I’m a <b>Senior Applied Scientist</b> on the <b>Adobe Foundation
+          Model team</b>, working on reinforcement learning and post-training for
+          multimodal foundation models.</p>
+
+          <p>Previously, I was <b>Head of Applied Research at Pika</b>, where I co-led
+          the agent research behind <a href="https://www.pika.me/" target="_blank" rel="noreferrer">Pika.me</a>.
+          Earlier, I developed burst super-resolution for <a href="https://research.adobe.com/articles/indigo/indigo.html" target="_blank" rel="noreferrer">Project Indigo</a>
+          with <b>Marc Levoy</b>’s computational photography team at Adobe, and worked
+          as a senior research engineer at Samsung’s MPI Lab.</p>
 
           <p>PhD in EECS from <b>UC Berkeley</b> (2023) with Miki Lustig and Stella Yu,
           where I published across <b>CVPR, NeurIPS, PNAS, MRM, MICCAI</b> on inverse
-          problems in medical and natural imaging. Member of BAIR. Undergrad in
+          problems in medical and natural imaging. Former member of BAIR. Undergrad in
           Biomedical Engineering at <b>Tsinghua</b> (清华, honors).</p>
         </div>
       </div>
+
+      <p><b>Summer 2027 research internships:</b> I’m actively looking to host
+      research interns at Adobe, working on reinforcement learning and post-training
+      for multimodal foundation models. Feel free to reach out at
+      {' '}<a href="mailto:kewang@adobe.com">kewang@adobe.com</a>.</p>
 
       <div className="statcards">
         <div className="sc"><b>{window.KW_DATA.metrics.citations}</b><span>CITATIONS</span></div>
@@ -84,6 +94,9 @@ function AboutMe(){
       <p className="data-stamp">Google Scholar snapshot · {window.KW_DATA.updated} · Works include papers, abstracts and the dissertation.</p>
       <h2 className="sec">What I work on</h2>
       <p>
+        <span className="pill">reinforcement learning</span>&nbsp;
+        <span className="pill">post-training</span>&nbsp;
+        <span className="pill">multimodal foundation models</span>&nbsp;
         <span className="pill">computational imaging</span>&nbsp;
         <span className="pill">generative video</span>&nbsp;
         <span className="pill">deep learning</span>&nbsp;
@@ -96,7 +109,8 @@ function AboutMe(){
       <p style={{fontSize:12}}>
         <b>Scholar:</b> <a href="https://scholar.google.com/citations?user=Iz3m3v4AAAAJ" target="_blank">scholar.google.com/…/Iz3m3v4AAAAJ</a><br/>
         <b>Site:</b> <a href="https://kewang0622.github.io/" target="_blank">kewang0622.github.io</a><br/>
-        <b>Email:</b> <a href="mailto:kewang0622@gmail.com">kewang0622@gmail.com</a>
+        <b>Work / internships:</b> <a href="mailto:kewang@adobe.com">kewang@adobe.com</a><br/>
+        <b>Personal:</b> <a href="mailto:kewang0622@gmail.com">kewang0622@gmail.com</a>
       </p>
     </div>
   );
@@ -187,7 +201,8 @@ function CV(){
       <div style={{textAlign:'center', marginBottom:12, paddingBottom:10, borderBottom:'2px solid #000'}}>
         <h1 style={{fontSize:22}}>KE WANG  ·  王 可</h1>
         <div style={{fontSize:12, marginTop:4}}>
-          kewang0622@gmail.com · kewang0622.github.io · San Francisco, CA
+          {d.role} · {d.team}<br/>
+          <a href={'mailto:'+d.workEmail}>{d.workEmail}</a> · kewang0622.github.io
         </div>
       </div>
 
@@ -366,7 +381,7 @@ function AboutThisMac(){
         <div className="row"><span>h-index</span><span>{window.KW_DATA.metrics.h_index}</span></div>
         <div className="row"><span>Coffee</span><span>2,048 K</span></div>
         <div style={{marginTop:14, fontSize:11, textAlign:'center'}}>
-          © Ke Wang · 2018–2026 · Tsinghua → Berkeley → Samsung → Adobe → Pika
+          © Ke Wang · 2018–2026 · Tsinghua → Berkeley → Samsung → Adobe → Pika → Adobe
         </div>
       </div>
     </div>
@@ -527,7 +542,8 @@ function Chooser(){
     ['PhD Thesis','https://www2.eecs.berkeley.edu/Pubs/TechRpts/2023/EECS-2023-178.html'],
     ['Project Indigo','https://research.adobe.com/articles/indigo/indigo.html'],
     ['Pika Labs','https://pika.art/'],
-    ['Email','mailto:kewang0622@gmail.com'],
+    ['Work & internships','mailto:kewang@adobe.com'],
+    ['Personal email','mailto:kewang0622@gmail.com'],
   ];
   return (
     <div>
@@ -557,13 +573,13 @@ function Terminal(){
     const cmd = val.trim().toLowerCase();
     let out = [];
     if(cmd==='help') out = ['commands: whoami, now, pubs, cites, advisors, stack, contact, fortune, clear'];
-    else if(cmd==='whoami') out = ['ke wang — applied research lead @ pika labs'];
-    else if(cmd==='now') out = ['making generative video feel like cinema.'];
+    else if(cmd==='whoami') out = [window.KW_DATA.name+' — '+window.KW_DATA.role+' · '+window.KW_DATA.team];
+    else if(cmd==='now') out = [window.KW_DATA.focus+'.', 'Hosting research interns for summer 2027. Reach out: '+window.KW_DATA.workEmail];
     else if(cmd==='pubs') out = [window.KW_DATA.publications.length+' curated works · CVPR, NeurIPS, PNAS, MRM, MICCAI, IEEE SPM'];
     else if(cmd==='cites') out = [window.KW_DATA.metrics.citations+' total · h-index '+window.KW_DATA.metrics.h_index+' · Google Scholar snapshot '+window.KW_DATA.updated];
-    else if(cmd==='advisors') out = ['PhD: Miki Lustig (Berkeley EECS), Stella Yu (Michigan)', 'Adobe: Marc Levoy'];
+    else if(cmd==='advisors') out = ['PhD: Miki Lustig (Berkeley EECS), Stella Yu (Michigan)', 'Earlier computational photography work: Marc Levoy’s team at Adobe'];
     else if(cmd==='stack') out = ['PyTorch · JAX · CUDA · Metal · Swift · Python · C++'];
-    else if(cmd==='contact') out = ['kewang0622@gmail.com'];
+    else if(cmd==='contact') out = ['Work / internships: '+window.KW_DATA.workEmail, 'Personal: '+window.KW_DATA.email];
     else if(cmd==='fortune') {
       const f = [
         'the best camera is the one you have trained.',

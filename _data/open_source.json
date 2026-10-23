@@ -1,0 +1,199 @@
+{
+  "as_of": "2026-10-23",
+  "source": "GitHub REST API",
+  "note": "Repository stars are dated snapshots. Contribution links identify merged pull requests authored by KeWang0622; repository stars are not personal contribution counts.",
+  "contributions": [
+    {
+      "name": "OpenClaw",
+      "repo": "openclaw/openclaw",
+      "url": "https://github.com/openclaw/openclaw",
+      "stars": 392865,
+      "description": "An open-source personal AI assistant across operating systems and messaging platforms.",
+      "source_url": "https://api.github.com/repos/openclaw/openclaw",
+      "merged_pr_count": 2,
+      "contribution_url": "https://github.com/openclaw/openclaw/pull/73282",
+      "contribution_title": "fix(gateway): accept heartbeat/cron/webhook channel hints in agent params (#73237)",
+      "evidence": [
+        {
+          "url": "https://github.com/openclaw/openclaw/pull/73282",
+          "title": "fix(gateway): accept heartbeat/cron/webhook channel hints in agent params (#73237)",
+          "merged_at": "2026-04-28T06:32:23Z",
+          "author": "KeWang0622"
+        },
+        {
+          "url": "https://github.com/openclaw/openclaw/pull/73287",
+          "title": "fix(memory-core): cap concurrent detached dream-narrative subagents (#73198)",
+          "merged_at": "2026-04-28T05:42:07Z",
+          "author": "KeWang0622"
+        }
+      ],
+      "emoji": "🦞"
+    },
+    {
+      "name": "ECC",
+      "repo": "affaan-m/ECC",
+      "url": "https://github.com/affaan-m/ECC",
+      "stars": 287161,
+      "description": "Skills, memory, security, and development workflows for coding agents.",
+      "source_url": "https://api.github.com/repos/affaan-m/ECC",
+      "merged_pr_count": 2,
+      "contribution_url": "https://github.com/affaan-m/ECC/pull/1384",
+      "contribution_title": "fix: resolve markdownlint MD028 + ESLint eqeqeq lint failures",
+      "evidence": [
+        {
+          "url": "https://github.com/affaan-m/ECC/pull/1384",
+          "title": "fix: resolve markdownlint MD028 + ESLint eqeqeq lint failures",
+          "merged_at": "2026-04-13T06:03:19Z",
+          "author": "KeWang0622"
+        },
+        {
+          "url": "https://github.com/affaan-m/ECC/pull/1385",
+          "title": "fix: route block-no-verify hook through run-with-flags.js",
+          "merged_at": "2026-04-13T06:02:19Z",
+          "author": "KeWang0622"
+        }
+      ],
+      "previous_repo": "affaan-m/everything-claude-code",
+      "emoji": "✨"
+    },
+    {
+      "name": "Dify",
+      "repo": "langgenius/dify",
+      "url": "https://github.com/langgenius/dify",
+      "stars": 159365,
+      "description": "A platform for building agent workflows and retrieval-augmented applications.",
+      "source_url": "https://api.github.com/repos/langgenius/dify",
+      "merged_pr_count": 1,
+      "contribution_url": "https://github.com/langgenius/dify/pull/35047",
+      "contribution_title": "refactor(api): type WorkflowRun.to_dict with WorkflowRunDict TypedDict",
+      "evidence": [
+        {
+          "url": "https://github.com/langgenius/dify/pull/35047",
+          "title": "refactor(api): type WorkflowRun.to_dict with WorkflowRunDict TypedDict",
+          "merged_at": "2026-04-13T08:40:21Z",
+          "author": "KeWang0622"
+        }
+      ],
+      "emoji": "🤖"
+    },
+    {
+      "name": "FastMCP",
+      "repo": "PrefectHQ/fastmcp",
+      "url": "https://github.com/PrefectHQ/fastmcp",
+      "stars": 28184,
+      "description": "A Python framework for building MCP servers and clients.",
+      "source_url": "https://api.github.com/repos/PrefectHQ/fastmcp",
+      "merged_pr_count": 1,
+      "contribution_url": "https://github.com/PrefectHQ/fastmcp/pull/3880",
+      "contribution_title": "fix: resolve list[dict] return type producing Root() instead of dicts",
+      "evidence": [
+        {
+          "url": "https://github.com/PrefectHQ/fastmcp/pull/3880",
+          "title": "fix: resolve list[dict] return type producing Root() instead of dicts",
+          "merged_at": "2026-04-12T21:54:00Z",
+          "author": "KeWang0622"
+        }
+      ],
+      "emoji": "🚀"
+    },
+    {
+      "name": "MCP Go",
+      "repo": "mark3labs/mcp-go",
+      "url": "https://github.com/mark3labs/mcp-go",
+      "stars": 9179,
+      "description": "A Go implementation of the Model Context Protocol.",
+      "source_url": "https://api.github.com/repos/mark3labs/mcp-go",
+      "merged_pr_count": 1,
+      "contribution_url": "https://github.com/mark3labs/mcp-go/pull/795",
+      "contribution_title": "feat(mcptest): add ServerOption support for test servers",
+      "evidence": [
+        {
+          "url": "https://github.com/mark3labs/mcp-go/pull/795",
+          "title": "feat(mcptest): add ServerOption support for test servers",
+          "merged_at": "2026-04-14T08:13:08Z",
+          "author": "KeWang0622"
+        }
+      ],
+      "emoji": "🐹"
+    },
+    {
+      "name": "VoltAgent",
+      "repo": "VoltAgent/voltagent",
+      "url": "https://github.com/VoltAgent/voltagent",
+      "stars": 10864,
+      "description": "An open-source TypeScript framework and platform for AI agents.",
+      "source_url": "https://api.github.com/repos/VoltAgent/voltagent",
+      "merged_pr_count": 1,
+      "contribution_url": "https://github.com/VoltAgent/voltagent/pull/1202",
+      "contribution_title": "fix(core): forward providerMetadata on tool-result stream chunks",
+      "evidence": [
+        {
+          "url": "https://github.com/VoltAgent/voltagent/pull/1202",
+          "title": "fix(core): forward providerMetadata on tool-result stream chunks",
+          "merged_at": "2026-04-15T04:24:30Z",
+          "author": "KeWang0622"
+        }
+      ],
+      "emoji": "⚡"
+    },
+    {
+      "name": "Xberg",
+      "repo": "xberg-io/xberg",
+      "url": "https://github.com/xberg-io/xberg",
+      "stars": 9442,
+      "description": "Document intelligence with a Rust core, language bindings, and MCP support.",
+      "source_url": "https://api.github.com/repos/xberg-io/xberg",
+      "merged_pr_count": 1,
+      "contribution_url": "https://github.com/xberg-io/xberg/pull/695",
+      "contribution_title": "feat: add minimal Helm chart for Kubernetes deployment",
+      "evidence": [
+        {
+          "url": "https://github.com/xberg-io/xberg/pull/695",
+          "title": "feat: add minimal Helm chart for Kubernetes deployment",
+          "merged_at": "2026-04-13T14:15:23Z",
+          "author": "KeWang0622"
+        }
+      ],
+      "previous_repo": "kreuzberg-dev/kreuzberg",
+      "emoji": "📄"
+    }
+  ],
+  "projects": [
+    {
+      "name": "MRFoundry",
+      "repo": "KeWang0622/MRFoundry",
+      "url": "https://github.com/KeWang0622/MRFoundry",
+      "stars": 30,
+      "description": "MRI research guidance for coding agents: composable skills, established tools, and evidence-linked research memory.",
+      "source_url": "https://api.github.com/repos/KeWang0622/MRFoundry",
+      "emoji": "🧲"
+    },
+    {
+      "name": "Kaogong",
+      "repo": "KeWang0622/kaogong-skill",
+      "url": "https://github.com/KeWang0622/kaogong-skill",
+      "stars": 200,
+      "description": "Free, open-source AI study guidance for Chinese civil service and public-sector examinations.",
+      "source_url": "https://api.github.com/repos/KeWang0622/kaogong-skill",
+      "emoji": "📚"
+    },
+    {
+      "name": "Pantheon",
+      "repo": "KeWang0622/pantheon-skill",
+      "url": "https://github.com/KeWang0622/pantheon-skill",
+      "stars": 20,
+      "description": "An agent skill exploring digital personas and memories of departed loved ones.",
+      "source_url": "https://api.github.com/repos/KeWang0622/pantheon-skill",
+      "emoji": "🏛️"
+    },
+    {
+      "name": "Nobodybuilt",
+      "repo": "KeWang0622/nobodybuilt",
+      "url": "https://github.com/KeWang0622/nobodybuilt",
+      "stars": 3,
+      "description": "An agent skill for discovering unexplored tool ideas and developing publish-ready projects.",
+      "source_url": "https://api.github.com/repos/KeWang0622/nobodybuilt",
+      "emoji": "🔭"
+    }
+  ]
+}

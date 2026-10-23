@@ -315,7 +315,7 @@ function App(){
     if(id==='shutdown'){ if(confirm('Shut down Ke\'s Macintosh?')) document.body.style.background='#000'; return; }
     if(id==='boot'){wm.wins.forEach(w=>wm.close(w.id));setBooted(false);return;}
     if(id==='trash'){ setTrashFull(false); alert('Trash emptied. ✓'); return; }
-    if(id==='balloon'){ alert('Ke\'s Macintosh · September 2026\nHead of Applied Research, Pika Labs.\nPress ⌘K to launch things. Drag windows by their title bars.'); return; }
+    if(id==='balloon'){ alert('Ke\'s Macintosh · October 2026\nSenior Applied Scientist, Adobe Foundation Model team.\nPress ⌘K to launch things. Drag windows by their title bars.'); return; }
     const def = APPS.find(a=>a.id===id);
     if(!def) return;
     wm.open({...def,query,w:Math.min(def.w,window.innerWidth-36),h:Math.min(def.h,window.innerHeight-100),x:Math.max(18,Math.min(def.x,window.innerWidth-def.w-24)),y:Math.max(36,Math.min(def.y,window.innerHeight-def.h-60))});

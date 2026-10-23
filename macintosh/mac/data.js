@@ -1,9 +1,15 @@
 // Verified against Google Scholar, CVF proceedings and the personal-site CV on 2026-09-23.
+// Current appointment and internship invitation updated from Ke on 2026-10-23.
 // Metrics are dated snapshots. Curated entries omit a duplicate Scholar record; counts are not summed.
 window.KW_DATA = {
   "name": "Ke Wang",
   "cn": "王 可",
   "email": "kewang0622@gmail.com",
+  "workEmail": "kewang@adobe.com",
+  "role": "Senior Applied Scientist",
+  "team": "Adobe Foundation Model team",
+  "focus": "Reinforcement learning and post-training for multimodal foundation models",
+  "profileUpdated": "2026-10-23",
   "site": "kewang0622.github.io",
   "scholar": "https://scholar.google.com/citations?user=Iz3m3v4AAAAJ",
   "metrics": {
@@ -247,12 +253,35 @@ window.KW_DATA = {
       "tldr": "Combines microwave contrast w/ ultrasound resolution; degree-level accuracy at depth."
     }
   ],
+  "personalProjects": [
+    {
+      "name": "Kaogong",
+      "url": "https://github.com/KeWang0622/kaogong-skill",
+      "description": "Free, open-source AI study guidance for Chinese civil service and public-sector examinations."
+    },
+    {
+      "name": "Pantheon",
+      "url": "https://github.com/KeWang0622/pantheon-skill",
+      "description": "An agent skill exploring digital personas and memories of departed loved ones."
+    },
+    {
+      "name": "Nobodybuilt",
+      "url": "https://github.com/KeWang0622/nobodybuilt",
+      "description": "An agent skill for discovering unexplored tool ideas and developing publish-ready projects."
+    }
+  ],
   "timeline": [
     [
-      "2025 — now",
+      "Present",
+      "Senior Applied Scientist",
+      "Adobe · Foundation Model team",
+      "Reinforcement learning and post-training for multimodal foundation models. Hosting research interns for summer 2027; reach out at kewang@adobe.com."
+    ],
+    [
+      "Former",
       "Head of Applied Research",
       "Pika Labs · San Francisco",
-      "Leading applied research for generative AI applications; co-led the agent research behind Pika.me."
+      "Led applied research for generative AI applications and co-led the agent research behind Pika.me."
     ],
     [
       "2024 — 2025",

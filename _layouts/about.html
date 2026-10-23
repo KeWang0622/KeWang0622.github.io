@@ -3,7 +3,7 @@ layout: default
 ---
 
 <!-- about.html -->
-      <div class="post about-page">
+      <div class="post">
         <header class="post-header">
           <h1 class="post-title">
             {% if site.title == "blank" -%}
@@ -26,7 +26,6 @@ layout: default
           <div class="profile float-{%- if page.profile.align == 'left' -%}left{%- else -%}right{%- endif -%}">
             {%- if page.profile.image %}
               {%- assign profile_image_path = page.profile.image | prepend: 'assets/img/' -%}
-              {%- assign profile_image_alt = site.first_name | append: ' ' | append: site.last_name -%}
 
               {% if page.profile.image_circular %}
                 {%- assign profile_image_class = "img-fluid z-depth-1 rounded-circle" -%}
@@ -38,7 +37,7 @@ layout: default
               path=profile_image_path
               class=profile_image_class
               responsive=false
-              alt=profile_image_alt -%}
+              alt="Ke Wang" -%}
             {% endif -%}
             {%- if page.profile.address %}
             <div class="address d-none d-md-block">
