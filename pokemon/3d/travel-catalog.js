@@ -13,5 +13,7 @@ export const TRAVEL_MODES = Object.freeze([
   { id: 'porsche', label: 'Porsche 911', shortLabel: 'Porsche 911', pace: 'Fast cruise', color: '#b36f61',
     icon: icon('<path d="m3 24 3-8 8-2c6-9 17-9 23 0l7 5v7h-5m-27 0H3v-2Zm11-10h23M25 8l1 6m12 4h6M5 19h5"/><circle cx="12" cy="26" r="4"/><circle cx="35" cy="26" r="4"/>') },
   { id: 'horse', label: 'Horse', shortLabel: 'Horseback', pace: 'Gentle canter', color: '#9a7758',
-    icon: icon('<path d="m9 17 6-4 14 2 3-8 5-3 3 6 4 5-6 3-3-3-3 10-3 8m3-11-14 1-6 10m11-11 4 11m-13-12-4 6-3 6M10 16 5 14 3 20"/><path d="m34 7 3-3m-7 11 1-7"/><circle cx="38" cy="11" r=".8" fill="currentColor" stroke="none"/>') }
+    icon: icon('<path d="m9 17 6-4 14 2 3-8 5-3 3 6 4 5-6 3-3-3-3 10-3 8m3-11-14 1-6 10m11-11 4 11m-13-12-4 6-3 6M10 16 5 14 3 20"/><path d="m34 7 3-3m-7 11 1-7"/><circle cx="38" cy="11" r=".8" fill="currentColor" stroke="none"/>') },
+  { id: 'charizard', label: 'Charizard', shortLabel: 'Charizard', pace: 'Dragon ride', color: '#be783f',
+    icon: icon('<path d="m21 18-6-9L4 4l5 16 8-4m7 2 5-9 10-6-3 16-8-2" fill="#719c96" fill-opacity=".23"/><path d="M20 25c-4-5-2-10 4-12l2-5 4-3 1 6 5 3-4 3-3-1c3 7 0 12-6 13M24 13l4-3m-7 16-4 5h-5m14-5 4 5h5M20 26c-9 4-13 1-13-5"/><path d="M7 23c-4-1-3-4-1-7 0 3 4 3 3 6" fill="currentColor" fill-opacity=".28"/>') }
 ].map(mode => Object.freeze(mode)));
