@@ -8,13 +8,16 @@ middle_name:
 last_name: Wang
 chinese_last_name: 王
 chinese_first_name: 可
-email: kewang0622@gmail.com
-description: > # the ">" symbol means to ignore newlines until "footer_text:"
-  A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
+email: kewang@adobe.com
+personal_email: kewang0622@gmail.com
+description: >
+  Ke Wang — Senior Applied Scientist, Adobe Foundation Model team; Berkeley EECS PhD.
+  Reinforcement learning and post-training for multimodal foundation models.
+  Hosting research interns for summer 2027. Creator of MRFoundry.
 footer_text: >
   Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
-keywords: jekyll, jekyll-theme, academic-website, portfolio-website  # add your own keywords or leave empty
+keywords: Ke Wang, Adobe, multimodal foundation models, reinforcement learning, post-training, computational imaging, MRI, MRFoundry, UC Berkeley
 
 lang: en # the language of your site (for example: en, fr, cn, ru, etc.)
 icon: kw.ico #🎓 # the emoji used as the favicon (alternatively, provide image name in /assets/img/)

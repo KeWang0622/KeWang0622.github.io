@@ -14,17 +14,22 @@
 - title: Experience
   type: time_table
   contents:
+    - title: Senior Applied Scientist
+      institution: Adobe · Foundation Model team
+      year: Sep 2026 - Present
+      description:
+        - Reinforcement learning and post-training for multimodal foundation models.
     - title: Head of Applied Research
       institution: Pika Labs
-      year: 2025 -
+      year: Former
       description:
-        - Leading applied research for next-generation GenAI applications.
+        - Led applied research for generative AI applications and co-led the agent research behind Pika.me.
     - title: Computer Scientist
       institution: Adobe Inc. Computational Photography Team
       year: 2024 - 2025
       description:
-        - Working on real-world computational photography applications.
-    - title: Senior Research Enginner
+        - Developed real-world computational photography applications, including burst super-resolution for Project Indigo.
+    - title: Senior Research Engineer
       institution: Samsung Research America (MPI Lab)
       year: 2023 - 2024
       description:
@@ -33,7 +38,7 @@
       institution: University of California, Berkeley
       year: 2018 - 2023
       description:
-        - Peceptual feature loss for advanced MRI reconstruction.
+        - Perceptual feature loss for advanced MRI reconstruction.
         - Direct contrast synthesis from Magnetic Resonance Fingerprinting.
         - Memory-efficient learning for high-dimensional MRI reconstruction.
         - Complex-valued scattering representations for image classifications.
@@ -42,7 +47,7 @@
       year: 2022 - 2023
       description:
         - Developed real-world parametric image harmonization pipeline. 
-        - Work accpected to CVPR 2023, patent filed, product delivered.
+        - Work accepted to CVPR 2023, patent filed, product delivered.
     - title: Research Intern
       institution: Emerging Product Team @ Adobe
       year: May - Aug 2021
@@ -54,7 +59,7 @@
       institution: Stanford University
       year: Jun - Aug 2017
       description:
-        - Developed temperature imaging piplines using thermoacoustic imaging.
+        - Developed temperature imaging pipelines using thermoacoustic imaging.
 
     - title: Undergraduate Research Assistant
       institution: Tsinghua University
