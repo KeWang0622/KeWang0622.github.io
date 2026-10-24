@@ -1,0 +1,163 @@
+/* Keep the HUD attached to the world, including after phone rotation. */
+.explore-bar{top:auto;bottom:20px}
+#interact-prompt{top:auto;bottom:71px}
+#first-person-drive{position:absolute;z-index:14;left:28px;bottom:90px;touch-action:none}
+
+/* A phone gets a compact travel shelf, thumb controls and a bottom action dock. */
+@media (max-width:600px), (max-width:1000px) and (max-height:500px){
+ :root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--safe-right:env(safe-area-inset-right,0px);--phone-header:56px;--phone-bio:58px}
+ html{scroll-padding-top:12px}
+ body{overflow-x:hidden}
+ .topbar{height:calc(var(--phone-header) + var(--safe-top));min-height:0;padding:var(--safe-top) max(12px,var(--safe-right)) 0 max(12px,var(--safe-left));gap:10px}
+ .wordmark{font-size:15px;gap:8px;white-space:nowrap}
+ .wordmark small{font-size:7px;margin-top:3px}
+ .topbar nav{gap:8px}
+ .topbar nav>a{display:none}
+ #help-button{height:44px;width:44px;min-height:44px;min-width:44px}
+ .identity-chip{position:relative;top:auto;left:auto;margin:0;min-height:var(--phone-bio);height:var(--phone-bio);padding:6px max(14px,var(--safe-right)) 6px max(14px,var(--safe-left));border:0;border-bottom:1px solid #dce4d8;border-radius:0;box-shadow:none;background:#fafbf5;gap:10px}
+ .identity-chip img{width:32px;height:38px}
+ .identity-chip strong{font-size:12px}
+ .identity-chip>span{gap:3px}
+ .identity-chip span span{font-size:10px}
+ .identity-chip small{display:none}
+ .identity-chip b{margin-left:auto}
+ #world-stage,.is-indoors #world-stage{height:calc(100svh - var(--phone-header) - var(--phone-bio) - var(--safe-top));height:calc(100dvh - var(--phone-header) - var(--phone-bio) - var(--safe-top));min-height:0;max-height:none;margin:0}
+ .is-indoors{--phone-bio:0px}
+ .is-indoors .identity-chip{display:none}
+ #world{border-radius:0}
+ #world:focus-visible{outline-offset:-4px;border-radius:0}
+ #travel-control{left:max(10px,var(--safe-left));right:max(10px,var(--safe-right));top:10px;width:auto;max-height:none;padding:5px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;border-radius:13px;overscroll-behavior-x:contain;touch-action:pan-x;background:#fffef5f0}
+ #travel-control::-webkit-scrollbar{display:none}
+ #travel-title,#travel-note{display:none}
+ .travel-options{display:flex;gap:3px;width:max-content;min-width:100%}
+ .travel-option{flex:1 0 66px;width:66px;min-height:56px;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:3px 5px;border-radius:9px;touch-action:pan-x}
+ .travel-option-art,.travel-option-art svg{width:30px;height:24px}
+ .travel-option-label{position:static;width:auto;height:auto;margin:0;padding:0;clip:auto;overflow:visible;font-size:10px;line-height:1.2;white-space:nowrap}
+ .travel-check,.travel-option[aria-checked=true] .travel-check{display:none}
+ .travel-option.is-pending .travel-check{display:block;position:absolute;right:3px;top:2px;font-size:10px}
+ #camera-mode-control,.is-indoors #camera-mode-control{display:contents}
+ .camera-view-switch{position:absolute;z-index:14;right:max(10px,var(--safe-right));top:87px;padding:3px;border-radius:12px;gap:2px}
+ .camera-view-switch button{min-height:44px;font-size:10px;padding:6px 8px;gap:4px}
+ .camera-view-switch button svg{width:15px;height:15px}
+ #camera-mode-control kbd,#travel-driving-hint{display:none}
+ #first-person-drive:not([hidden]){display:grid}
+ #first-person-drive{left:max(12px,var(--safe-left));bottom:calc(78px + var(--safe-bottom));grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px;padding:6px;border-radius:16px;background:#fffef5e8}
+ #first-person-drive button{min-width:44px;min-height:44px;font-size:24px;border-radius:10px}
+ #first-person-drive button[data-drive=forward]{grid-column:2;grid-row:1}
+ #first-person-drive button[data-drive=left]{grid-column:1;grid-row:2}
+ #first-person-drive button[data-drive=back]{grid-column:2;grid-row:2}
+ #first-person-drive button[data-drive=right]{grid-column:3;grid-row:2}
+ .view-controls{right:max(12px,var(--safe-right));bottom:calc(78px + var(--safe-bottom));border-radius:12px;gap:0}
+ .view-controls button{min-width:44px;min-height:44px;padding:7px}
+ .view-controls #view-overview{min-width:44px;font-size:11px;padding:7px}
+ #travel-reverse,#travel-flight{position:absolute;z-index:14;right:max(12px,var(--safe-right));bottom:calc(133px + var(--safe-bottom))}
+ #travel-reverse{min-height:44px;padding:9px 12px;font-size:11px}
+ #travel-flight{gap:4px}
+ #travel-flight-status{position:absolute;bottom:calc(100% + 5px);right:0;background:#fffef5e8;padding:4px 7px;border-radius:7px}
+ #travel-flight button{min-height:44px;min-width:55px;font-size:11px;padding:7px}
+ .explore-bar{top:auto;bottom:calc(10px + var(--safe-bottom));left:max(10px,var(--safe-left));right:max(10px,var(--safe-right));transform:none;width:auto;min-height:52px;max-width:none;padding:4px;gap:4px;margin:0;justify-content:space-between;background:#fffef5f5;border:1px solid #fff;border-radius:15px;box-shadow:0 5px 20px #294d3a24;backdrop-filter:blur(12px)}
+ #walk-hint{display:none}
+ .adventure-actions{gap:2px;min-width:0}
+ #bag-toggle,#guide-toggle{min-height:44px;padding:7px 8px;gap:6px;font-size:11px;border:0;background:transparent;box-shadow:none;border-radius:10px;white-space:nowrap}
+ #bag-toggle:hover,#guide-toggle:hover{background:#eaf0e4}
+ #bag-toggle svg{width:18px;height:18px}
+ #party-count{width:17px;height:17px;font-size:9px}
+ #guide-toggle .journal-label{display:inline;font-size:0}
+ #guide-toggle .journal-label:after{content:"Journal";font-size:11px}
+ #guide-toggle>span:last-child,#progress{display:none}
+ .motion-controls{gap:0;padding:0;flex-shrink:0}
+ #music-toggle,#quiet-mode,#reset-view{min-width:44px;width:44px;min-height:44px;padding:4px;justify-content:center}
+ .motion-controls button span{display:none}
+ #interact-prompt{top:auto;bottom:calc(191px + var(--safe-bottom));min-height:44px;max-width:calc(100% - 24px);font-size:11px;white-space:normal}
+ #interact-prompt .keycap{display:none}
+ #travel-status{left:max(12px,var(--safe-left));right:max(12px,var(--safe-right));bottom:calc(195px + var(--safe-bottom));transform:none;width:auto;max-width:none;font-size:11px;padding:9px 12px}
+ .landmark-label{min-height:44px;font-size:11px;padding:8px 10px}
+ .is-indoors #travel-control{display:none}
+ .room-toolbar{top:10px;left:max(10px,var(--safe-left));right:max(10px,var(--safe-right));gap:7px;flex-wrap:nowrap;align-items:stretch}
+ .room-toolbar>button{min-height:48px;padding:10px;font-size:11px}
+ .room-heading{min-width:0;flex:1;padding:9px 11px}
+ .room-heading .eyebrow,#room-subtitle,#room-story{display:none}
+ #room-name{font-size:14px;line-height:1.3}
+ .is-indoors .camera-view-switch{top:68px}
+ #discovery-toast{top:calc(var(--phone-header) + var(--safe-top) + 74px);max-width:calc(100% - 24px);font-size:12px}
+ #loading p{font-size:13px}
+ #render-fallback{inset:12px;padding:24px;z-index:20;overflow:auto}
+ .field-guide{padding:32px 18px;max-width:100%;margin:0}
+ .guide-heading{display:block}
+ .guide-heading p{max-width:none;margin-top:12px;font-size:12px;text-align:left}
+ .destination-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .destination-card{min-height:166px;padding:16px}
+ .destination-card h3{font-size:13px}.destination-card p{font-size:11px}
+ dialog,#journal-dialog,#backpack-dialog,#exhibit-dialog{width:calc(100% - max(16px,var(--safe-left)) - max(16px,var(--safe-right)));max-width:900px;max-height:calc(100svh - max(16px,var(--safe-top)) - max(16px,var(--safe-bottom)));max-height:calc(100dvh - max(16px,var(--safe-top)) - max(16px,var(--safe-bottom)));overscroll-behavior:contain;overflow-y:auto;scrollbar-width:thin}
+ dialog{padding:25px 22px;border-radius:16px}
+ .dialog-close,#backpack-dialog .dialog-close{min-width:44px;min-height:44px;z-index:5}
+ dialog>.dialog-close{position:sticky;right:auto;top:0;display:grid;place-items:center;width:44px;height:44px;margin:0 0 -44px auto;background:#fffef7ed;border:1px solid #d4ddd0;border-radius:50%}
+ .journal-heading{padding-right:48px}
+ #help-dialog>h2{padding-right:44px}
+ #help-dialog p{font-size:13px;line-height:1.7}
+ #journal-dialog{padding:24px 18px 20px}
+ .journal-filters button{min-height:44px}
+ .journal-actions button{min-height:44px}
+ #backpack-dialog{padding:0}
+ .bag-header{position:sticky;top:0;z-index:5;padding:14px 16px}
+ .bag-workspace{display:flex;flex-direction:column}
+ .bag-collection{padding:15px;border-right:0;border-bottom:1px solid #cddbe5}
+ .bag-slots{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+ .bag-slot{padding:6px 2px}.slot-art{height:49px}.slot-name{font-size:10px;line-height:1.3;min-height:26px}.slot-state{font-size:9px}
+ .bag-detail{display:grid;grid-template-columns:42% 58%}
+ .buddy-view{height:230px}.buddy-copy{padding:16px 12px}
+ .buddy-title-row{display:block}.buddy-title-row h3{font-size:19px}.buddy-title-row>span{display:block;margin-top:4px}
+ #buddy-description{font-size:12px;line-height:1.6}
+ .buddy-turn button{min-width:44px;min-height:44px}.buddy-turn span{display:none}
+ #buddy-toggle,#party-recall,#party-all,#backpack-done{min-height:44px}
+ #party-recall{font-size:11px}
+ .bag-party{padding:15px}.party-friend{height:70px}.party-name{font-size:9px;white-space:normal;max-width:100%;width:100%;min-height:22px;line-height:1.2;text-align:center}
+ .bag-footer{padding:12px 15px}.bag-footer>span{display:none}.bag-footer>div{width:100%;justify-content:space-between}
+ .exhibit-toolbar button{min-width:44px;min-height:44px}
+ .exhibit-image-wrap{min-height:280px;height:45svh}
+}
+@media (max-width:360px){
+ #party-count{display:none}
+ #guide-toggle{padding:7px 5px}
+ #bag-toggle{padding:7px 6px;gap:4px}
+ .camera-view-switch button{min-height:44px;padding:6px}
+ .bag-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .slot-art{height:46px}.slot-name{min-height:15px}
+}
+/* Landscape reserves the middle of the screen for the world. */
+@media (max-width:1000px) and (max-height:500px){
+ :root{--phone-header:48px;--phone-bio:0px}
+ .identity-chip{display:none}
+ .wordmark small{display:none}
+ .topbar nav>a{display:inline-flex;font-size:11px;min-height:44px}
+ #travel-control{left:max(10px,var(--safe-left));right:auto;max-width:calc(100% - 230px - var(--safe-left) - var(--safe-right));top:8px;padding:4px}
+ .travel-option{flex-basis:56px;width:56px;min-height:48px;gap:1px}
+ .travel-option-art,.travel-option-art svg{width:26px;height:21px}
+ .travel-option-label{font-size:9px}
+ .camera-view-switch,.is-indoors .camera-view-switch{top:8px}
+ #first-person-drive{bottom:calc(12px + var(--safe-bottom))}
+ .explore-bar{left:auto;right:max(12px,var(--safe-right));bottom:calc(12px + var(--safe-bottom));min-height:50px}
+ .view-controls{bottom:calc(78px + var(--safe-bottom))}
+ #travel-reverse,#travel-flight{bottom:calc(131px + var(--safe-bottom))}
+ #interact-prompt,#travel-status{bottom:calc(76px + var(--safe-bottom));left:50%;right:auto;transform:translateX(-50%);max-width:calc(100% - 390px);width:max-content}
+ .room-toolbar{right:calc(230px + var(--safe-right));top:8px}
+ .room-heading .eyebrow{display:none}
+ #journal-places{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .journal-heading{padding:0 50px 16px 0}
+ .journal-heading h2{font-size:25px}
+ .journal-passport{display:none}
+ .bag-workspace{display:grid;grid-template-columns:38% 62%}
+ .bag-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .bag-detail{display:flex;flex-direction:row}
+ .buddy-view{height:230px;width:43%;flex:none}
+ .buddy-copy{flex:1}
+ .bag-party{padding:12px 16px}
+ .exhibit-image-wrap{height:65svh}
+}
+
+/* Keep a usable thumb pad on tablets, including narrow split-screen windows. */
+@media (pointer:coarse), (min-width:601px) and (max-width:900px){
+ #first-person-drive:not([hidden]){display:grid}
+ #first-person-drive{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px)}
+ #first-person-drive button{min-width:44px;min-height:44px}
+}
