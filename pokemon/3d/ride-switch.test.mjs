@@ -124,8 +124,8 @@ function productionSwitchHarness(walkable,{id='bicycle',x=0,z=0,yaw=0}={}){
     const destinationMarker={visible:false},WORLD_LIMIT=64,groundForWalk=()=>0,flightCeiling=()=>-Infinity,landingCeiling=()=>-Infinity;
     const travelShape=()=>TRAVEL[selectedTravel],flying=()=>selectedTravel==='charizard';
     const statuses=[],announcements=[];
-    const document={dispatchEvent(event){statuses.push(event.detail);}};
-    class CustomEvent{constructor(type,{detail}){this.type=type;this.detail=detail;}}
+    const document={dispatchEvent(event){if(event.type==='world:travel-status')statuses.push(event.detail);}};
+    class CustomEvent{constructor(type,{detail=null}={}){this.type=type;this.detail=detail;}}
     const ui={announce(message){announcements.push(message);}},canvas={focus(){}},leaveOverview=()=>{};
     const updateTravelVisual=()=>{},resetCompanionTrail=()=>{};
     ${worldSource.slice(travelStart,travelEnd)}
