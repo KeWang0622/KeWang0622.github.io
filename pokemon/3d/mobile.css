@@ -113,6 +113,7 @@
  #party-recall{font-size:11px}
  .bag-party{padding:15px}.party-friend{height:70px}.party-name{font-size:9px;white-space:normal;max-width:100%;width:100%;min-height:22px;line-height:1.2;text-align:center}
  .bag-footer{padding:12px 15px}.bag-footer>span{display:none}.bag-footer>div{width:100%;justify-content:space-between}
+ #exhibit-dialog[open]{display:block}
  .exhibit-toolbar button{min-width:44px;min-height:44px}
  .exhibit-image-wrap{min-height:280px;height:45svh}
 }
