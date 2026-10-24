@@ -1,4 +1,4 @@
-import { TRAVEL_MODES } from './travel-catalog.js?v=20261023-flight-controls';
+import { TRAVEL_MODES } from './travel-catalog.js?v=20261023-stable-map';
 
 export function initTravelUI() {
   const stage = document.getElementById('world-stage');
@@ -128,25 +128,36 @@ export function initTravelUI() {
     options.append(button); buttons.push(button);
   }
   function refresh() {
-    const effective = indoors ? 'walk' : selected, isMounted = mounted(), isFlying = flying();
+    const effective = indoors ? 'walk' : selected, isMounted = mounted(), isFlying = flying(), isThird = view === 'third';
     controls.classList.toggle('travel-indoors', indoors);
     cameraControls.classList.toggle('is-flying', isFlying);
     note.textContent = indoors ? 'Walking indoors' : isFlying ? 'Fly over the village' : 'Rides stay outside';
     reverseButton.hidden = !isMounted || isFlying;
     reverseButton.disabled = !ready || paused;
     drivingHint.hidden = !isMounted;
-    drivingHint.innerHTML = isFlying
-      ? '<span>W/S fly / brake · A/D steer</span><span>Space rise · C descend</span>'
-      : '<span>W/S forward / reverse · A/D steer</span><span>Space brake</span>';
+    drivingHint.innerHTML = isThird
+      ? `<span>↑ ↓ ← → move on screen</span><span>${isFlying ? 'Space rise · C descend' : 'R reverse · Space stop'}</span>`
+      : isFlying
+        ? '<span>W/S fly / brake · A/D steer</span><span>Space rise · C descend</span>'
+        : '<span>W/S forward / reverse · A/D steer</span><span>Space brake</span>';
     flightControls.hidden = !isFlying;
     for (const button of flightButtons) button.disabled = !ready || paused;
     drivePad.hidden = !isMounted && view !== 'first';
-    drivePad.setAttribute('aria-label', isFlying ? 'Flight steering' : isMounted ? 'Riding controls' : 'First person movement');
-    drivePad.querySelector('[data-drive="back"]').setAttribute('aria-label', isFlying ? 'Brake and move backward' : isMounted ? 'Brake and reverse' : 'Move backward');
-    for (const button of drivePad.children) button.disabled = !ready || paused;
+    drivePad.setAttribute('aria-label', isThird ? 'Screen direction controls' : isFlying ? 'Flight steering' : isMounted ? 'Riding controls' : 'First person movement');
+    const padLabels = isThird
+      ? { forward: ['↑', 'Move up'], left: ['←', 'Move left'], back: ['↓', 'Move down'], right: ['→', 'Move right'] }
+      : { forward: ['↑', 'Move forward'], left: ['↶', 'Steer left'], back: ['↓', isFlying ? 'Brake and move backward' : isMounted ? 'Brake and reverse' : 'Move backward'], right: ['↷', 'Steer right'] };
+    for (const button of drivePad.children) {
+      const [glyph, label] = padLabels[button.dataset.drive];
+      button.textContent = glyph; button.setAttribute('aria-label', label); button.disabled = !ready || paused;
+    }
     const desktopHint = document.querySelector('#walk-hint .desktop-hint'), mobileHint = document.querySelector('#walk-hint .mobile-hint');
-    if (desktopHint) desktopHint.textContent = isFlying ? 'fly · Space rise · C descend' : isMounted ? 'W/S forward / reverse · A/D steer' : view === 'first' ? 'W/S move · A/D turn · drag to look' : 'click to walk · drag to look';
-    if (mobileHint) mobileHint.textContent = isFlying ? 'Arrow pad to fly · Rise / Descend' : isMounted ? 'Arrow pad to drive · drag to look' : view === 'first' ? 'Arrow pad to move · drag to look' : 'Tap a place to visit';
+    if (desktopHint) desktopHint.textContent = isThird
+      ? isFlying ? 'move on screen · Space rise · C descend' : isMounted ? 'move on screen · R reverse · Space stop' : 'move on screen · click to walk'
+      : isFlying ? 'W/S fly · A/D steer · drag to look' : isMounted ? 'W/S forward / reverse · A/D steer' : 'W/S move · A/D turn · drag to look';
+    if (mobileHint) mobileHint.textContent = isThird
+      ? isFlying ? 'Arrows move on screen · Rise / Descend' : isMounted ? 'Arrows move on screen' : 'Tap a place to visit'
+      : isFlying ? 'Arrow pad to fly · drag to look' : isMounted ? 'Arrow pad to drive · drag to look' : 'Arrow pad to move · drag to look';
     for (const button of viewButtons) { button.disabled = !ready || paused; button.setAttribute('aria-pressed', String(button.dataset.view === view)); }
     for (const button of buttons) {
       const mode = TRAVEL_MODES.find(item => item.id === button.dataset.travelId), active = mode.id === effective;
