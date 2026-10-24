@@ -12,6 +12,7 @@ come from `../data.js`; the renderer does not invent biographical facts.
 - `navigation.js`, `companion-navigation.js`, `world-surfaces.js`: swept vehicle footprints, routes, followers and shared bridge geometry/collision.
 - `travel-models.js`, `charizard-model.js`: original ride meshes, articulated riders, and first-person visibility/camera anchors.
 - `travel-ui.js`, `travel-catalog.js`, `travel.css`: the permanent seven-mode travel rail, perspective switch and touch driving controls.
+- `ride-controls.js`, `flight.js`: shared mounted driving physics, aerial clearance and safe landing.
 - `ride-camera.js`, `village-sky.js`: seat-relative first-person view and a lightweight painted daylight sky.
 - `ground.js`: batched paving, gravel paths, stone edges and planted arrival beds.
 - `details.js`: material-batched benches, bicycle, drainage, compass and bridge-side reeds.
@@ -70,16 +71,26 @@ chapter and image directly, without requiring gameplay.
 The left travel rail offers walking, bicycle, blue Model S, Cybertruck, Porsche
 911, horse and an original Charizard fan-art ride. Rides stay outside; a room uses
 walking and restores the selected ride when there is enough clearance outside.
-Charizard follows ground routes with folded wings, rather than bypassing obstacles.
+Charizard takes off automatically and flies with articulated wingbeats, tucked feet
+and a following MRI companion. Space rises and C descends. A conservative height
+atlas built from the actual rendered meshes keeps its full wingspan above roofs,
+trees and water. It can cross the river without a bridge. Switching to a ground
+ride finds open dry ground, flies there, and lands before the ride changes.
+Selecting a building while flying also lands before entering.
 
-The view switch or **V** toggles third and first person. Third person retains
-screen-direction movement. In first person **W/S** move forward/back and **A/D**
-turn; drag to look around independently of the steering. Touch screens have a
-four-button driving pad. Mounted rearward input reverses, and **R** or the
-hold-to-reverse button backs straight out at the current heading. Every movement
-and turn checks the full ride footprint, including animated wings and the rider.
-First person keeps hands and the handlebars/reins in view, hides the rider's head,
-and uses transparent car glazing. The camera keeps the horizon level on ramps.
+The view switch or **V** toggles third and first person; third person is the
+fresh-load default. On foot, third-person movement follows screen directions;
+first-person walking uses W/S forward/back and A/D turn. For every ride, in both
+views, **W/↑** accelerates along the nose, **S/↓** brakes then reverses, and
+**A/D/←/→** steer. Cars use signed-speed steering and cannot spin in place.
+**Space** brakes a ground ride; **R** or the reverse button backs straight out.
+The chase camera follows behind a ride; dragging temporarily orbits independently.
+Touch screens have a driving pad and flight altitude buttons.
+
+Ground movement sweeps the full vehicle footprint and preserves a straight
+backward escape when steering beside an obstacle would trap a corner. First
+person keeps hands and the handlebars/reins in view, hides the rider's head, and
+uses transparent car glazing. The horizon stays level on ramps and in flight.
 
 Music starts only after selecting its control; it loads on demand, plays quietly,
 and pauses when the tab is hidden. Credits and the track license are included.

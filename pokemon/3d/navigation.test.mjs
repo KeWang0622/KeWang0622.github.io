@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import * as THREE from './lib/three.module.js';
 import {TRAVEL,footprintOffsets,footprintClear,turnClear,motionClear,findWalkingRoute,angleDelta} from './navigation.js';
 import {createTravelModel} from './travel-models.js';
+import {FLIGHT} from './flight.js';
 import {BRIDGE_XS,createBridgeSurfaces} from './world-surfaces.js';
 import {pondRadius,SCENIC_PLACES,extensionRoadPoints} from './outdoor-extension.js';
 import {createInterior} from './interiors.js';
@@ -27,7 +28,7 @@ const walkable=(x,z,radius=.22)=>{
 };
 
 for(const name of Object.keys(TRAVEL).filter(name=>name!=='walk')){
-  test(`${name}: collision discs enclose every actual mesh vertex throughout steering and gait`,()=>{
+  test(`${name}: clearance envelope encloses every actual mesh vertex throughout articulation`,()=>{
     const model=createTravelModel(name),shape=TRAVEL[name],offsets=footprintOffsets(shape),v=new THREE.Vector3();
     let greatestDistance=0,vertexCount=0;
     try{
@@ -44,12 +45,12 @@ for(const name of Object.keys(TRAVEL).filter(name=>name!=='walk')){
         });
       }
       assert.ok(vertexCount>1000,'the actual authored model was inspected, including its mounted rider');
-      assert.ok(greatestDistance<=shape.radius,`${name}: mesh protrudes ${(greatestDistance-shape.radius).toFixed(4)}m beyond collision discs`);
+      assert.ok(greatestDistance<=(name==='charizard'?FLIGHT.radius:shape.radius),`${name}: mesh protrudes ${(greatestDistance-shape.radius).toFixed(4)}m beyond collision discs`);
     }finally{model.dispose();}
   });
 }
 
-for(const [name,shape]of Object.entries(TRAVEL)){
+for(const [name,shape]of Object.entries(TRAVEL).filter(([id])=>id!=='charizard')){
   test(`${name}: all three bridges are crossable in both directions`,()=>{
     for(const b of bridges)for(const direction of [-1,1]){
       const length=b.halfLength+b.rampLength+shape.axle+1;
@@ -68,7 +69,7 @@ test('turning rejects a car sweeping through furniture even when endpoint poses 
 });
 
 test('a long frame cannot jump a vehicle or walker across closed water',()=>{
-  for(const [name,shape]of Object.entries(TRAVEL)){
+  for(const [name,shape]of Object.entries(TRAVEL).filter(([id])=>id!=='charizard')){
     const from={x:0,z:riverZ(0)-5},to={x:0,z:riverZ(0)+5};
     assert.ok(footprintClear(from.x,from.z,0,shape,walkable),`${name} starts on land`);
     assert.ok(footprintClear(to.x,to.z,0,shape,walkable),`${name} ends on land`);
@@ -77,7 +78,7 @@ test('a long frame cannot jump a vehicle or walker across closed water',()=>{
 });
 
 test('all travel route footprints use a valid bridge rather than crossing the water directly',()=>{
-  for(const [name,shape]of Object.entries(TRAVEL))for(const b of bridges){
+  for(const [name,shape]of Object.entries(TRAVEL).filter(([id])=>id!=='charizard'))for(const b of bridges){
     const from={x:b.x,z:b.z+6,yaw:Math.PI},to={x:b.x,z:b.z-6};
     const route=findWalkingRoute(from,to,{shape,walkable,min:-64,max:64,step:.6});
     assert.ok(route.length,`${name} route across bridge ${b.x} exists`);
@@ -162,4 +163,12 @@ test('an unreachable long search has a bounded work budget and reports exhaustio
   const route=findWalkingRoute({x:0,z:-5,yaw:0},{x:0,z:5},{shape:TRAVEL.walk,walkable:free,min:-12,max:12,maxMilliseconds:0,onBudgetExceeded:()=>{exhausted=true;}});
   assert.deepEqual(route,[]);
   assert.equal(exhausted,true,'caller can distinguish exhausted search from a solid destination');
+});
+
+test('folded launch footprint encloses Charizard and its seated rider',()=>{
+  const model=createTravelModel('charizard'),shape=TRAVEL.charizard,offsets=footprintOffsets(shape),v=new THREE.Vector3();
+  try {model.update(.05,{airborne:0,time:1});model.group.updateMatrixWorld(true);model.group.traverse(n=>{
+    const a=n.geometry?.attributes.position;if(!a)return;
+    for(let i=0;i<a.count;i++){v.fromBufferAttribute(a,i).applyMatrix4(n.matrixWorld);assert.ok(Math.min(...offsets.map(z=>Math.hypot(v.x,v.z-z)))<=shape.radius);}
+  });}finally{model.dispose();}
 });

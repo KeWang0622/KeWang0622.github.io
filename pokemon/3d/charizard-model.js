@@ -1,6 +1,7 @@
 /** Original hand-modelled Charizard fan art for Ke's noncommercial portfolio.
  * No extracted game model or texture. Pokémon / Charizard belong to their
- * respective owners. The folded pose is intentionally village-scale: +Z front.
+ * respective owners. Flight rig uses +Z forward, a fixed saddle and a broad,
+ * articulated wingspan. World altitude and banking belong to the caller.
  * Every instance owns its geometry/materials and can be disposed independently.
  */
 import * as THREE from './lib/three.module.js';
@@ -11,7 +12,7 @@ const material=(color,roughness=.7,extra={})=>new THREE.MeshStandardMaterial({co
 
 export function createCharizardModel(){
   const group=new THREE.Group();group.name='travel-charizard';
-  const body=new THREE.Group();group.add(body);
+  const body=new THREE.Group();body.name='charizard-body';group.add(body);
   const materials={
     orange:material(0xe99338,.68),light:material(0xf3a34e,.72),dark:material(0xb95b28,.77),
     cream:material(0xf4dfad,.84),claw:material(0xf4eed9,.48),wing:material(0x317e83,.75,{side:THREE.DoubleSide}),
@@ -65,34 +66,41 @@ export function createCharizardModel(){
   }
   const legs=[];
   for(const s of[-1,1]){
-    const leg=new THREE.Group();leg.position.set(s*.36,.89,-.10);group.add(leg);
+    const leg=new THREE.Group();leg.name=s<0?'charizard-left-leg':'charizard-right-leg';leg.position.set(s*.36,.89,-.10);group.add(leg);
     oval([s*.06,-.05,0],[.235,.37,.26],'orange',leg);
     curve([[s*.07,-.17,.015],[s*.09,-.43,-.025],[s*.10,-.66,.07]],[.19,.13,.125],'orange',leg);
     oval([s*.105,-.77,.19],[.18,.12,.27],'orange',leg);
     for(let k=-1;k<=1;k++)curve([[s*.105+k*.105,-.79,.34],[s*.105+k*.108,-.79,.47],[s*.105+k*.11,-.84,.50]],[.060,.044,.001],'claw',leg,15,10);
-    legs.push({g:leg,phase:s<0?Math.PI:0});
+    legs.push({g:leg,s});
   }
-  // Compact folding: membrane tips sit behind the shoulders rather than
-  // extending over both bridge rails. Each panel bows between curved spars.
+  // Broad bat-like wings: orange leading edge, teal membrane and scalloped
+  // trailing edge. The wrist flexes after the shoulder, so each stroke travels
+  // outward through the wing instead of rotating a rigid flat triangle.
   const wings=[];
-  function membrane(a,b,c,parent){const p=[],idx=[],n=13;for(let i=0;i<=n;i++)for(let j=0;j<=n;j++){const u=i/n,v=j/n,A=V(a),B=V(b),C=V(c),q=A.clone().multiplyScalar(1-u).add(B.multiplyScalar(u*(1-v))).add(C.multiplyScalar(u*v));q.lerp(A,Math.sin(Math.PI*v)*u*u*.16);q.z-=Math.sin(Math.PI*u)*Math.sin(Math.PI*v)*.085;p.push(...q.toArray());if(i&&j){const t=i*(n+1)+j;idx.push(t,t-1,t-n-1,t-1,t-n-2,t-n-1);}}
+  function membrane(a,b,c,parent){const p=[],idx=[],n=13;for(let i=0;i<=n;i++)for(let j=0;j<=n;j++){const u=i/n,v=j/n,A=V(a),B=V(b),C=V(c),q=A.clone().multiplyScalar(1-u).add(B.multiplyScalar(u*(1-v))).add(C.multiplyScalar(u*v));q.lerp(A,Math.sin(Math.PI*v)*u*u*.14);q.y-=Math.sin(Math.PI*u)*Math.sin(Math.PI*v)*.075;p.push(...q.toArray());if(i&&j){const t=i*(n+1)+j;idx.push(t,t-1,t-n-1,t-1,t-n-2,t-n-1);}}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();mesh(g,'wing',parent);}
   for(const s of[-1,1]){
-    const wing=new THREE.Group();wing.position.set(s*.36,1.86,-.22);body.add(wing);wings.push({g:wing,s});
-    const shoulder=[0,0,0],elbow=[s*.39,.79,-.22],tip=[s*.66,.63,-.84];
-    const fingers=[[s*.67,-.38,-.69],[s*.39,-.48,-.85],[s*.10,-.28,-.76],[0,.04,-.10]];
-    curve([shoulder,[s*.23,.40,-.10],elbow,tip],[.095,.073,.052,.004],'orange',wing,30,12);
-    membrane(elbow,tip,fingers[0],wing);
-    for(let i=0;i<fingers.length-1;i++)membrane(elbow,fingers[i],fingers[i+1],wing);
-    for(const p of fingers.slice(0,-1))curve([elbow,[p[0]*.88,.20,p[2]*.75],p],[.037,.024,.004],'orange',wing,22,9);
-    const edge=[tip,...fingers],rim=[];for(let i=0;i<edge.length-1;i++)for(let k=0;k<7;k++){const t=k/6;rim.push(V(edge[i]).lerp(V(edge[i+1]),t).lerp(V(elbow),Math.sin(t*Math.PI)*.16).toArray());}
-    curve(rim,[.014,.014,.012,.008,.004],'dark',wing,56,7);
-    curve([[elbow[0],elbow[1]-.10,elbow[2]-.015],[s*.49,.15,-.63],[s*.50,-.30,-.75]],[.009,.006,.002],'wingVein',wing,22,6);
-    curve([elbow,[s*.43,.88,-.17],[s*.43,.91,-.12]],[.04,.023,.001],'claw',wing,10,9);
+    const wing=new THREE.Group();wing.name=s<0?'charizard-left-wing':'charizard-right-wing';wing.position.set(s*.36,1.86,-.22);body.add(wing);
+    const shoulder=[0,0,0],elbow=[s*.86,.23,-.13];
+    curve([shoulder,[s*.37,.19,.02],elbow],[.12,.092,.068],'orange',wing,26,12);
+    membrane(shoulder,elbow,[s*.16,.05,-.64],wing);
+    curve([[s*.16,.05,-.64],[s*.07,-.025,-.28],shoulder],[.018,.028,.052],'orange',wing,18,9);
+    const hand=new THREE.Group();hand.name='charizard-wing-wrist';hand.position.set(...elbow);wing.add(hand);wings.push({g:wing,hand,s});
+    const wrist=[0,0,0],tip=[s*1.65,.09,-.27];
+    const fingers=[[s*1.34,-.08,-1.11],[s*.64,-.14,-1.45],[s*-.12,-.13,-1.19],[s*-.69,-.17,-.48]];
+    curve([wrist,[s*.73,.19,-.03],tip],[.075,.050,.006],'orange',hand,32,12);
+    membrane(wrist,tip,fingers[0],hand);
+    for(let i=0;i<fingers.length-1;i++)membrane(wrist,fingers[i],fingers[i+1],hand);
+    for(const p of fingers.slice(0,-1))curve([wrist,[p[0]*.66,.025,p[2]*.54],p],[.044,.028,.005],'orange',hand,24,10);
+    curve([wrist,[s*-.32,-.05,-.27],fingers.at(-1)],[.058,.033,.013],'orange',hand,22,10);
+    const edge=[tip,...fingers],rim=[];for(let i=0;i<edge.length-1;i++)for(let k=0;k<9;k++){const t=k/8;rim.push(V(edge[i]).lerp(V(edge[i+1]),t).lerp(V(wrist),Math.sin(t*Math.PI)*.14).toArray());}
+    curve(rim,[.016,.016,.013,.012,.008],'dark',hand,72,8);
+    for(const p of fingers.slice(0,3))curve([[p[0]*.19,-.012,p[2]*.19],[p[0]*.51,-.045,p[2]*.50],[p[0]*.77,-.07,p[2]*.77]],[.009,.007,.003],'wingVein',hand,18,6);
+    curve([wrist,[s*.035,.16,.05],[s*.015,.26,.15]],[.062,.036,.001],'claw',hand,14,10);
   }
-  // The tail turns upward, keeping the flame above paving and out of the rider's
-  // route. Its curve stays within the declared travel footprint.
-  const tail=new THREE.Group();tail.position.set(0,.70,-.40);body.add(tail);
+  // The tail trails behind the flight direction. Only its joint responds to
+  // wing beats and banking, leaving the saddle stable for the seated rider.
+  const tail=new THREE.Group();tail.name='charizard-tail';tail.position.set(0,.70,-.40);body.add(tail);
   curve([[0,0,0],[.12,-.22,-.38],[.27,-.21,-.77],[.27,.03,-1.10],[.21,.35,-1.24]],[.23,.18,.12,.075,.035],'orange',tail,44,14);
   const fire=new THREE.Group();fire.position.set(.21,.38,-1.24);tail.add(fire);
   // Three asymmetric flame tongues instead of a sphere or a single cone.
@@ -113,9 +121,34 @@ export function createCharizardModel(){
   const containers=[];group.traverse(o=>{if(o.isGroup)containers.push(o);});
   for(const container of containers){const buckets=new Map();for(const child of [...container.children]){if(!child.isMesh)continue;child.updateMatrix();let g=child.geometry.clone().applyMatrix4(child.matrix);g.deleteAttribute('uv');if(g.index){const old=g;g=g.toNonIndexed();old.dispose();}if(!buckets.has(child.material))buckets.set(child.material,[]);buckets.get(child.material).push(g);container.remove(child);child.geometry.dispose();}for(const[m,geos]of buckets){const g=mergeGeometries(geos,false);const obj=new THREE.Mesh(g,m);obj.castShadow=obj.receiveShadow=true;container.add(obj);geos.forEach(g=>g.dispose());}}
   group.userData.front='+Z';group.userData.art='Original Charizard fan art, hand-authored geometry';
-  let phase=0;
-  return {group,seat:new THREE.Vector3(0,1.93,-.31),riderPose:'dragon-riding',length:3.05,width:2.22,
-    update(dt,{speed=0,time=0}={}){const moving=Math.min(Math.abs(speed)/2,1);phase+=Math.abs(speed)*dt*2.1;body.position.y=Math.sin(phase*2)*.021*moving;for(const l of legs){l.g.rotation.x=Math.sin(phase+l.phase)*.24*moving;l.g.position.y=.89+Math.abs(Math.sin(phase+l.phase))*.10*moving;}for(const w of wings){w.g.rotation.z=w.s*(Math.sin(time*1.6)*.025+moving*.015);w.g.rotation.y=w.s*Math.sin(time*1.2)*.012;}tail.rotation.y=Math.sin(time*1.5)*.045;fire.scale.set(1+Math.sin(time*8)*.06,1+Math.sin(time*10)*.09,1+Math.sin(time*9)*.05);fire.rotation.z=Math.sin(time*5)*.06;},
+  group.userData.flight={wingspan:5.8,wingbeatHz:1.25,bodyWidth:1.45};
+  return {group,seat:new THREE.Vector3(0,1.93,-.31),riderPose:'dragon-riding',length:3.15,width:5.8,
+    flight:group.userData.flight,
+    update(dt,{speed=0,time=0,airborne=1,bank=0}={}){
+      const air=THREE.MathUtils.clamp(airborne,0,1),flying=air*air*(3-2*air),moving=Math.min(Math.abs(speed)/6.5,1);
+      // A slower, wider hover stroke becomes a compact travelling stroke. The
+      // fixed time frequency also keeps reduced-motion callers deterministic.
+      const phase=time*Math.PI*2*1.25,stroke=Math.sin(phase),recovery=Math.max(0,-Math.cos(phase));
+      for(const w of wings){
+        // Fold up and back during the final metre of descent. Interpolate the
+        // actual joints rather than shrinking the mesh: membrane and bones
+        // retain their thickness and the same recognisable wing structure.
+        w.g.rotation.z=w.s*THREE.MathUtils.lerp(1.0,.13+stroke*(.59-moving*.11),flying);
+        w.g.rotation.y=w.s*THREE.MathUtils.lerp(.95,.045+recovery*.13,flying);
+        w.g.rotation.x=-.035*stroke*flying;
+        w.hand.rotation.z=w.s*THREE.MathUtils.lerp(-.34,Math.sin(phase-.56)*.16-.035,flying);
+        w.hand.rotation.y=w.s*THREE.MathUtils.lerp(.50,recovery*.14+moving*.035,flying);
+      }
+      for(const l of legs){
+        l.g.rotation.x=(1.05+moving*.10+Math.sin(phase-.85)*.025)*flying;
+        l.g.rotation.z=l.s*(.09+Math.sin(phase-1)*.015)*flying;
+        l.g.position.y=.89+.09*flying;
+      }
+      tail.rotation.x=(-.13+moving*.10+Math.sin(phase-1.0)*.035)*flying;
+      tail.rotation.y=Math.sin(time*1.5)*.055-THREE.MathUtils.clamp(bank,-.5,.5)*.35;
+      fire.scale.set(1+Math.sin(time*8)*.06,1+Math.sin(time*10)*.09,1+Math.sin(time*9)*.05);
+      fire.rotation.x=.16*moving*flying;fire.rotation.z=Math.sin(time*5)*.06;
+    },
     dispose(){const geos=new Set();group.traverse(o=>{if(o.geometry)geos.add(o.geometry);});geos.forEach(g=>g.dispose());Object.values(materials).forEach(m=>m.dispose());}
   };
 }

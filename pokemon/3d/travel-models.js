@@ -8,7 +8,7 @@
 import * as THREE from './lib/three.module.js';
 import { RoundedBoxGeometry } from './lib/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
-import { createCharizardModel } from './charizard-model.js';
+import { createCharizardModel } from './charizard-model.js?v=20261023-flight-controls';
 
 const clamp = THREE.MathUtils.clamp;
 const standard = (color, roughness=.55, metalness=0) => new THREE.MeshStandardMaterial({color,roughness,metalness});
@@ -280,13 +280,13 @@ export function createMountedRider(id){
   }
   animateLegs();
   // Static body details are batched, joints retain their authored pivots.
-  const model=f.finish({seat:base.toArray(),length:.8,width:.8,update(dt,{speed=0,time=0}={}){phase+=(dragon?Math.abs(speed)*2.1:horseMode?Math.abs(speed)*2.35:speed*2.3)*dt;animateLegs();f.group.position.y=dragon?Math.sin(phase*2)*.021*Math.min(Math.abs(speed)/2,1):horseMode?Math.sin(phase*2)*.028*Math.min(Math.abs(speed)/1.5,1):0;}});
+  const model=f.finish({seat:base.toArray(),length:.8,width:.8,update(dt,{speed=0,time=0}={}){phase+=(dragon?Math.abs(speed)*2.1:horseMode?Math.abs(speed)*2.35:speed*2.3)*dt;animateLegs();f.group.position.y=dragon?0:horseMode?Math.sin(phase*2)*.028*Math.min(Math.abs(speed)/1.5,1):0;}});
   const hiddenInFirstPerson=[upper,pelvis,...legs.flatMap(l=>[l.upperLeg,l.lowerLeg,l.shoe])];
   model.setFirstPerson=enabled=>{for(const o of hiddenInFirstPerson)o.visible=!enabled;};
   model.camera={eye:new THREE.Vector3(0,.81*s,.185*s).applyEuler(upper.rotation).add(base),lookAhead:3};
   // A small elevated riding view lets visitors see the road over the dragon's
   // brow while keeping its horns/neck in frame as visual orientation cues.
-  if(dragon)model.camera.eye.set(0,3.02,-.34);
+  if(dragon)model.camera.eye.set(0,3.30,-.34);
   if(horseMode)model.camera.eye.set(0,2.63,-.10);
   if(id==='cybertruck')model.camera.eye.y=1.23;
   model.group.name=`mounted-ke-${id}`;model.group.userData.portraitReference='assets/img/kw_ws.jpg';return model;
