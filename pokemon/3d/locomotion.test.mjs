@@ -5,6 +5,7 @@ import * as THREE from './lib/three.module.js';
 import {TRAVEL,angleDelta,footprintClear,turnClear,motionClear} from './navigation.js';
 import {createBridgeSurfaces} from './world-surfaces.js';
 import {stepRideControl} from './ride-controls.js';
+import {canReverseTravel} from './travel-policy.js';
 import {FLIGHT,stepFlight} from './flight.js';
 
 // Exercise the production input integrator, not a second implementation of it.
@@ -16,9 +17,9 @@ assert.ok(start>=0&&end>start,'production movement function can be located');
 const advanceSource=source.slice(start,end);
 function harness(shape,walkable,{x=0,z=0,yaw=0}={}){
   const trainer={position:new THREE.Vector3(x,0,z),rotation:{y:yaw}};
-  const runtime=new Function('THREE','angleDelta','turnClear','motionClear','trainer','travelShape','walkable',
-    `let steering=0;${advanceSource};return {advance,get steering(){return steering;}};`)
-    (THREE,angleDelta,turnClear,motionClear,trainer,()=>shape,walkable);
+  const runtime=new Function('THREE','angleDelta','turnClear','motionClear','trainer','travelShape','walkable','selectedTravel','canReverseTravel',
+    `let steering=0;const activeRoom=null;${advanceSource};return {advance,get steering(){return steering;}};`)
+    (THREE,angleDelta,turnClear,motionClear,trainer,()=>shape,walkable,Object.keys(TRAVEL).find(id=>TRAVEL[id]===shape),canReverseTravel);
   return {...runtime,trainer,advance:runtime.advance};
 }
 
@@ -48,16 +49,16 @@ function fixedCamera(){
 function rideHarness(id,walkable,{x=0,z=0,ground=()=>0,y=id==='charizard'?FLIGHT.cruise:ground(x,z),yaw=0,speed=0,steer=0}={}){
   const trainer={position:new THREE.Vector3(x,y,z),rotation:{y:yaw}};
   const rideControl={speed,steer},camera=fixedCamera();
-  const runtime=new Function('THREE','angleDelta','stepRideControl','turnClear','motionClear','trainer','rideControl','selectedTravel','travelShape','walkable','camera','FLIGHT','stepFlight','groundForWalk',
-    `let steering=0,reverseHeld=false,ridePending=null,flightCruise=6.5,keys=new Set();const flying=()=>selectedTravel==='charizard',flightCeiling=()=>-Infinity,WORLD_LIMIT=64,viewProjection=new THREE.Matrix4();${screenSource};${advanceSource};
+  const runtime=new Function('THREE','angleDelta','stepRideControl','turnClear','motionClear','trainer','rideControl','selectedTravel','travelShape','walkable','camera','FLIGHT','stepFlight','groundForWalk','canReverseTravel',
+    `let steering=0,reverseHeld=false,ridePending=null,flightCruise=6.5,keys=new Set(),firstMoveYaw=null,firstLookYaw=0;const activeRoom=null;const flying=()=>selectedTravel==='charizard',flightCeiling=()=>-Infinity,WORLD_LIMIT=64,viewProjection=new THREE.Matrix4();${screenSource};${advanceSource};
     function frame(inputKeys,viewMode='first',dt=.05,controls={}){
       keys=new Set(inputKeys);reverseHeld=controls.reverseHeld||false;
-      const touchDrive=controls.touchDrive||{throttle:0,turn:0},direction=new THREE.Vector3(),activeRoom=null,path=[],pathIndex=0;
+      const touchDrive=controls.touchDrive||{throttle:0,turn:0},direction=new THREE.Vector3(),path=[],pathIndex=0;
       let manualInput=false,flightLanding=false,flightLift=0;
       ${inputSource}
     }
     return {advanceRide,frame,get steering(){return steering;}};`)
-    (THREE,angleDelta,stepRideControl,turnClear,motionClear,trainer,rideControl,id,()=>TRAVEL[id],walkable,camera,FLIGHT,stepFlight,ground);
+    (THREE,angleDelta,stepRideControl,turnClear,motionClear,trainer,rideControl,id,()=>TRAVEL[id],walkable,camera,FLIGHT,stepFlight,ground,canReverseTravel);
   return {trainer,rideControl,camera,advanceRide:runtime.advanceRide,frame:runtime.frame,get steering(){return runtime.steering;}};
 }
 
@@ -353,7 +354,7 @@ for(const id of groundModes.filter(id=>id!=='walk')){
     assert.ok(moved,'the turn completes and travel resumes');
   });
 
-  test(`${id}: third-person R is a separate straight reverse command and Space stops directional movement`,()=>{
+  if(canReverseTravel(id))test(`${id}: third-person R is a separate straight reverse command and Space stops directional movement`,()=>{
     const yaw=.8,keyboard=rideHarness(id,()=>true,{yaw}),button=rideHarness(id,()=>true,{yaw});
     for(let i=0;i<12;i++){
       keyboard.frame(['r','arrowup','arrowleft'],'third');
@@ -441,8 +442,8 @@ test('the explicit back-up command works without a world vector and still sweeps
   assert.equal(blocked.trainer.position.z,4,'explicit reverse does not override water collision');
 });
 
-test('relative controls turn in place and walk backward without flipping the view',()=>{
-  for(const id of ['walk','model-s']){
+test('legacy relative reverse is available only to cars and still respects clearance',()=>{
+  for(const id of ['model-s']){
     const shape=TRAVEL[id],state=harness(shape,()=>true);
     state.advance(new THREE.Vector3(),.05,Infinity,false,{throttle:0,turn:1});
     const yaw=state.trainer.rotation.y;
@@ -558,3 +559,34 @@ test('Charizard flying over a porch cannot accidentally enter its building',()=>
   assert.deepEqual(porchCrossings({planned:false,selectedTravel:'charizard'}),[]);
   assert.deepEqual(porchCrossings({planned:true,destination:'mrfoundry',selectedTravel:'charizard'}),[]);
 });
+
+for(const id of ['walk','bicycle','horse','charizard']){
+  test(`${id}: reverse key and held reverse UI command cannot cause motion`,()=>{
+    for(const view of ['first','third']){
+      const state=rideHarness(id,()=>true,{yaw:.9}),start=state.trainer.position.clone();
+      for(let i=0;i<20;i++)state.frame(['r'],view,.05,{reverseHeld:true});
+      assert.equal(state.trainer.position.x,start.x);
+      assert.equal(state.trainer.position.z,start.z);
+      assert.equal(state.trainer.rotation.y,.9);
+      assert.equal(state.rideControl.speed,0);
+    }
+  });
+  test(`${id}: first-person rearward input turns once and travels forward; touch matches keys`,()=>{
+    const yaw=.71,key=rideHarness(id,()=>true,{yaw}),touch=rideHarness(id,()=>true,{yaw});
+    const initial=key.trainer.position.clone(),goal=yaw+Math.PI;
+    for(let i=0;i<100;i++){
+      const before=key.trainer.position.clone();key.frame(['s'],'first');
+      touch.frame([],'first',.05,{touchDrive:{throttle:-1,turn:0}});
+      const step=key.trainer.position.clone().sub(before),heading=key.trainer.rotation.y;
+      assert.ok(step.x*Math.sin(heading)+step.z*Math.cos(heading)>=-1e-10,'every step travels forward relative to the nose');
+      assert.ok(key.rideControl.speed>=0,'never enters reverse gear');
+      assert.ok(key.trainer.position.distanceTo(touch.trainer.position)<1e-10,'touch and keyboard agree');
+    }
+    assert.ok(Math.abs(angleDelta(key.trainer.rotation.y,goal))<1e-7,'holding the input completes one turn without spinning continuously');
+    assert.ok(key.trainer.position.clone().sub(initial).dot(new THREE.Vector3(Math.sin(goal),0,Math.cos(goal)))>2,'makes progress in the initially requested rearward direction');
+    const stopped=key.trainer.position.clone();key.frame([],'first');key.frame([],'first');
+    assert.ok(Math.hypot(key.trainer.position.x-stopped.x,key.trainer.position.z-stopped.z)<1e-10,'release stops horizontal motion');
+    key.frame(['w'],'first');
+    assert.ok(Math.abs(angleDelta(key.trainer.rotation.y,goal))<1e-7,'next gesture uses the new forward heading');
+  });
+}

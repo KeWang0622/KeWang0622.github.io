@@ -17,7 +17,8 @@ import { stepCompanion } from './companion-navigation.js';
 import { createTravelModel } from './travel-models.js?v=20261023-centered-travel';
 import { createWorldMaterials } from './world-materials.js?v=20261023-painted-meadow';
 import { FIRST_PERSON_FOV, firstPersonPose } from './ride-camera.js';
-import { stepRideControl } from './ride-controls.js';
+import { stepRideControl } from './ride-controls.js?v=20261023-car-reverse';
+import { canReverseTravel } from './travel-policy.js?v=20261023-car-reverse';
 import { planRideSwitch } from './ride-switch.js?v=20261023-centered-travel';
 import { updateCenteredFocus } from './stable-camera.js?v=20261023-centered-travel';
 import { FLIGHT, createFlightEnvelope, stepFlight, findLandingSpot, flightDeployment } from './flight.js';
@@ -347,6 +348,7 @@ async function init(){
   let selectedTravel='walk',travelModel=null,viewMode='third',firstLookYaw=0,firstLookPitch=-.10,reverseHeld=false;
   const touchDrive={throttle:0,turn:0};
   const rideControl={speed:0,steer:0};
+  let firstMoveYaw=null;
   let flightStatusTime=0,mountTime=0,flightLift=0,flightCruise=FLIGHT.cruise,flightLanding=false,flightPending=null;
   const flying=()=>!activeRoom&&selectedTravel==='charizard';
   const travelCache=new Map();
@@ -564,15 +566,16 @@ async function init(){
     actualDistance=(activeRoom?(activeRoom.camera.distance||19)*(innerWidth<600?1.75:1):innerWidth<600?28:24)/zoom;actualPitch=cameraPitch;
     updateOverviewButton();updateTravelVisual();resize();
     document.dispatchEvent(new CustomEvent('world:view-changed',{detail:{mode}}));
-    ui.announce(mode==='first'?'First person. W and S move forward and back; A and D turn. Drag to look around. V returns to third person.':'Third person. The camera follows you smoothly and keeps the same orientation. Arrows move on screen; R reverses a ground ride.');
+    ui.announce(mode==='first'?(canReverseTravel(activeRoom?'walk':selectedTravel)?'First person. W accelerates; S brakes then reverses; A and D steer. Drag to look around.':'First person. Choose a direction to turn and move forward. Down turns you around. Drag to look around.'):'Third person. The camera follows with a fixed orientation. Arrows move on screen. Only cars can reverse with R.');
     canvas.focus({preventScroll:true});
   }
   document.addEventListener('world:view-select',event=>setView(event.detail?.mode));
-  document.addEventListener('world:reverse',event=>{reverseHeld=Boolean(!paused&&!roomLoading&&event.detail?.active);if(reverseHeld){cancelRideSwitch();navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;}});
+  document.addEventListener('world:reverse',event=>{reverseHeld=Boolean(!paused&&!roomLoading&&!activeRoom&&canReverseTravel(selectedTravel)&&event.detail?.active);if(reverseHeld){cancelRideSwitch();navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;}});
   document.addEventListener('world:flight',event=>{flightLift=paused||roomLoading?0:THREE.MathUtils.clamp(Number(event.detail?.lift)||0,-1,1);if(flightLift){cancelRideSwitch();navigationRevision++;path=[];flightPending=null;flightLanding=false;}});
   document.addEventListener('world:drive',event=>{
     touchDrive.throttle=paused||roomLoading?0:THREE.MathUtils.clamp(Number(event.detail?.throttle)||0,-1,1);
     touchDrive.turn=paused||roomLoading?0:THREE.MathUtils.clamp(Number(event.detail?.turn)||0,-1,1);
+    resetFirstMoveIfReleased();
     if(touchDrive.throttle||touchDrive.turn){
       cancelRideSwitch();flightLanding=false;flightPending=null;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;
       // Touch controls resume the following camera exactly like keyboard input.
@@ -630,7 +633,7 @@ async function init(){
       finally{doorTransitionPending=false;}
     });
   }
-  function clearMovement(){cancelRideSwitch();rideControl.speed=0;rideControl.steer=0;flightLift=0;flightPending=null;flightLanding=false;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;keys.clear();destinationMarker.visible=false;footprints.forEach(f=>{f.age=8;f.m.visible=false;});document.dispatchEvent(new CustomEvent('world:input-reset'));}
+  function clearMovement(){firstMoveYaw=null;cancelRideSwitch();rideControl.speed=0;rideControl.steer=0;flightLift=0;flightPending=null;flightLanding=false;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;keys.clear();destinationMarker.visible=false;footprints.forEach(f=>{f.age=8;f.m.visible=false;});document.dispatchEvent(new CustomEvent('world:input-reset'));}
   function showExterior(show){outdoorObjects.forEach(object=>object.visible=show);mapStates.forEach(s=>s.label.hidden=!show);}
   async function enterInterior(id){
     if(roomLoading||activeRoom)return;const place=data.places.find(p=>p.id===id);if(!place)return;
@@ -687,10 +690,10 @@ async function init(){
   canvas.addEventListener('pointerup',e=>{const beganOnCanvas=pointers.has(e.pointerId);pointers.delete(e.pointerId);if(!beganOnCanvas)return;if(dragged||paused||roomLoading){if(!pointers.size)resetCanvasPointers();return;}const rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(activeRoom?activeRoom.targets:targets,false)[0];if(hit){if(activeRoom){if(hit.object.userData.exit){moveTo(activeRoom.exit.approach,null,exitInterior);return;}const exhibit=activeRoom.exhibits.find(e=>e.id===hit.object.userData.exhibitId);if(exhibit)moveTo(exhibit.approach,null,()=>ui.openExhibit?.(exhibit));}else walkTo(hit.object.userData.placeId);return;}const ground=raycaster.intersectObjects(activeRoom?[activeRoom.floor]:[terrain,...bridgeFloors],false)[0];if(ground)moveTo(ground.point);downPoint=null;});
   for(const type of ['pointercancel','lostpointercapture'])canvas.addEventListener(type,e=>{if(!pointers.has(e.pointerId))return;pointers.delete(e.pointerId);downPoint=null;pinchDistance=0;dragged=Boolean(pointers.size);});
   canvas.addEventListener('wheel',e=>{e.preventDefault();setZoom(targetZoom-e.deltaY*.001);},{passive:false});
-  canvas.addEventListener('keydown',e=>{if(paused||roomLoading)return;const k=e.key.toLowerCase();if(k==='v'&&!e.repeat){e.preventDefault();setView(viewMode==='first'?'third':'first');return;}if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','r',' ','c'].includes(k)){e.preventDefault();cancelRideSwitch();keys.add(k);flightLanding=false;flightPending=null;navigationRevision++;path=[];arrivalId=null;arrivalAction=null;
+  canvas.addEventListener('keydown',e=>{if(paused||roomLoading)return;const k=e.key.toLowerCase();if(k==='r'&&(activeRoom||!canReverseTravel(selectedTravel)))return;if(k==='v'&&!e.repeat){e.preventDefault();setView(viewMode==='first'?'third':'first');return;}if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','r',' ','c'].includes(k)){e.preventDefault();cancelRideSwitch();keys.add(k);flightLanding=false;flightPending=null;navigationRevision++;path=[];arrivalId=null;arrivalAction=null;
       if(overview){leaveOverview();camera.position.set(focus.x+Math.sin(cameraYaw)*Math.cos(actualPitch)*actualDistance,focus.y+Math.sin(actualPitch)*actualDistance,focus.z+Math.cos(cameraYaw)*Math.cos(actualPitch)*actualDistance);camera.lookAt(focus);camera.updateMatrixWorld();}
       overview=false;updateOverviewButton();destinationMarker.visible=false;}if((k==='e'||k==='enter')&&nearest){e.preventDefault();interact();}});
-  window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
+  window.addEventListener('keyup',e=>{keys.delete(e.key.toLowerCase());resetFirstMoveIfReleased();});window.addEventListener('blur',()=>{firstMoveYaw=null;keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
   document.addEventListener('world:pause',()=>{paused=true;clearMovement();});document.addEventListener('world:resume',()=>{paused=false;});
   window.addEventListener('orientationchange',clearMovement);
   document.getElementById('reset-view').addEventListener('click',()=>{if(activeRoom)exitInterior();if(viewMode==='first')setView('third');cameraYaw=.44;cameraPitch=.64;setZoom(1);moveTo(new THREE.Vector3(-3.2,0,9.8));canvas.focus({preventScroll:true});window.scrollTo({top:0,behavior:reducedMotion?'instant':'smooth'});});
@@ -711,22 +714,22 @@ async function init(){
   }
   function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer?.setSize(w,h);camera.aspect=w/h;camera.fov=viewMode==='first'?FIRST_PERSON_FOV:w<600?49:42;camera.near=viewMode==='first'?.045:.15;camera.updateProjectionMatrix();}
   new ResizeObserver(resize).observe(stage);resize();
-  let hidden=false,inView=true;document.addEventListener('visibilitychange',()=>{hidden=document.hidden;lastTime=0;keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
-  new IntersectionObserver(([entry])=>{inView=entry.isIntersecting;lastTime=0;if(!inView){keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;interactPrompt.hidden=true;document.dispatchEvent(new CustomEvent('world:input-reset'));}},{rootMargin:'100px'}).observe(stage);
+  let hidden=false,inView=true;document.addEventListener('visibilitychange',()=>{hidden=document.hidden;lastTime=0;firstMoveYaw=null;keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
+  new IntersectionObserver(([entry])=>{inView=entry.isIntersecting;lastTime=0;if(!inView){firstMoveYaw=null;keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;interactPrompt.hidden=true;document.dispatchEvent(new CustomEvent('world:input-reset'));}},{rootMargin:'100px'}).observe(stage);
   const direction=new THREE.Vector3(),delta=new THREE.Vector3(),moveStart=new THREE.Vector3(),viewProjection=new THREE.Matrix4();
   let steering=0;
   function advance(vector,dt,remaining=Infinity,followingRoute=false,options={}){
-    const shape=travelShape(),mounted=shape.axle>0;
-    // Relative controls also work on foot: backing up preserves the view and
-    // steering alone can turn safely without needing a nonzero world vector.
+    const shape=travelShape(),mounted=shape.axle>0,allowsReverse=canReverseTravel(activeRoom?'walk':selectedTravel);
+    // Legacy relative commands remain collision-checked. Only cars may
+    // request negative throttle; directional movement is always forward.
     const relative=!followingRoute&&(Number.isFinite(options.throttle)||Number.isFinite(options.turn));
-    const forceReverse=mounted&&!followingRoute&&options.forceReverse===true;
+    const forceReverse=allowsReverse&&mounted&&!followingRoute&&options.forceReverse===true;
     if(vector.lengthSq()<1e-10&&!relative&&!forceReverse){steering=0;return;}
     const oldYaw=trainer.rotation.y,goal=vector.lengthSq()>1e-10?Math.atan2(vector.x,vector.z):oldYaw;
-    const throttle=relative?THREE.MathUtils.clamp(options.throttle||0,-1,1):0;
+    const throttle=relative?THREE.MathUtils.clamp(options.throttle||0,allowsReverse?-1:0,1):0;
     // Explicit reverse preserves heading; screen directions instead turn the
     // vehicle toward the requested direction, even for a full U-turn.
-    const reversing=forceReverse||(relative?throttle<0:mounted&&!followingRoute&&!options.screenDirection&&Math.abs(angleDelta(oldYaw,goal))>Math.PI/2);
+    const reversing=allowsReverse&&(forceReverse||(relative?throttle<0:mounted&&!followingRoute&&!options.screenDirection&&Math.abs(angleDelta(oldYaw,goal))>Math.PI/2));
     const steeringGoal=forceReverse?oldYaw:reversing?goal+Math.PI:goal;
     const turn=relative?THREE.MathUtils.clamp(options.turn||0,-1,1)*shape.turn*dt:angleDelta(oldYaw,steeringGoal);
     const requestedYaw=forceReverse?oldYaw:relative?oldYaw+turn:oldYaw+THREE.MathUtils.clamp(turn,-shape.turn*dt,shape.turn*dt);
@@ -739,7 +742,7 @@ async function init(){
     // Direction changes blend into forward arcs instead of waiting until
     // perfectly aligned, then jumping immediately to full speed.
     if(options.screenDirection&&options.motion){
-      const alignment=mounted?Math.max(0,Math.cos(angleDelta(nextYaw,goal))):1;
+      const alignment=mounted||options.forwardOnly?Math.max(0,Math.cos(angleDelta(nextYaw,goal))):1;
       const desired=shape.speed*alignment*alignment;
       const rate=desired<options.motion.speed?shape.speed*6:shape.speed*4;
       options.motion.speed+=THREE.MathUtils.clamp(desired-options.motion.speed,-rate*dt,rate*dt);
@@ -748,7 +751,7 @@ async function init(){
     const paceFor=yaw=>forceReverse?-.55:options.screenDirection&&options.motion?options.motion.speed/shape.speed:relative?throttle*(mounted&&throttle<0?.55:1):mounted?
       Math.max(reversing?.25:0,Math.cos(angleDelta(yaw,steeringGoal)))*(reversing?-.55:1):1;
     const candidateFor=yaw=>{
-      const heading=mounted||relative?yaw:goal,pace=paceFor(yaw);
+      const heading=mounted||relative||options.forwardOnly?yaw:goal,pace=paceFor(yaw);
       const amount=Math.min(remaining,dt*shape.speed*Math.abs(pace))*Math.sign(pace);
       return {x:trainer.position.x+Math.sin(heading)*amount,z:trainer.position.z+Math.cos(heading)*amount};
     };
@@ -801,7 +804,7 @@ async function init(){
   }
   function advanceRide(dt,{throttle=0,turn=0,brake=false}={}){
     const shape=travelShape(),oldYaw=trainer.rotation.y;
-    if(reverseHeld||keys.has('r'))rideControl.steer=0;
+    if(canReverseTravel(selectedTravel)&&(reverseHeld||keys.has('r')))rideControl.steer=0;
     const control=stepRideControl(rideControl,{throttle,turn,brake},{...shape,id:selectedTravel},dt);
     steering=control.steer;
     const desiredYaw=oldYaw+control.yawDelta;
@@ -836,6 +839,16 @@ async function init(){
     const result=stepFlight(trainer.position,next,{dt,ground:groundForWalk,ceiling:flightCeiling,cruise:flightCruise,limit:WORLD_LIMIT});
     trainer.position.set(result.x,result.y,result.z);
   }
+  // Keep a first-person direction fixed for the whole held gesture. Otherwise
+  // the following camera would make a held Down command turn forever.
+  function resetFirstMoveIfReleased(){
+    if(!touchDrive.throttle&&!touchDrive.turn&&!['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].some(key=>keys.has(key)))firstMoveYaw=null;
+  }
+  function firstPersonDirection(vector,x,y){
+    if(!x&&!y){firstMoveYaw=null;return vector.set(0,0,0);}
+    if(firstMoveYaw===null)firstMoveYaw=trainer.rotation.y+firstLookYaw;
+    return vector.set(Math.sin(firstMoveYaw)*y-Math.cos(firstMoveYaw)*x,0,Math.cos(firstMoveYaw)*y+Math.sin(firstMoveYaw)*x).normalize();
+  }
   function advanceFlightRoute(dt){
     const waypoint=path[pathIndex];
     if(!waypoint)return;
@@ -859,7 +872,10 @@ async function init(){
       const sx=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));
       const sy=Number(keys.has('w')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
       direction.set(0,0,0);
-      const backing=(reverseHeld||keys.has('r'))&&travelShape().axle>0;
+      const car=!activeRoom&&canReverseTravel(selectedTravel);
+      const backing=car&&(reverseHeld||keys.has('r'));
+      const inputX=THREE.MathUtils.clamp(sx-touchDrive.turn,-1,1),inputY=THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1);
+      if(viewMode!=='first'||car||(!inputX&&!inputY))firstMoveYaw=null;
       const lift=flying()?THREE.MathUtils.clamp(Number(keys.has(' '))-Number(keys.has('c'))+flightLift,-1,1):0;
       if(lift)flightCruise=THREE.MathUtils.clamp(flightCruise+lift*dt*5,FLIGHT.minCruise,FLIGHT.maxCruise);
       manualInput=Boolean(sx||sy||backing||touchDrive.throttle||touchDrive.turn||lift||keys.has(' '));
@@ -871,11 +887,13 @@ async function init(){
         trainer.position.y=result.y;
         if(result.landed){const pending=flightPending;clearMovement();travelStatus(null,pending?.travel?`Ready to explore with ${rideName(pending.travel)}.`:'Landed.');selectedTravel=pending?.travel||(pending?.id?'charizard':'walk');updateTravelVisual();resetCompanionTrail();if(pending?.id)queueArrival(pending.id);else pending?.action?.();}
       }else if(ridePending){advanceRideSwitch(dt);}
-      else if(viewMode==='first'&&!activeRoom&&selectedTravel!=='walk'&&(manualInput||pathIndex>=path.length)){
+      else if(viewMode==='first'&&car&&(manualInput||pathIndex>=path.length)){
         advanceRide(dt,{throttle:backing?-1:THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1),turn:backing?0:THREE.MathUtils.clamp(-sx+touchDrive.turn,-1,1),brake:!flying()&&keys.has(' ')});
       }else if(manualInput&&viewMode==='first'){
-        const throttle=backing?-1:THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1),turn=THREE.MathUtils.clamp(-sx+touchDrive.turn,-1,1);
-        advance(direction,dt,Infinity,false,{throttle,turn,forceReverse:backing});
+        firstPersonDirection(direction,inputX,inputY);
+        if(flying())advanceScreenFlight(direction,dt);
+        else if(!keys.has(' '))advance(direction,dt,Infinity,false,{screenDirection:true,forwardOnly:true,motion:rideControl});
+        else {steering=0;rideControl.speed=0;}
       }else if(backing&&!flying()&&!keys.has(' ')){rideControl.speed=0;advance(direction,dt,Infinity,false,{forceReverse:true});}
       else if(manualInput){
         viewProjection.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
@@ -883,7 +901,6 @@ async function init(){
         // Include local terrain slope; indoors this is exactly a horizontal plane.
         const slopeX=activeRoom||flying()?0:(groundForWalk(x+.04,z)-groundForWalk(x-.04,z))/.08;
         const slopeZ=activeRoom||flying()?0:(groundForWalk(x,z+.04)-groundForWalk(x,z-.04))/.08;
-        const inputX=THREE.MathUtils.clamp(sx-touchDrive.turn,-1,1),inputY=THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1);
         screenGroundDirection(direction,inputX,inputY,viewProjection.elements,trainer.position,camera.aspect,slopeX,slopeZ);
         const screenOrigin=trainer.position.clone().project(camera);
         const screenProgress=next=>{

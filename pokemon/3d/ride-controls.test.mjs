@@ -64,6 +64,44 @@ test('a held brake stops forward and backward motion without engaging either gea
   }
 });
 
+test('each car can engage reverse after braking to a stop', () => {
+  for (const id of ['model-s', 'cybertruck', 'porsche']) {
+    const shape = {...TRAVEL[id], id};
+    const state = {speed: shape.speed};
+    hold(state, {throttle: -1}, 3, shape);
+    assert.ok(state.speed < 0, `${id} can reverse`);
+    assert.equal(state.speed, -shape.speed * .45);
+  }
+});
+
+test('negative throttle brakes bikes and living mounts without reversing', () => {
+  for (const id of ['bicycle', 'horse', 'charizard', 'walk', 'unknown']) {
+    const shape = {...(TRAVEL[id] || TRAVEL.walk), id};
+    const state = {speed: shape.speed};
+    const first = step(state, {throttle: -1}, shape);
+    assert.ok(first.speed > 0 && first.speed < shape.speed, `${id} decelerates instead of stopping abruptly`);
+    for (let i = 0; i < 180; i++) {
+      assert.ok(step(state, {throttle: -1}, shape).speed >= 0, `${id} cannot enter reverse`);
+    }
+    assert.equal(state.speed, 0);
+    hold(state, {throttle: 1}, 1, shape);
+    assert.ok(state.speed > 0, `${id} still accelerates forward after braking`);
+  }
+});
+
+test('noncars discard stale reverse speed and cannot enable reverse through shape overrides', () => {
+  for (const id of ['bicycle', 'horse', 'charizard', 'walk', 'unknown']) {
+    const shape = {...(TRAVEL[id] || TRAVEL.walk), id, car: true, reverseRatio: 1};
+    for (const input of [{}, {throttle: -1}, {throttle: 1}, {brake: true}]) {
+      const result = step({speed: -shape.speed}, input, shape);
+      assert.ok(result.speed >= 0, `${id} rejects stale negative speed`);
+    }
+    const state = {speed: 0};
+    hold(state, {throttle: -1}, 3, shape);
+    assert.equal(state.speed, 0, `${id} cannot opt into reverse with car: true`);
+  }
+});
+
 test('cars steer their wheels at rest but do not rotate in place', () => {
   for (const id of ['model-s', 'cybertruck', 'porsche']) {
     const state = {speed: 0};
