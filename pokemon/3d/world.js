@@ -23,9 +23,11 @@ import { planRideSwitch } from './ride-switch.js?v=20261023-centered-travel';
 import { updateCenteredFocus } from './stable-camera.js?v=20261023-centered-travel';
 import { FLIGHT, createFlightEnvelope, stepFlight, findLandingSpot, flightDeployment } from './flight.js';
 import { applyLandscapeLight } from './landscape-light.js?v=20261023-painted-meadow';
-import { buildMeadow } from './meadow.js?v=20261023-painted-meadow';
-import { styleFoliage } from './foliage-art.js?v=20261023-painted-meadow';
-import { createPainterlyWater } from './painterly-water.js?v=20261023-painted-meadow';
+import { buildMeadow } from './meadow.js?v=20261024-living-village';
+import { createWorldLife } from './world-life.js?v=20261024-living-village';
+import { initDiscovery } from './discovery.js?v=20261024-living-village';
+import { styleFoliage } from './foliage-art.js?v=20261024-living-village';
+import { createPainterlyWater } from './painterly-water.js?v=20261024-living-village';
 import { createVillageSky } from './village-sky.js';
 import { chooseRenderProfile } from './mobile-rendering.js?v=20261023-mobile';
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
@@ -66,15 +68,16 @@ async function init(){
   renderer.toneMappingExposure=1.0;
   const scene=new THREE.Scene();
   scene.background=new THREE.Color(0xc5dfdd);
-  scene.fog=new THREE.FogExp2(0xbcd4ce,.0095);
+  scene.fog=new THREE.Fog(0xbcd4ce,28,135);
   scene.add(createVillageSky());
   const camera=new THREE.PerspectiveCamera(42,1,.15,1600);
-  const hemi=new THREE.HemisphereLight(0xdceeff,0x647560,1.30);scene.add(hemi);
-  const sun=new THREE.DirectionalLight(0xffedcf,2.85);sun.position.set(-18,34,20);sun.castShadow=true;
+  const outdoorLight={sun:2.85,sky:1.08,fill:.25};
+  const hemi=new THREE.HemisphereLight(0xdceeff,0x647560,outdoorLight.sky);scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xffedcf,outdoorLight.sun);sun.position.set(-18,34,20);sun.castShadow=true;
   sun.shadow.mapSize.set(renderProfile.shadowMapSize,renderProfile.shadowMapSize);Object.assign(sun.shadow.camera,{left:-28,right:28,top:28,bottom:-28,near:1,far:100});
   sun.shadow.normalBias=.03;sun.shadow.bias=-.00008;sun.shadow.radius=2.5;
   scene.add(sun,sun.target);
-  const skyFill=new THREE.DirectionalLight(0xa6cddc,.40);skyFill.position.set(15,9,-20);scene.add(skyFill);
+  const skyFill=new THREE.DirectionalLight(0xa6cddc,outdoorLight.fill);skyFill.position.set(15,9,-20);scene.add(skyFill);
   renderer.info.autoReset=false;
   let composer=null;
   if(renderProfile.useComposer){
@@ -197,7 +200,7 @@ async function init(){
 
   // Load one authored workshop family and genuine CC0 textured vegetation.
   const [arrivalResult,companionResult,foliageResult,adobeResult]=await Promise.allSettled([
-    loader.loadAsync('./assets/arrival.glb'),loader.loadAsync('./assets/companion.glb'),loader.loadAsync('./assets/foliage/foliage.glb'),loader.loadAsync('./assets/adobe-lab.glb')
+    loader.loadAsync('./assets/arrival.glb?v=20261024-living-village'),loader.loadAsync('./assets/companion.glb'),loader.loadAsync('./assets/foliage/foliage.glb'),loader.loadAsync('./assets/adobe-lab.glb?v=20261024-living-village')
   ]);
   const arrival=arrivalResult.status==='fulfilled'?arrivalResult.value.scene:null;
   const adobeModel=adobeResult.status==='fulfilled'?adobeResult.value.scene:null;
@@ -338,7 +341,10 @@ async function init(){
 
 
   // Decorative grass must not enter the flight/landing obstacle atlas.
-  outdoorObjects.push(buildMeadow({scene,groundHeight,roadDistance,riverZ,nearBuilding,pondRadius,windUniform}));
+  const meadow=buildMeadow({scene,groundHeight,roadDistance,riverZ,nearBuilding,pondRadius,windUniform});
+  outdoorObjects.push(meadow);
+  const wildlife=createWorldLife({scene,groundHeight,mobile:renderProfile.name==='mobile'});
+  outdoorObjects.push(wildlife);
   applyLandscapeLight(scene,windUniform);
 
   // Character and scanner companion. Character asset is optional during authoring.
@@ -386,6 +392,9 @@ async function init(){
 
   // Movement follows the same accessible place IDs, over a navigation grid.
   const keys=new Set();let path=[],pathIndex=0,arrivalId=null,arrivalAction=null,navigationRevision=0,paused=false,nearest=null,time=0,lastTime=0,previousMoving=false,routeTimedOut=false;
+  let postcardRequested=false;
+  const postcardWaiters=[];
+  const discovery=initDiscovery({places:SCENIC_PLACES,goTo:id=>walkToScenic(id),announce:ui.announce,capture:()=>new Promise(resolve=>{postcardRequested=true;postcardWaiters.push(resolve);})});
   const STEP=.6,MIN=-WORLD_LIMIT,MAX=WORLD_LIMIT,N=Math.ceil((MAX-MIN)/STEP)+1;
   function walkable(x,z,radius=WALKER_RADIUS){
     if(activeRoom){const b=activeRoom.bounds;if(x<b.minX+radius||x>b.maxX-radius||z<b.minZ+radius||z>b.maxZ-radius)return false;return !activeRoom.blockers.some(b=>Math.abs(x-b.x)<b.w+radius&&Math.abs(z-b.z)<b.d+radius);}
@@ -664,7 +673,7 @@ async function init(){
     updateTravelVisual();resetCompanionTrail();
     cameraYaw=outdoorReturn.yaw;cameraPitch=outdoorReturn.pitch;zoom=targetZoom=outdoorReturn.zoom;overview=false;overviewButton.disabled=false;updateOverviewButton();
     focus.set(trainer.position.x,trainer.position.y+1.2,trainer.position.z);focusTarget.copy(focus);actualDistance=(innerWidth<600?28:24)/zoom;actualPitch=cameraPitch;
-    scene.background.set(0xc5dfdd);scene.fog=outdoorFog;sun.intensity=2.85;hemi.intensity=1.30;skyFill.intensity=.40;
+    scene.background.set(0xc5dfdd);scene.fog=outdoorFog;sun.intensity=outdoorLight.sun;hemi.intensity=outdoorLight.sky;skyFill.intensity=outdoorLight.fill;
     canvas.setAttribute('aria-label','Explore Ke’s research village. Tap or click to walk, or use the touch direction pad, WASD, or arrow keys to move in screen directions.');ui.setRoom?.(null);ui.announce('Back in the village.');canvas.focus({preventScroll:true});
     if(!reducedMotion)canvas.animate([{opacity:.25},{opacity:1}],{duration:420});
   }
@@ -694,7 +703,7 @@ async function init(){
       if(overview){leaveOverview();camera.position.set(focus.x+Math.sin(cameraYaw)*Math.cos(actualPitch)*actualDistance,focus.y+Math.sin(actualPitch)*actualDistance,focus.z+Math.cos(cameraYaw)*Math.cos(actualPitch)*actualDistance);camera.lookAt(focus);camera.updateMatrixWorld();}
       overview=false;updateOverviewButton();destinationMarker.visible=false;}if((k==='e'||k==='enter')&&nearest){e.preventDefault();interact();}});
   window.addEventListener('keyup',e=>{keys.delete(e.key.toLowerCase());resetFirstMoveIfReleased();});window.addEventListener('blur',()=>{firstMoveYaw=null;keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
-  document.addEventListener('world:pause',()=>{paused=true;clearMovement();});document.addEventListener('world:resume',()=>{paused=false;});
+  document.addEventListener('world:pause',()=>{paused=true;clearMovement();discovery.update(trainer.position,{paused:true});});document.addEventListener('world:resume',()=>{paused=false;});
   window.addEventListener('orientationchange',clearMovement);
   document.getElementById('reset-view').addEventListener('click',()=>{if(activeRoom)exitInterior();if(viewMode==='first')setView('third');cameraYaw=.44;cameraPitch=.64;setZoom(1);moveTo(new THREE.Vector3(-3.2,0,9.8));canvas.focus({preventScroll:true});window.scrollTo({top:0,behavior:reducedMotion?'instant':'smooth'});});
   const projection=new THREE.Vector3();
@@ -953,6 +962,9 @@ async function init(){
     interactPrompt.hidden=!nearest||nearest.kind!=='exhibit'||moving||paused||overview||roomLoading;
     if(nearest)document.getElementById('interact-text').textContent=nearest.kind==='exit'?'Leave building':nearest.kind==='exhibit'?`View ${nearest.exhibit.title}`:`Enter ${nearest.place.title}`;
     if(!quietMotion){windUniform.value+=dt;const breeze=windUniform.value;flagCloths.forEach((f,i)=>f.rotation.y=Math.sin(breeze*1.4+i)*.1);waterGlints.forEach(g=>g.scale.x=.7+Math.sin(breeze+g.userData.seed)*.3);}
+    meadow.userData.updateInteractors([trainer.position,...followers.filter(f=>f.enabled).slice(0,3).map(f=>f.model.position)],dt,!activeRoom&&!quietMotion&&!paused&&!roomLoading);
+    wildlife.userData.update(windUniform.value,{player:trainer.position,enabled:!activeRoom,motion:!quietMotion&&!paused&&!roomLoading});
+    discovery.update(trainer.position,{delta:dt,moving,indoors:Boolean(activeRoom),paused:paused||roomLoading,altitude:trainer.position.y-groundForWalk(trainer.position.x,trainer.position.z)});
     // A fixed-angle camera follows the actor continuously. The target belongs
     // to the navigation body, never to animated heads, wheels or wingbeats.
     if(overview){focusTarget.set(0,1,-5);updateCenteredFocus(focus,focusTarget,{dt,sharpness:4,heightSharpness:4});}
@@ -966,7 +978,7 @@ async function init(){
     actualPitch=THREE.MathUtils.lerp(actualPitch,overview?.91:cameraPitch,reducedMotion?1:Math.min(1,dt*3));
     const distance=actualDistance,pitch=actualPitch;
     distantBuildings.forEach(item=>item.object.visible=!activeRoom);
-    if(scene.fog)scene.fog.density=overview?.0015:.0095;
+    if(scene.fog===outdoorFog){scene.fog.near=overview?110:28;scene.fog.far=overview?300:135;}
     activeRoom?.update?.(quietMotion?0:dt,quietMotion?windUniform.value:time);
     if(viewMode==='first'){
       // Use the actual mount transform so the eye follows the saddle or seat on
@@ -979,6 +991,11 @@ async function init(){
     camera.updateMatrixWorld();updateLabels();
     sun.position.set(focus.x-18,34,focus.z+20);sun.target.position.set(focus.x,0,focus.z);sun.target.updateMatrixWorld();
     renderer.info.reset();if(composer)composer.render();else renderer.render(scene,camera);
+    if(postcardRequested){
+      postcardRequested=false;let photo=null;
+      try{const card=document.createElement('canvas');card.width=360;card.height=210;const ctx=card.getContext('2d');const ratio=Math.max(card.width/canvas.width,card.height/canvas.height),w=canvas.width*ratio,h=canvas.height*ratio;ctx.drawImage(canvas,(card.width-w)/2,(card.height-h)/2,w,h);photo=card.toDataURL('image/jpeg',.82);}catch{}
+      for(const resolve of postcardWaiters.splice(0))resolve(photo);
+    }
   }
   window.KE_WORLD_SCENE={ready:true,walkTo,walkToScenic,scenicPlaces:()=>SCENIC_PLACES.map(({id,title})=>({id,title})),enterInterior,exitInterior,setCompanion,getCompanions,getRoom:()=>roomPlaceId,reset:()=>{if(activeRoom)exitInterior();moveTo(new THREE.Vector3(-3.2,0,9.8));},renderer,camera,scene,trainer};
 
