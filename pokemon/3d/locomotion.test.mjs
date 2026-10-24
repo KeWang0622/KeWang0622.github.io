@@ -25,33 +25,44 @@ const bridge=createBridgeSurfaces(()=>0,()=>0)[0];
 const bridgeWalkable=(x,z,r)=>!bridge.blocks(x,z,r)&&
   (Math.abs(z-bridge.z)>=1.45+r||bridge.supports(x,z,r));
 
-// Run the actual mounted movement and keyboard dispatch together. Camera and
-// projection APIs are deliberately absent: mounted keys must never be routed
-// back through screenGroundDirection after the character or camera turns.
+// Run the actual movement and keyboard dispatch together. First-person rides
+// use vehicle-relative throttle/steering; third person uses the production
+// screen-to-ground projection with a fixed perspective camera.
 const rideStart=source.indexOf('  function advanceRide('),rideEnd=source.indexOf('\n  function advanceFlightRoute(',rideStart);
 const inputStart=source.indexOf("      const sx=Number(keys.has('d')",rideEnd);
 const inputEnd=source.indexOf('\n      if(!flying())trainer.position.y=',inputStart);
 assert.ok(rideStart>=0&&rideEnd>rideStart&&inputStart>rideEnd&&inputEnd>inputStart,'production mounted movement and input dispatch can be located');
-const rideSource=source.slice(rideStart,rideEnd),inputSource=source.slice(inputStart,inputEnd);
+const inputSource=source.slice(inputStart,inputEnd);
+const screenStart=source.indexOf('function screenGroundDirection(');
+const screenEnd=source.indexOf('\n}',screenStart)+2;
+assert.ok(screenStart>=0&&screenEnd>screenStart,'production screen projection can be located');
+const screenSource=source.slice(screenStart,screenEnd);
+const screenDirection=new Function(`${screenSource};return screenGroundDirection;`)();
+function fixedCamera(){
+  const camera=new THREE.PerspectiveCamera(42,16/9,.15,200),yaw=.44,pitch=.64,distance=24;
+  const focus=new THREE.Vector3(0,1.25,0);
+  camera.position.set(Math.sin(yaw)*Math.cos(pitch)*distance,focus.y+Math.sin(pitch)*distance,Math.cos(yaw)*Math.cos(pitch)*distance);
+  camera.lookAt(focus);camera.updateMatrixWorld();return camera;
+}
 function rideHarness(id,walkable,{x=0,z=0,yaw=0,speed=0,steer=0}={}){
   const trainer={position:new THREE.Vector3(x,0,z),rotation:{y:yaw}};
-  const rideControl={speed,steer};
-  const runtime=new Function('THREE','stepRideControl','turnClear','motionClear','trainer','rideControl','selectedTravel','travelShape','walkable',
-    `let steering=0,reverseHeld=false,keys=new Set();const flying=()=>false;${rideSource};
-    function frame(inputKeys,viewMode='third',dt=.05,controls={}){
+  const rideControl={speed,steer},camera=fixedCamera();
+  const runtime=new Function('THREE','angleDelta','stepRideControl','turnClear','motionClear','trainer','rideControl','selectedTravel','travelShape','walkable','camera',
+    `let steering=0,reverseHeld=false,keys=new Set();const flying=()=>false,groundForWalk=()=>0,viewProjection=new THREE.Matrix4();${screenSource};${advanceSource};
+    function frame(inputKeys,viewMode='first',dt=.05,controls={}){
       keys=new Set(inputKeys);reverseHeld=controls.reverseHeld||false;
       const touchDrive=controls.touchDrive||{throttle:0,turn:0},direction=new THREE.Vector3(),activeRoom=null,path=[],pathIndex=0;
       let manualInput=false,flightLanding=false,flightLift=0,flightCruise=6.5;
       ${inputSource}
     }
     return {advanceRide,frame,get steering(){return steering;}};`)
-    (THREE,stepRideControl,turnClear,motionClear,trainer,rideControl,id,()=>TRAVEL[id],walkable);
-  return {trainer,rideControl,advanceRide:runtime.advanceRide,frame:runtime.frame,get steering(){return runtime.steering;}};
+    (THREE,angleDelta,stepRideControl,turnClear,motionClear,trainer,rideControl,id,()=>TRAVEL[id],walkable,camera);
+  return {trainer,rideControl,camera,advanceRide:runtime.advanceRide,frame:runtime.frame,get steering(){return runtime.steering;}};
 }
 
 for(const id of ['model-s','cybertruck','porsche']){
-  test(`${id}: production Up dispatch remains forward at every heading in first and third person`,()=>{
-    for(const view of ['first','third'])for(const yaw of [0,.7,Math.PI/2,Math.PI,Math.PI*1.5]){
+  test(`${id}: first-person Up dispatch remains forward at every heading`,()=>{
+    for(const view of ['first'])for(const yaw of [0,.7,Math.PI/2,Math.PI,Math.PI*1.5]){
       const state=rideHarness(id,()=>true,{yaw}),nose=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
       for(let i=0;i<20;i++)state.frame(['arrowup'],view);
       assert.ok(state.trainer.position.dot(nose)>1,`${view}, yaw ${yaw}: Up advances along the vehicle nose`);
@@ -108,7 +119,7 @@ test('production reverse retains the prior heading when a steered rear corner wo
   assert.equal(motionClear({x:0,z:0},steered,control.yawDelta,shape,free),false,'translation at the new angle would trap the rear corner');
   assert.ok(motionClear({x:0,z:0},{x:0,z:speed*dt},0,shape,free),'a straight backward escape exists');
   const state=rideHarness('model-s',free,{speed,steer:.48});
-  state.frame(['s','a'],'third',dt);
+  state.frame(['s','a'],'first',dt);
   assert.equal(state.trainer.rotation.y,0,'do not keep the trapping rotation');
   assert.ok(Math.abs(state.trainer.position.z-speed*dt)<1e-12,'take the clear straight reverse escape');
   assert.equal(state.trainer.position.x,0);
@@ -145,7 +156,7 @@ test('R straight reverse clears prior steering and behaves like the held reverse
   const button=rideHarness('cybertruck',()=>true,{yaw,steer:.48});
   for(let i=0;i<12;i++){
     keyboard.frame(['r','a']);
-    button.frame([],'third',.05,{reverseHeld:true});
+    button.frame([],'first',.05,{reverseHeld:true});
     assert.equal(keyboard.trainer.rotation.y,yaw,'prior steering cannot bend the explicit straight-back command');
   }
   assert.ok(keyboard.trainer.position.dot(new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)))<-.5);
@@ -157,11 +168,99 @@ test('touch throttle and steering use the same mounted motion as keyboard input'
   const touch=rideHarness('model-s',()=>true,{yaw:2.7});
   for(let i=0;i<20;i++){
     keyboard.frame(['w','d'],'first');
-    touch.frame([],'third',.05,{touchDrive:{throttle:1,turn:-1}});
+    touch.frame([],'first',.05,{touchDrive:{throttle:1,turn:-1}});
   }
   assert.ok(keyboard.trainer.position.distanceTo(touch.trainer.position)<1e-12);
   assert.equal(keyboard.trainer.rotation.y,touch.trainer.rotation.y);
 });
+
+// The camera is never rotated with the actor: assertions use actual projected
+// pixels, including perspective away from the centre of the map.
+const groundModes=['walk','bicycle','model-s','cybertruck','porsche','horse'];
+const screenCommands=[
+  {key:'arrowup',sx:0,sy:1,touch:{throttle:1,turn:0}},
+  {key:'arrowdown',sx:0,sy:-1,touch:{throttle:-1,turn:0}},
+  {key:'arrowleft',sx:-1,sy:0,touch:{throttle:0,turn:1}},
+  {key:'arrowright',sx:1,sy:0,touch:{throttle:0,turn:-1}}
+];
+function projectedStep(before,after,camera){
+  const a=before.clone().project(camera),b=after.clone().project(camera);
+  return new THREE.Vector2((b.x-a.x)*camera.aspect,b.y-a.y);
+}
+for(const id of groundModes){
+  test(`${id}: third-person cardinal input moves in its screen direction at every heading`,()=>{
+    for(const yaw of [0,.7,Math.PI/2,Math.PI,Math.PI*1.5])for(const command of screenCommands){
+      const state=rideHarness(id,()=>true,{x:3,z:-2,yaw}),initial=state.trainer.position.clone();
+      for(let i=0;i<40;i++){
+        const before=state.trainer.position.clone();state.frame([command.key],'third');
+        const step=projectedStep(before,state.trainer.position,state.camera);
+        assert.ok(step.x*command.sx+step.y*command.sy>=-1e-10,`yaw ${yaw}, ${command.key}: no reverse or opposite-screen step`);
+        assert.ok(Math.abs(step.x*command.sy-step.y*command.sx)<1e-9,'motion stays on the requested screen axis');
+        assert.equal(state.rideControl.speed,0,'third-person movement never builds coasting velocity');
+      }
+      assert.ok(state.trainer.position.distanceTo(initial)>.5,`${command.key} makes useful progress after turning`);
+    }
+  });
+
+  test(`${id}: third-person touch directions match keyboard and release stops immediately`,()=>{
+    for(const command of screenCommands){
+      const keyboard=rideHarness(id,()=>true,{yaw:2.7,speed:TRAVEL[id].speed});
+      const touch=rideHarness(id,()=>true,{yaw:2.7,speed:TRAVEL[id].speed});
+      for(let i=0;i<40;i++){
+        keyboard.frame([command.key],'third');
+        touch.frame([],'third',.05,{touchDrive:command.touch});
+      }
+      assert.ok(keyboard.trainer.position.distanceTo(touch.trainer.position)<1e-12);
+      assert.equal(keyboard.trainer.rotation.y,touch.trainer.rotation.y);
+      const stopped=keyboard.trainer.position.clone(),yaw=keyboard.trainer.rotation.y;
+      for(let i=0;i<10;i++)keyboard.frame([],'third');
+      assert.equal(keyboard.trainer.position.distanceTo(stopped),0,'release has no residual drift');
+      assert.equal(keyboard.trainer.rotation.y,yaw,'release also stops turning');
+      assert.equal(keyboard.rideControl.speed,0);
+    }
+  });
+}
+
+for(const id of groundModes.filter(id=>id!=='walk')){
+  test(`${id}: screen Up turns toward the requested direction before moving instead of auto-reversing`,()=>{
+    const state=rideHarness(id,()=>true),projection=new THREE.Matrix4().multiplyMatrices(state.camera.projectionMatrix,state.camera.matrixWorldInverse);
+    const up=screenDirection(new THREE.Vector3(),0,1,projection.elements,state.trainer.position,state.camera.aspect);
+    const goal=Math.atan2(up.x,up.z);state.trainer.rotation.y=goal+Math.PI;
+    const initial=state.trainer.position.clone();state.frame(['arrowup'],'third');
+    assert.equal(state.trainer.position.distanceTo(initial),0,'a rearward screen request begins by turning in place');
+    assert.ok(Math.abs(angleDelta(goal+Math.PI,state.trainer.rotation.y))>0,'orientation starts changing');
+    let moved=false;
+    for(let i=0;i<40;i++){
+      const before=state.trainer.position.clone();state.frame(['arrowup'],'third');
+      if(state.trainer.position.distanceTo(before)<1e-10)continue;
+      moved=true;
+      assert.ok(projectedStep(before,state.trainer.position,state.camera).y>0,'Up stays screen-up after the half turn');
+      assert.ok(state.trainer.position.clone().sub(before).dot(new THREE.Vector3(Math.sin(state.trainer.rotation.y),0,Math.cos(state.trainer.rotation.y)))>0,'translation follows the nose, not reverse');
+    }
+    assert.ok(moved,'the turn completes and travel resumes');
+  });
+
+  test(`${id}: third-person R is a separate straight reverse command and Space stops directional movement`,()=>{
+    const yaw=.8,keyboard=rideHarness(id,()=>true,{yaw}),button=rideHarness(id,()=>true,{yaw});
+    for(let i=0;i<12;i++){
+      keyboard.frame(['r','arrowup','arrowleft'],'third');
+      button.frame([],'third',.05,{reverseHeld:true});
+      assert.equal(keyboard.trainer.rotation.y,yaw,'explicit reverse does not choose a screen heading');
+    }
+    assert.ok(keyboard.trainer.position.dot(new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)))<-.5);
+    assert.ok(keyboard.trainer.position.distanceTo(button.trainer.position)<1e-12,'held reverse button is identical to R');
+    const stopped=keyboard.trainer.position.clone();
+    for(let i=0;i<10;i++)keyboard.frame(['arrowup',' '],'third');
+    assert.equal(keyboard.trainer.position.distanceTo(stopped),0,'Space suppresses the move command');
+    assert.equal(keyboard.rideControl.speed,0);
+    keyboard.frame(['r',' '],'third');
+    assert.equal(keyboard.trainer.position.distanceTo(stopped),0,'Space also overrides explicit keyboard reverse');
+    keyboard.frame([' '],'third',.05,{reverseHeld:true});
+    assert.equal(keyboard.trainer.position.distanceTo(stopped),0,'Space also overrides the held reverse button');
+    keyboard.frame([],'third');
+    assert.equal(keyboard.trainer.position.distanceTo(stopped),0,'releasing the stop does not restart motion');
+  });
+}
 
 for(const id of ['model-s','cybertruck','porsche']){
   test(`${id}: rearward input reverses on an open road without beginning a U-turn`,()=>{
@@ -295,7 +394,7 @@ test('a waypoint closer than one frame of travel is not overshot',()=>{
 const doorStart=source.indexOf('  function updateDoorCrossings('),doorEnd=source.indexOf('\n  function queueDoorTransition(',doorStart);
 assert.ok(doorStart>=0&&doorEnd>doorStart,'production door crossing function can be located');
 const doorSource=source.slice(doorStart,doorEnd);
-function porchCrossings({destination=null,planned=false,selectedTravel='model-s'}){
+function porchCrossings({destination=null,planned=false,selectedTravel='model-s',dx=0,dz=-.03}){
   const opened=[];
   // These are the production workshop and Pika front-porch coordinates. The
   // actor moves toward the workshop while a longer route can target Pika.
@@ -306,7 +405,7 @@ function porchCrossings({destination=null,planned=false,selectedTravel='model-s'
   ];
   const update=new Function('trainer','direction','landmarkState','travelShape','queueDoorTransition','path','arrivalId','selectedTravel',
     `let activeRoom=null,blockedDoorId=null,roomExitArmed=false,pathIndex=0;${doorSource};return updateDoorCrossings;`)
-    (trainer,new THREE.Vector3(0,0,-.03),landmarkState,()=>TRAVEL[selectedTravel],id=>opened.push(id),planned?[{x:-4,z:7},{x:22,z:-14.45}]:[],destination,selectedTravel);
+    (trainer,new THREE.Vector3(dx,0,dz),landmarkState,()=>TRAVEL[selectedTravel],id=>opened.push(id),planned?[{x:-4,z:7},{x:22,z:-14.45}]:[],destination,selectedTravel);
   update(true,1000);return opened;
 }
 
@@ -316,6 +415,22 @@ test('a planned trip to Pika does not enter the workshop while passing its porch
 
 test('manually approaching the workshop still opens its door automatically',()=>{
   assert.deepEqual(porchCrossings({planned:false}),['mrfoundry']);
+});
+
+test('walking parallel to a porch does not pull the visitor into the building',()=>{
+  for(const dx of [-.03,.03])assert.deepEqual(porchCrossings({dx,dz:0}),[]);
+});
+
+test('a shallow diagonal past the porch does not count as approaching its door',()=>{
+  for(const dx of [-.03,.03])assert.deepEqual(porchCrossings({dx,dz:-.01}),[]);
+});
+
+test('a purposeful diagonal approach still enters without needing a perfect centreline',()=>{
+  for(const dx of [-.01,.01])assert.deepEqual(porchCrossings({dx,dz:-.03}),['mrfoundry']);
+});
+
+test('walking away from a nearby porch never enters its building',()=>{
+  assert.deepEqual(porchCrossings({dx:0,dz:.03}),[]);
 });
 
 test('a planned trip opens the door of its intended destination',()=>{
