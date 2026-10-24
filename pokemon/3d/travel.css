@@ -5,12 +5,17 @@
 .travel-option{position:relative;display:flex;align-items:center;gap:8px;width:100%;min-height:39px;padding:5px 7px;border:1px solid transparent;border-radius:9px;background:transparent;color:#395648;text-align:left;transition:background .14s,border-color .14s}
 .travel-option:hover:not(:disabled){background:#eaf0e4;border-color:#c3d2ba;color:#294b42}
 .travel-option[aria-checked="true"]{background:#dfebd7;border-color:#9ab695;box-shadow:inset 0 0 0 1px #9ab69515;color:#284f38}
+.travel-option.is-pending{border-color:#bd9d67;border-style:dashed;background:#faf1dc;color:#755d36}
+.travel-option.is-pending .travel-check{display:block;color:#987a45;font-weight:700}
 .travel-option:disabled{opacity:.36;cursor:default}
 .travel-option-art{width:32px;height:26px;display:grid;place-items:center;flex:none;color:var(--travel-accent,#66836c)}
 .travel-option-art svg{width:32px;height:26px}
 .travel-option-label{font-size:11px;font-weight:600;line-height:1.25}
 .travel-check{margin-left:auto;display:none;color:#507a54;font-size:11px}
 .travel-option[aria-checked="true"] .travel-check{display:block}
+#travel-status{position:absolute;z-index:15;left:50%;bottom:140px;transform:translateX(-50%);width:max-content;max-width:min(380px,calc(100% - 40px));margin:0;padding:11px 16px;border:1px solid #fffef4;border-radius:12px;background:#fffef5f5;box-shadow:0 5px 22px #294d3a20;backdrop-filter:blur(12px);color:#385d4b;font-size:12px;line-height:1.5;text-align:center;pointer-events:none}
+#travel-status[hidden]{display:none}
+#travel-status.is-pending{border-color:#e1d1a5;color:#755d36}
 #travel-note{display:block;margin:9px 8px 0;font-size:9px;line-height:1.4;color:#6d8171}
 .is-indoors #travel-control{top:125px}
 .travel-option:focus-visible{outline:2px solid #477d75;outline-offset:2px}
@@ -54,6 +59,8 @@
  .travel-option-art,.travel-option-art svg{width:31px;height:27px}
  .travel-option-label,#travel-note{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
  .travel-check,.travel-option[aria-checked="true"] .travel-check{display:none}
+ .travel-option.is-pending .travel-check{display:block;position:absolute;right:3px;bottom:1px;font-size:13px;line-height:1}
+ #travel-status{bottom:142px;left:74px;right:12px;transform:none;width:auto;max-width:none;padding:9px 12px;font-size:11px}
  .is-indoors #travel-control{top:104px}
  #camera-mode-control{right:12px;top:14px;gap:6px}
  .camera-view-switch{padding:3px;border-radius:11px;gap:2px}

@@ -1,13 +1,27 @@
-import { TRAVEL_MODES } from './travel-catalog.js?v=20261023-stable-map';
+import { TRAVEL_MODES } from './travel-catalog.js?v=20261023-centered-travel';
 
 export function initTravelUI() {
   const stage = document.getElementById('world-stage');
   if (!stage || document.getElementById('travel-control')) return;
   let selected = 'walk', indoors = false, ready = Boolean(window.KE_WORLD_SCENE?.ready), view = 'third', reversing = false, paused = false;
+  let pendingTravel = null, statusTimer;
   const controls = document.createElement('div');
   controls.id = 'travel-control';
   controls.innerHTML = '<span id="travel-title" class="travel-heading">Travel</span><div class="travel-options" role="radiogroup" aria-labelledby="travel-title" aria-describedby="travel-note"></div><span id="travel-note">Rides stay outside</span>';
   const options = controls.querySelector('.travel-options'), note = controls.querySelector('#travel-note');
+  const travelStatus = document.createElement('p');
+  travelStatus.id = 'travel-status'; travelStatus.hidden = true;
+  travelStatus.setAttribute('role', 'status'); travelStatus.setAttribute('aria-live', 'polite'); travelStatus.setAttribute('aria-atomic', 'true');
+  function setTravelStatus(id = null, message = '') {
+    clearTimeout(statusTimer);
+    pendingTravel = TRAVEL_MODES.some(mode => mode.id === id) ? id : null;
+    const text = typeof message === 'string' ? message.trim() : '';
+    travelStatus.textContent = text || (pendingTravel ? `Getting ${TRAVEL_MODES.find(mode => mode.id === pendingTravel).label} ready…` : '');
+    travelStatus.hidden = !travelStatus.textContent;
+    travelStatus.classList.toggle('is-pending', Boolean(pendingTravel));
+    if (!pendingTravel && text) statusTimer = setTimeout(() => { travelStatus.hidden = true; }, 4000);
+    refresh();
+  }
   const cameraControls = document.createElement('div');
   cameraControls.id = 'camera-mode-control';
   cameraControls.innerHTML = '<div class="camera-view-switch" role="group" aria-label="Camera view"><button type="button" data-view="first" aria-pressed="false"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true"><path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z"/><circle cx="10" cy="10" r="2.3"/></svg><span>First person</span></button><button type="button" data-view="third" aria-pressed="true"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true"><circle cx="10" cy="5.5" r="2.4"/><path d="M5.5 17v-3.5a4.5 4.5 0 0 1 9 0V17M2 7V3h4m8 0h4v4"/></svg><span>Third person</span></button><kbd aria-label="V key switches view">V</kbd></div><p id="travel-driving-hint" hidden></p><button type="button" id="travel-reverse" hidden aria-label="Hold to reverse. Release to stop reversing."><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true"><path d="m8 4-5 5 5 5M3 9h8a5 5 0 0 1 5 5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Hold to reverse</span><kbd>R</kbd></button>';
@@ -160,11 +174,14 @@ export function initTravelUI() {
       : isFlying ? 'Arrow pad to fly · drag to look' : isMounted ? 'Arrow pad to drive · drag to look' : 'Arrow pad to move · drag to look';
     for (const button of viewButtons) { button.disabled = !ready || paused; button.setAttribute('aria-pressed', String(button.dataset.view === view)); }
     for (const button of buttons) {
-      const mode = TRAVEL_MODES.find(item => item.id === button.dataset.travelId), active = mode.id === effective;
+      const mode = TRAVEL_MODES.find(item => item.id === button.dataset.travelId), active = mode.id === effective, pending = mode.id === pendingTravel;
       button.setAttribute('aria-checked', String(active));
+      button.setAttribute('aria-busy', String(pending));
+      button.classList.toggle('is-pending', pending);
+      button.querySelector('.travel-check').textContent = pending ? '…' : '✓';
       button.tabIndex = active ? 0 : -1;
       button.disabled = !ready || paused || (indoors && mode.id !== 'walk');
-      button.title = !ready ? 'Ready when the village opens' : indoors && mode.id !== 'walk' ? `${mode.label} · parked outside` : `${mode.label} · ${mode.pace}`;
+      button.title = !ready ? 'Ready when the village opens' : indoors && mode.id !== 'walk' ? `${mode.label} · parked outside` : pending ? `${mode.label} · getting ready` : `${mode.label} · ${mode.pace}`;
     }
   }
   options.addEventListener('keydown', event => {
@@ -180,7 +197,13 @@ export function initTravelUI() {
     releaseAll();
     if (state.id === 'charizard' && selected !== 'charizard') flightStatus.textContent = 'Taking off';
     if (TRAVEL_MODES.some(mode => mode.id === state.id)) selected = state.id;
-    indoors = Boolean(state.indoors); refresh();
+    indoors = Boolean(state.indoors);
+    if (indoors) setTravelStatus();
+    else refresh();
+  });
+  document.addEventListener('world:travel-status', event => {
+    const { id = null, message = '' } = event.detail || {};
+    setTravelStatus(indoors ? null : id, indoors ? '' : message);
   });
   document.addEventListener('world:view-changed', event => {
     if (!['first', 'third'].includes(event.detail?.mode)) return;
@@ -192,6 +215,6 @@ export function initTravelUI() {
     if (flightStatus.textContent !== text) flightStatus.textContent = text;
   });
   document.addEventListener('world:ready', () => { ready = true; refresh(); });
-  stage.append(controls, cameraControls); refresh();
+  stage.append(controls, cameraControls, travelStatus); refresh();
   return { element: controls, cameraControls };
 }
