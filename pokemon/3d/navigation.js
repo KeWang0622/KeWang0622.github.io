@@ -6,7 +6,7 @@ export const TRAVEL = {
   cybertruck:{speed:6.8,radius:1.05,axle:1.40,turn:2.5},
   porsche:{speed:7.6,radius:.96,axle:1.10,turn:3.0},
   horse:{speed:6.1,radius:.46,axle:.96,turn:3.8},
-  charizard:{speed:6.5,radius:1.14,axle:.75,turn:3.4}
+  charizard:{speed:6.5,radius:1.46,axle:.75,turn:3.4}
 };
 export const angleDelta=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
 const offsetCache=new WeakMap();
