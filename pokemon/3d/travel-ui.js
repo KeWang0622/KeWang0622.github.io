@@ -1,9 +1,10 @@
 import { TRAVEL_MODES } from './travel-catalog.js?v=20261023-centered-travel';
+import { padDirectionAt, combinePadDirections } from './touch-drive.js?v=20261023-mobile';
 
 export function initTravelUI() {
   const stage = document.getElementById('world-stage');
   if (!stage || document.getElementById('travel-control')) return;
-  let selected = 'walk', indoors = false, ready = Boolean(window.KE_WORLD_SCENE?.ready), view = 'third', reversing = false, paused = false;
+  let selected = 'walk', indoors = false, ready = Boolean(window.KE_WORLD_SCENE?.ready), view = 'third', reversing = false, paused = false, roomLoading = false;
   let pendingTravel = null, statusTimer;
   const controls = document.createElement('div');
   controls.id = 'travel-control';
@@ -36,16 +37,15 @@ export function initTravelUI() {
   drivePad.id = 'first-person-drive'; drivePad.hidden = true;
   drivePad.setAttribute('role', 'group'); drivePad.setAttribute('aria-label', 'Riding controls');
   drivePad.innerHTML = '<button type="button" data-drive="forward" aria-label="Move forward" aria-keyshortcuts="W ArrowUp">↑</button><button type="button" data-drive="left" aria-label="Steer left" aria-keyshortcuts="A ArrowLeft">↶</button><button type="button" data-drive="back" aria-label="Brake and reverse" aria-keyshortcuts="S ArrowDown">↓</button><button type="button" data-drive="right" aria-label="Steer right" aria-keyshortcuts="D ArrowRight">↷</button>';
-  cameraControls.append(flightControls, drivePad);
+  cameraControls.append(flightControls);
   const driveInputs = new Map(), flightInputs = new Map();
   let driveThrottle = 0, driveTurn = 0, flightLift = 0;
   const mounted = () => !indoors && selected !== 'walk';
   const flying = () => !indoors && selected === 'charizard';
-  const canDrive = () => ready && !paused && (mounted() || view === 'first');
+  const canDrive = () => ready && !paused && !roomLoading;
   function sendDrive() {
     const actions = [...driveInputs.values()];
-    const throttle = Number(actions.includes('forward')) - Number(actions.includes('back'));
-    const turn = Number(actions.includes('left')) - Number(actions.includes('right'));
+    const { throttle, turn } = combinePadDirections(actions);
     for (const button of drivePad.children) button.classList.toggle('held', actions.includes(button.dataset.drive));
     if (throttle === driveThrottle && turn === driveTurn) return;
     driveThrottle = throttle; driveTurn = turn;
@@ -57,6 +57,16 @@ export function initTravelUI() {
       if (event.button !== 0 || !canDrive()) return;
       event.preventDefault(); button.setPointerCapture(event.pointerId);
       driveInputs.set(event.pointerId, button.dataset.drive); sendDrive();
+    });
+    button.addEventListener('pointermove', event => {
+      if (!driveInputs.has(event.pointerId)) return;
+      event.preventDefault();
+      const regions = [...drivePad.children].map(item => {
+        const { left, top, right, bottom } = item.getBoundingClientRect();
+        return { action: item.dataset.drive, left, top, right, bottom };
+      });
+      driveInputs.set(event.pointerId, canDrive() ? padDirectionAt(event.clientX, event.clientY, regions) : '');
+      sendDrive();
     });
     for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(type, event => { driveInputs.delete(event.pointerId); sendDrive(); });
     button.addEventListener('keydown', event => {
@@ -80,13 +90,13 @@ export function initTravelUI() {
   function releaseFlight() { flightInputs.clear(); sendFlight(); }
   for (const button of flightButtons) {
     button.addEventListener('pointerdown', event => {
-      if (event.button !== 0 || !ready || paused || !flying()) return;
+      if (event.button !== 0 || !canDrive() || !flying()) return;
       event.preventDefault(); button.setPointerCapture(event.pointerId);
       flightInputs.set(event.pointerId, Number(button.dataset.lift)); sendFlight();
     });
     for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(type, event => { flightInputs.delete(event.pointerId); sendFlight(); });
     button.addEventListener('keydown', event => {
-      if (![' ', 'Enter'].includes(event.key) || !ready || paused || !flying()) return;
+      if (![' ', 'Enter'].includes(event.key) || !canDrive() || !flying()) return;
       event.preventDefault(); flightInputs.set(`key-${button.dataset.lift}`, Number(button.dataset.lift)); sendFlight();
     });
     button.addEventListener('keyup', event => {
@@ -96,7 +106,7 @@ export function initTravelUI() {
     button.addEventListener('blur', () => { flightInputs.delete(`key-${button.dataset.lift}`); sendFlight(); });
   }
   function reverse(active) {
-    active = Boolean(active && ready && !paused && mounted() && !flying());
+    active = Boolean(active && canDrive() && mounted() && !flying());
     if (reversing === active) return;
     reversing = active;
     reverseButton.classList.toggle('reversing', active);
@@ -104,7 +114,7 @@ export function initTravelUI() {
   }
   function releaseAll() { reverse(false); releaseDrive(); releaseFlight(); }
   for (const button of viewButtons) button.addEventListener('click', () => {
-    if (!ready || paused) return;
+    if (!canDrive()) return;
     releaseAll();
     document.dispatchEvent(new CustomEvent('world:view-select', { detail: { mode: button.dataset.view } }));
     document.getElementById('world')?.focus({ preventScroll: true });
@@ -126,6 +136,8 @@ export function initTravelUI() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
   document.addEventListener('world:pause', () => { paused = true; releaseAll(); refresh(); });
   document.addEventListener('world:resume', () => { paused = false; refresh(); });
+  document.addEventListener('world:input-reset', releaseAll);
+  document.addEventListener('world:room-loading', event => { roomLoading = Boolean(event.detail?.loading); releaseAll(); refresh(); });
   const buttons = [];
   for (const mode of TRAVEL_MODES) {
     const button = document.createElement('button');
@@ -134,7 +146,7 @@ export function initTravelUI() {
     button.style.setProperty('--travel-accent', mode.color);
     button.innerHTML = `<span class="travel-option-art">${mode.icon}</span><span class="travel-option-label">${mode.label}</span><span class="travel-check" aria-hidden="true">✓</span>`;
     button.addEventListener('click', () => {
-      if (!ready || paused || indoors) return;
+      if (!canDrive() || indoors) return;
       releaseAll();
       document.dispatchEvent(new CustomEvent('world:travel-select', { detail: { id: mode.id } }));
       document.getElementById('world')?.focus({ preventScroll: true });
@@ -147,7 +159,7 @@ export function initTravelUI() {
     cameraControls.classList.toggle('is-flying', isFlying);
     note.textContent = indoors ? 'Walking indoors' : isFlying ? 'Fly over the village' : 'Rides stay outside';
     reverseButton.hidden = !isMounted || isFlying;
-    reverseButton.disabled = !ready || paused;
+    reverseButton.disabled = !canDrive();
     drivingHint.hidden = !isMounted;
     drivingHint.innerHTML = isThird
       ? `<span>↑ ↓ ← → move on screen</span><span>${isFlying ? 'Space rise · C descend' : 'R reverse · Space stop'}</span>`
@@ -155,24 +167,26 @@ export function initTravelUI() {
         ? '<span>W/S fly / brake · A/D steer</span><span>Space rise · C descend</span>'
         : '<span>W/S forward / reverse · A/D steer</span><span>Space brake</span>';
     flightControls.hidden = !isFlying;
-    for (const button of flightButtons) button.disabled = !ready || paused;
-    drivePad.hidden = !isMounted && view !== 'first';
+    for (const button of flightButtons) button.disabled = !canDrive();
+    // CSS exposes this only on compact/touch layouts. Walking and room visits
+    // need exactly the same controls as rides, rather than tap-only movement.
+    drivePad.hidden = false;
     drivePad.setAttribute('aria-label', isThird ? 'Screen direction controls' : isFlying ? 'Flight steering' : isMounted ? 'Riding controls' : 'First person movement');
     const padLabels = isThird
       ? { forward: ['↑', 'Move up'], left: ['←', 'Move left'], back: ['↓', 'Move down'], right: ['→', 'Move right'] }
       : { forward: ['↑', 'Move forward'], left: ['↶', 'Steer left'], back: ['↓', isFlying ? 'Brake and move backward' : isMounted ? 'Brake and reverse' : 'Move backward'], right: ['↷', 'Steer right'] };
     for (const button of drivePad.children) {
       const [glyph, label] = padLabels[button.dataset.drive];
-      button.textContent = glyph; button.setAttribute('aria-label', label); button.disabled = !ready || paused;
+      button.textContent = glyph; button.setAttribute('aria-label', label); button.disabled = !canDrive();
     }
     const desktopHint = document.querySelector('#walk-hint .desktop-hint'), mobileHint = document.querySelector('#walk-hint .mobile-hint');
     if (desktopHint) desktopHint.textContent = isThird
       ? isFlying ? 'move on screen · Space rise · C descend' : isMounted ? 'move on screen · R reverse · Space stop' : 'move on screen · click to walk'
       : isFlying ? 'W/S fly · A/D steer · drag to look' : isMounted ? 'W/S forward / reverse · A/D steer' : 'W/S move · A/D turn · drag to look';
     if (mobileHint) mobileHint.textContent = isThird
-      ? isFlying ? 'Arrows move on screen · Rise / Descend' : isMounted ? 'Arrows move on screen' : 'Tap a place to visit'
+      ? isFlying ? 'Arrows to fly · Rise / Descend' : 'Arrows to move · tap a place to visit'
       : isFlying ? 'Arrow pad to fly · drag to look' : isMounted ? 'Arrow pad to drive · drag to look' : 'Arrow pad to move · drag to look';
-    for (const button of viewButtons) { button.disabled = !ready || paused; button.setAttribute('aria-pressed', String(button.dataset.view === view)); }
+    for (const button of viewButtons) { button.disabled = !canDrive(); button.setAttribute('aria-pressed', String(button.dataset.view === view)); }
     for (const button of buttons) {
       const mode = TRAVEL_MODES.find(item => item.id === button.dataset.travelId), active = mode.id === effective, pending = mode.id === pendingTravel;
       button.setAttribute('aria-checked', String(active));
@@ -180,7 +194,7 @@ export function initTravelUI() {
       button.classList.toggle('is-pending', pending);
       button.querySelector('.travel-check').textContent = pending ? '…' : '✓';
       button.tabIndex = active ? 0 : -1;
-      button.disabled = !ready || paused || (indoors && mode.id !== 'walk');
+      button.disabled = !canDrive() || (indoors && mode.id !== 'walk');
       button.title = !ready ? 'Ready when the village opens' : indoors && mode.id !== 'walk' ? `${mode.label} · parked outside` : pending ? `${mode.label} · getting ready` : `${mode.label} · ${mode.pace}`;
     }
   }
@@ -191,6 +205,7 @@ export function initTravelUI() {
     event.preventDefault();
     const next = event.key === 'Home' ? 0 : event.key === 'End' ? available.length - 1 : (index + (['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 1) + available.length) % available.length;
     available[next].focus({ preventScroll: true });
+    available[next].scrollIntoView({ inline: 'nearest', block: 'nearest' });
   });
   document.addEventListener('world:travel-changed', event => {
     const state = event.detail || {};
@@ -215,6 +230,16 @@ export function initTravelUI() {
     if (flightStatus.textContent !== text) flightStatus.textContent = text;
   });
   document.addEventListener('world:ready', () => { ready = true; refresh(); });
-  stage.append(controls, cameraControls, travelStatus); refresh();
+  stage.append(controls, cameraControls, travelStatus, drivePad); refresh();
+  new ResizeObserver(() => {
+    if (!controls.clientWidth || controls.scrollWidth <= controls.clientWidth) return;
+    const active = options.querySelector('.is-pending') || options.querySelector('[aria-checked="true"]');
+    if (!active) return;
+    const left = active.offsetLeft, right = left + active.offsetWidth;
+    // Keep the chosen ride in the shelf after phone rotation. Scroll only this
+    // rail, never the page: the visitor may be reading the field guide below.
+    if (left < controls.scrollLeft) controls.scrollLeft = Math.max(0, left - 5);
+    else if (right > controls.scrollLeft + controls.clientWidth) controls.scrollLeft = right - controls.clientWidth + 5;
+  }).observe(controls);
   return { element: controls, cameraControls };
 }
