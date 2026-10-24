@@ -12,11 +12,13 @@ import { createCameraCompanion } from './camera-companion.js';
 import { createMacCompanion, createPrismCompanion, createMusicCompanion } from './companion-models.js';
 import { WORLD_LIMIT, pondRadius, SCENIC_PLACES, extensionRoadPoints, buildOutdoorExtension } from './outdoor-extension.js';
 import { createBridgeSurfaces, WALKER_RADIUS } from './world-surfaces.js';
-import { TRAVEL, angleDelta, footprintOffsets, footprintClear, turnClear, motionClear, findWalkingRoute } from './navigation.js?v=20261023-rides-perspective';
+import { TRAVEL, angleDelta, footprintOffsets, footprintClear, turnClear, motionClear, findWalkingRoute } from './navigation.js?v=20261023-flight-controls';
 import { stepCompanion } from './companion-navigation.js';
-import { createTravelModel } from './travel-models.js?v=20261023-rides-perspective';
+import { createTravelModel } from './travel-models.js?v=20261023-flight-controls';
 import { createWorldMaterials } from './world-materials.js';
 import { FIRST_PERSON_FOV, firstPersonPose } from './ride-camera.js';
+import { stepRideControl } from './ride-controls.js';
+import { FLIGHT, createFlightEnvelope, stepFlight, findLandingSpot, flightDeployment } from './flight.js';
 import { createVillageSky } from './village-sky.js';
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
 
@@ -303,6 +305,22 @@ async function init(){
   });
   const mapStates=[...landmarkState,...scenicState];
   const outdoorObjects=scene.children.filter(object=>!object.isLight);
+  // One conservative height atlas from rendered meshes, including every tree
+  // instance. Large terrain/sky surfaces are handled by groundHeight instead.
+  const flightBoxes=[],bounds=new THREE.Box3(),instanceMatrix=new THREE.Matrix4(),worldMatrix=new THREE.Matrix4();
+  scene.updateMatrixWorld(true);
+  for(const root of outdoorObjects)root.traverse(obj=>{
+    if(!obj.isMesh||!obj.geometry)return;
+    obj.geometry.computeBoundingBox();
+    const record=matrix=>{
+      bounds.copy(obj.geometry.boundingBox).applyMatrix4(matrix);
+      if(bounds.max.x-bounds.min.x>30||bounds.max.z-bounds.min.z>30||bounds.max.y<.35)return;
+      flightBoxes.push({minX:bounds.min.x,maxX:bounds.max.x,minZ:bounds.min.z,maxZ:bounds.max.z,top:bounds.max.y});
+    };
+    if(obj.isInstancedMesh){for(let i=0;i<obj.count;i++){obj.getMatrixAt(i,instanceMatrix);worldMatrix.multiplyMatrices(obj.matrixWorld,instanceMatrix);record(worldMatrix);}}
+    else record(obj.matrixWorld);
+  });
+  const flightCeiling=createFlightEnvelope(flightBoxes,{limit:WORLD_LIMIT});
 
 
   // Character and scanner companion. Character asset is optional during authoring.
@@ -310,6 +328,9 @@ async function init(){
   let mixer=null,idleAction=null,walkAction=null,trainerBody=null,avatar=null,limbs=[];
   let selectedTravel='walk',travelModel=null,viewMode='third',firstLookYaw=0,firstLookPitch=-.10,reverseHeld=false;
   const touchDrive={throttle:0,turn:0};
+  const rideControl={speed:0,steer:0};
+  let flightStatusTime=0,mountTime=0,flightLift=0,flightCruise=FLIGHT.cruise,flightLanding=false,flightPending=null,lastOrbitTime=-Infinity;
+  const flying=()=>!activeRoom&&selectedTravel==='charizard';
   const travelCache=new Map();
   const travelShape=()=>TRAVEL[activeRoom?'walk':selectedTravel];
   try{
@@ -426,6 +447,19 @@ async function init(){
     for(const f of followers){f.navigationState={};f.arc=followerArc(rank);if(f.enabled)rank++;placeFollower(f,false,0);}
   }
   function updateCompanion(dt){
+    if(flying()){
+      let leader=trainer.position,heading=trainer.rotation.y;
+      for(const f of followers){if(!f.enabled)continue;
+        const gap=leader===trainer.position?3.7:1.4;
+        const target=new THREE.Vector3(leader.x-Math.sin(heading)*gap,leader.y+1.2,leader.z-Math.cos(heading)*gap);
+        target.y=Math.max(target.y,flightCeiling(target.x,target.z)+1.1);
+        f.model.position.lerp(target,Math.min(1,dt*5));
+        f.model.rotation.y+=angleDelta(f.model.rotation.y,heading)*Math.min(1,dt*7);
+        f.model.rotation.z=0;
+        if(f.deploy<1){f.deploy=Math.min(1,f.deploy+dt/.4);f.model.scale.setScalar(reducedMotion?1:Math.max(.001,1-(1-f.deploy)**3));}
+        leader=f.model.position;heading=f.model.rotation.y;
+      }return;
+    }
     const step=Math.hypot(trainer.position.x-trailX[trailLast],trainer.position.z-trailZ[trailLast]);
     if(step>1e-6){trailDistance+=step;trailLast=(trailLast+1)%trailCapacity;if(trailLast===trailFirst)trailFirst=(trailFirst+1)%trailCapacity;trailX[trailLast]=trainer.position.x;trailZ[trailLast]=trainer.position.z;trailArc[trailLast]=trailDistance;}
     while(trailFirst!==trailLast&&trailArc[(trailFirst+1)%trailCapacity]<trailDistance-trailLength)trailFirst=(trailFirst+1)%trailCapacity;
@@ -446,8 +480,9 @@ async function init(){
     if(f.enabled){
       // A send-out changes the ordering. Space the party immediately so a new
       // first companion does not materialize on top of an existing follower.
+      if(flying()){f.model.position.copy(trainer.position);f.model.position.y+=1.2;}
       let rank=0;
-      for(const member of followers){if(!member.enabled)continue;member.arc=followerArc(rank++);placeFollower(member,false,0);}
+      for(const member of followers){if(!member.enabled)continue;member.arc=followerArc(rank++);if(!flying())placeFollower(member,false,0);}
       f.deploy=reducedMotion?1:0;f.model.scale.setScalar(reducedMotion?1:.001);
     }
     document.dispatchEvent(new CustomEvent('world:companions-changed',{detail:getCompanions()}));
@@ -464,15 +499,28 @@ async function init(){
     followerLead=mounted?travelShape().axle+travelShape().radius+.85:1.4;
     document.dispatchEvent(new CustomEvent('world:travel-changed',{detail:{id:selectedTravel,indoors:Boolean(activeRoom)}}));
   }
+  function requestFlightLanding({travel=null,id=null,action=null,point=trainer.position}={}){
+    const shape=TRAVEL[travel||'walk'];
+    const spot=findLandingSpot(point,{shape,ground:groundForWalk,ceiling:flightCeiling,limit:WORLD_LIMIT,
+      clear:(x,z,shape)=>footprintClear(x,z,trainer.rotation.y,shape,walkable)});
+    if(!spot){ui.announce('No clear landing spot here. Fly toward an open path first.');return false;}
+    clearMovement();flightPending={travel,id,action,yaw:trainer.rotation.y};path=[spot];pathIndex=0;overview=false;updateOverviewButton();
+    ui.announce(travel?'Flying to a clear spot to land and change rides.':'Landing near the entrance.');return true;
+  }
   function setTravel(id){
-    if(!TRAVEL[id]||activeRoom)return;
+    if(!TRAVEL[id]||activeRoom||id===selectedTravel)return;
+    if(flying()){requestFlightLanding({travel:id});return;}
     if(!footprintClear(trainer.position.x,trainer.position.z,trainer.rotation.y,TRAVEL[id],walkable)){
       ui.announce('This ride needs more space. Move onto an open path first.');updateTravelVisual();return;
     }
-    clearMovement();selectedTravel=id;firstLookYaw=0;firstLookPitch=-.10;updateTravelVisual();resetCompanionTrail();canvas.focus({preventScroll:true});
+    clearMovement();selectedTravel=id;flightCruise=FLIGHT.cruise;
+    firstLookYaw=0;firstLookPitch=-.10;updateTravelVisual();resetCompanionTrail();
+    if(id!=='walk')cameraYaw=trainer.rotation.y+Math.PI;
+    ui.announce(id==='charizard'?'Taking flight. W/S move, A/D turn. Space rises, C descends.':id==='walk'?'On foot. Use the arrows to walk or click a destination.':'W or Up moves forward. S or Down brakes, then reverses. A and D steer.');
+    canvas.focus({preventScroll:true});
   }
   document.addEventListener('world:travel-select',event=>setTravel(event.detail?.id));
-  function route(from,to){routeTimedOut=false;return findWalkingRoute({...from,yaw:trainer.rotation.y},to,{shape:travelShape(),walkable,min:MIN,max:MAX,onBudgetExceeded:()=>{routeTimedOut=true;}});}
+  function route(from,to){if(flying())return [{x:THREE.MathUtils.clamp(to.x,MIN+FLIGHT.radius,MAX-FLIGHT.radius),z:THREE.MathUtils.clamp(to.z,MIN+FLIGHT.radius,MAX-FLIGHT.radius)}];routeTimedOut=false;return findWalkingRoute({...from,yaw:trainer.rotation.y},to,{shape:travelShape(),walkable,min:MIN,max:MAX,onBudgetExceeded:()=>{routeTimedOut=true;}});}
   let overview=false,cameraYaw=.44,cameraPitch=.64,zoom=1,targetZoom=1,actualDistance=24,actualPitch=.64;
   const focus=new THREE.Vector3(-3.2,1.5,5.5),focusTarget=focus.clone();
   const eyePosition=new THREE.Vector3(),lookPosition=new THREE.Vector3();
@@ -482,12 +530,13 @@ async function init(){
     focus.set(trainer.position.x,trainer.position.y+1.25,trainer.position.z-4);focusTarget.copy(focus);
     updateOverviewButton();updateTravelVisual();resize();
     document.dispatchEvent(new CustomEvent('world:view-changed',{detail:{mode}}));
-    ui.announce(mode==='first'?'First person. W and S move forward and back; A and D turn. Drag to look around. V returns to third person.':'Third person. Use the arrow keys to move around the village.');
+    ui.announce(mode==='first'?'First person. W and S move forward and back; A and D turn. Drag to look around. V returns to third person.':selectedTravel==='walk'?'Third person. Use the arrow keys to move around the village.':'Third person. W/S accelerate and brake; A/D steer, independently of the camera.');
     canvas.focus({preventScroll:true});
   }
   document.addEventListener('world:view-select',event=>setView(event.detail?.mode));
   document.addEventListener('world:reverse',event=>{reverseHeld=Boolean(event.detail?.active);if(reverseHeld){navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;}});
-  document.addEventListener('world:drive',event=>{touchDrive.throttle=THREE.MathUtils.clamp(Number(event.detail?.throttle)||0,-1,1);touchDrive.turn=THREE.MathUtils.clamp(Number(event.detail?.turn)||0,-1,1);if(touchDrive.throttle||touchDrive.turn){navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;}});
+  document.addEventListener('world:flight',event=>{flightLift=THREE.MathUtils.clamp(Number(event.detail?.lift)||0,-1,1);if(flightLift){navigationRevision++;path=[];flightPending=null;flightLanding=false;}});
+  document.addEventListener('world:drive',event=>{touchDrive.throttle=THREE.MathUtils.clamp(Number(event.detail?.throttle)||0,-1,1);touchDrive.turn=THREE.MathUtils.clamp(Number(event.detail?.turn)||0,-1,1);if(touchDrive.throttle||touchDrive.turn){flightLanding=false;flightPending=null;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;}});
   const zoomOut=document.getElementById('zoom-out'),zoomIn=document.getElementById('zoom-in'),overviewButton=document.getElementById('view-overview');
   function updateOverviewButton(){overviewButton.textContent=overview?'Explore':'Map';overviewButton.setAttribute('aria-pressed',String(overview));overviewButton.setAttribute('aria-label',overview?'Return to the trainer':'Show village map');}
   function setZoom(v){if(viewMode==='first')setView('third');targetZoom=THREE.MathUtils.clamp(v,.6,1.7);overview=false;updateOverviewButton();zoomIn.disabled=targetZoom>=1.7;zoomOut.disabled=targetZoom<=.6;}
@@ -495,6 +544,8 @@ async function init(){
   updateOverviewButton();overviewButton.addEventListener('click',()=>{if(viewMode==='first')setView('third');overview=!overview;updateOverviewButton();});
   function queueArrival(id,action){const revision=navigationRevision;setTimeout(()=>{if(revision!==navigationRevision||paused||roomLoading)return;if(action)action();else if(id)enterInterior(id);},150);}
   function moveTo(point,id=null,action=null){
+    if(flying()&&id){requestFlightLanding({id,point});return;}
+    rideControl.speed=0;flightPending=null;flightLanding=false;
     if(id&&selectedTravel!=='walk'&&!activeRoom)point=point.clone().add(new THREE.Vector3(0,0,travelShape().axle+travelShape().radius));
     navigationRevision++;path=route(trainer.position,point);pathIndex=0;arrivalId=id;arrivalAction=action;overview=false;updateOverviewButton();
     if(!path.length){destinationMarker.visible=false;const distance=Math.hypot(trainer.position.x-point.x,trainer.position.z-point.z),steps=Math.max(1,Math.ceil(distance/.16));let direct=true;for(let i=0;i<=steps;i++){const t=i/steps;if(!walkable(THREE.MathUtils.lerp(trainer.position.x,point.x,t),THREE.MathUtils.lerp(trainer.position.z,point.z,t))){direct=false;break;}}if(distance<(activeRoom?1.65:2.15)&&direct)queueArrival(id,action);else ui.announce(routeTimedOut?'Choose a nearer point along the path, then continue to your destination.':'That route is blocked. Try approaching from the path, or open the chapter in the field guide.');return;}
@@ -514,7 +565,7 @@ async function init(){
       return;
     }
     if(blockedDoorId){const s=landmarkState.find(s=>s.place.id===blockedDoorId);if(!s||Math.hypot(trainer.position.x-s.entry.x,trainer.position.z-s.entry.z)>2.8)blockedDoorId=null;}
-    if(!moving)return;
+    if(!moving||selectedTravel==='charizard')return;
     for(const s of landmarkState){
       // A planned trip may pass another front porch; only its destination opens.
       if(pathIndex<path.length&&arrivalId!==s.place.id)continue;
@@ -533,7 +584,7 @@ async function init(){
       finally{doorTransitionPending=false;}
     });
   }
-  function clearMovement(){reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;keys.clear();destinationMarker.visible=false;footprints.forEach(f=>{f.age=8;f.m.visible=false;});}
+  function clearMovement(){rideControl.speed=0;rideControl.steer=0;flightLift=0;flightPending=null;flightLanding=false;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;keys.clear();destinationMarker.visible=false;footprints.forEach(f=>{f.age=8;f.m.visible=false;});}
   function showExterior(show){outdoorObjects.forEach(object=>object.visible=show);mapStates.forEach(s=>s.label.hidden=!show);}
   async function enterInterior(id){
     if(roomLoading||activeRoom)return;const place=data.places.find(p=>p.id===id);if(!place)return;
@@ -560,6 +611,7 @@ async function init(){
     let stepOut=0;for(let d=.1;d<=3.0;d+=.1){if(!walkable(trainer.position.x,trainer.position.z+d))break;stepOut=d;}trainer.position.z+=stepOut;
     trainer.position.y=groundForWalk(trainer.position.x,trainer.position.z);
     if(!footprintClear(trainer.position.x,trainer.position.z,trainer.rotation.y,TRAVEL[selectedTravel],walkable))selectedTravel='walk';
+    flightCruise=FLIGHT.cruise;
     updateTravelVisual();resetCompanionTrail();
     cameraYaw=outdoorReturn.yaw;cameraPitch=outdoorReturn.pitch;zoom=targetZoom=outdoorReturn.zoom;overview=false;overviewButton.disabled=false;updateOverviewButton();
     focus.set(trainer.position.x,trainer.position.y+1.25,trainer.position.z-4);focusTarget.copy(focus);actualDistance=(innerWidth<600?28:24)/zoom;actualPitch=cameraPitch;
@@ -580,15 +632,15 @@ async function init(){
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(pointers.size===2){const[a,b]=[...pointers.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinchDistance)setZoom(targetZoom*d/pinchDistance);pinchDistance=d;dragged=true;return;}
     if(downPoint&&Math.hypot(e.clientX-downPoint.x,e.clientY-downPoint.y)>8)dragged=true;
-    if(dragged){if(viewMode==='first'){firstLookYaw=THREE.MathUtils.clamp(firstLookYaw-(e.clientX-old.x)*.004,-Math.PI*.85,Math.PI*.85);firstLookPitch=THREE.MathUtils.clamp(firstLookPitch-(e.clientY-old.y)*.003,-.85,.7);}else{cameraYaw-=(e.clientX-old.x)*.006;cameraPitch=THREE.MathUtils.clamp(cameraPitch+(e.clientY-old.y)*.002,.42,.95);}}
+    if(dragged){if(viewMode==='first'){firstLookYaw=THREE.MathUtils.clamp(firstLookYaw-(e.clientX-old.x)*.004,-Math.PI*.85,Math.PI*.85);firstLookPitch=THREE.MathUtils.clamp(firstLookPitch-(e.clientY-old.y)*.003,-.85,.7);}else{lastOrbitTime=time;cameraYaw-=(e.clientX-old.x)*.006;cameraPitch=THREE.MathUtils.clamp(cameraPitch+(e.clientY-old.y)*.002,.42,.95);}}
   });
   canvas.addEventListener('pointerup',e=>{const beganOnCanvas=pointers.has(e.pointerId);pointers.delete(e.pointerId);if(!beganOnCanvas)return;if(dragged||paused){if(!pointers.size)downPoint=null;return;}const rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(activeRoom?activeRoom.targets:targets,false)[0];if(hit){if(activeRoom){if(hit.object.userData.exit){moveTo(activeRoom.exit.approach,null,exitInterior);return;}const exhibit=activeRoom.exhibits.find(e=>e.id===hit.object.userData.exhibitId);if(exhibit)moveTo(exhibit.approach,null,()=>ui.openExhibit?.(exhibit));}else walkTo(hit.object.userData.placeId);return;}const ground=raycaster.intersectObjects(activeRoom?[activeRoom.floor]:[terrain,...bridgeFloors],false)[0];if(ground)moveTo(ground.point);downPoint=null;});
   canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);downPoint=null;});
   canvas.addEventListener('wheel',e=>{e.preventDefault();setZoom(targetZoom-e.deltaY*.001);},{passive:false});
-  canvas.addEventListener('keydown',e=>{if(paused)return;const k=e.key.toLowerCase();if(k==='v'&&!e.repeat){e.preventDefault();setView(viewMode==='first'?'third':'first');return;}if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','r'].includes(k)){e.preventDefault();keys.add(k);navigationRevision++;path=[];arrivalId=null;arrivalAction=null;
+  canvas.addEventListener('keydown',e=>{if(paused)return;const k=e.key.toLowerCase();if(k==='v'&&!e.repeat){e.preventDefault();setView(viewMode==='first'?'third':'first');return;}if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','r',' ','c'].includes(k)){e.preventDefault();keys.add(k);flightLanding=false;flightPending=null;navigationRevision++;path=[];arrivalId=null;arrivalAction=null;
       if(overview){focus.set(trainer.position.x,trainer.position.y+1.25,trainer.position.z-4);focusTarget.copy(focus);actualDistance=(innerWidth<600?28:24)/zoom;actualPitch=cameraPitch;camera.position.set(focus.x+Math.sin(cameraYaw)*Math.cos(actualPitch)*actualDistance,focus.y+Math.sin(actualPitch)*actualDistance,focus.z+Math.cos(cameraYaw)*Math.cos(actualPitch)*actualDistance);camera.lookAt(focus);camera.updateMatrixWorld();}
       overview=false;updateOverviewButton();destinationMarker.visible=false;}if((k==='e'||k==='enter')&&nearest){e.preventDefault();interact();}});
-  window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
+  window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
   document.addEventListener('world:pause',()=>{paused=true;clearMovement();});document.addEventListener('world:resume',()=>{paused=false;});
   document.getElementById('reset-view').addEventListener('click',()=>{if(activeRoom)exitInterior();if(viewMode==='first')setView('third');cameraYaw=.44;cameraPitch=.64;setZoom(1);moveTo(new THREE.Vector3(-3.2,0,9.8));canvas.focus({preventScroll:true});window.scrollTo({top:0,behavior:reducedMotion?'instant':'smooth'});});
   const projection=new THREE.Vector3();
@@ -608,8 +660,8 @@ async function init(){
   }
   function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);camera.aspect=w/h;camera.fov=viewMode==='first'?FIRST_PERSON_FOV:w<600?49:42;camera.near=viewMode==='first'?.045:.15;camera.updateProjectionMatrix();}
   new ResizeObserver(resize).observe(stage);resize();
-  let hidden=false,inView=true;document.addEventListener('visibilitychange',()=>{hidden=document.hidden;lastTime=0;keys.clear();reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
-  new IntersectionObserver(([entry])=>{inView=entry.isIntersecting;lastTime=0;if(!inView){keys.clear();reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;interactPrompt.hidden=true;}},{rootMargin:'100px'}).observe(stage);
+  let hidden=false,inView=true;document.addEventListener('visibilitychange',()=>{hidden=document.hidden;lastTime=0;keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
+  new IntersectionObserver(([entry])=>{inView=entry.isIntersecting;lastTime=0;if(!inView){keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;interactPrompt.hidden=true;}},{rootMargin:'100px'}).observe(stage);
   const direction=new THREE.Vector3(),delta=new THREE.Vector3(),moveStart=new THREE.Vector3(),viewProjection=new THREE.Matrix4();
   let steering=0;
   function advance(vector,dt,remaining=Infinity,followingRoute=false,options={}){
@@ -656,6 +708,41 @@ async function init(){
       const slideZ={x:trainer.position.x,z:next.z};if(motionClear(trainer.position,slideZ,heading,shape,walkable))trainer.position.z=slideZ.z;
     }
   }
+  function advanceRide(dt,{throttle=0,turn=0,brake=false}={}){
+    const shape=travelShape(),oldYaw=trainer.rotation.y;
+    if(reverseHeld||keys.has('r'))rideControl.steer=0;
+    const control=stepRideControl(rideControl,{throttle,turn,brake},{...shape,id:selectedTravel},dt);
+    steering=control.steer;
+    const desiredYaw=oldYaw+control.yawDelta;
+    let nextYaw=flying()||turnClear(trainer.position.x,trainer.position.z,oldYaw,desiredYaw,shape,walkable)?desiredYaw:oldYaw;
+    const candidate=yaw=>({x:trainer.position.x+Math.sin(yaw)*control.speed*dt,z:trainer.position.z+Math.cos(yaw)*control.speed*dt});
+    let next=candidate(nextYaw);
+    if(flying()){
+      const result=stepFlight(trainer.position,next,{dt,ground:groundForWalk,ceiling:flightCeiling,cruise:flightCruise,limit:WORLD_LIMIT});
+      trainer.position.set(result.x,result.y,result.z);trainer.rotation.y=nextYaw;return;
+    }
+    let clear=motionClear(trainer.position,next,nextYaw,shape,walkable);
+    if(!clear&&control.speed<0){const escape=candidate(oldYaw);if(motionClear(trainer.position,escape,oldYaw,shape,walkable)){next=escape;nextYaw=oldYaw;clear=true;steering=0;}}
+    trainer.rotation.y=nextYaw;
+    if(clear){trainer.position.x=next.x;trainer.position.z=next.z;}else rideControl.speed=0;
+  }
+  function advanceFlightRoute(dt){
+    const waypoint=path[pathIndex];
+    if(!waypoint)return;
+    const dx=waypoint.x-trainer.position.x,dz=waypoint.z-trainer.position.z,distance=Math.hypot(dx,dz);
+    if(distance<.08){
+      pathIndex++;
+      if(pathIndex>=path.length){destinationMarker.visible=false;
+        if(flightPending)flightLanding=true;
+        else {const id=arrivalId,action=arrivalAction;arrivalId=null;arrivalAction=null;queueArrival(id,action);}}
+      return;
+    }
+    const goal=Math.atan2(dx,dz),change=angleDelta(trainer.rotation.y,goal);
+    trainer.rotation.y+=THREE.MathUtils.clamp(change,-dt*1.6,dt*1.6);steering=THREE.MathUtils.clamp(change,-.5,.5);
+    const step=Math.min(distance,dt*travelShape().speed*Math.max(0,Math.cos(change)));
+    const result=stepFlight(trainer.position,{x:trainer.position.x+Math.sin(trainer.rotation.y)*step,z:trainer.position.z+Math.cos(trainer.rotation.y)*step},{dt,ground:groundForWalk,ceiling:flightCeiling,cruise:flightCruise,limit:WORLD_LIMIT});
+    trainer.position.set(result.x,result.y,result.z);
+  }
   function tick(now){requestAnimationFrame(tick);if(hidden||!inView)return;const dt=Math.min((now-(lastTime||now))/1000,.05);lastTime=now;time+=dt;let moving=false,manualInput=false;
     if(!paused&&!roomLoading){
       moveStart.copy(trainer.position);
@@ -663,8 +750,19 @@ async function init(){
       const sy=Number(keys.has('w')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'));
       direction.set(0,0,0);
       const backing=(reverseHeld||keys.has('r'))&&travelShape().axle>0;
-      manualInput=Boolean(sx||sy||backing||touchDrive.throttle||touchDrive.turn);
-      if(manualInput&&viewMode==='first'){
+      const lift=flying()?THREE.MathUtils.clamp(Number(keys.has(' '))-Number(keys.has('c'))+flightLift,-1,1):0;
+      if(lift)flightCruise=THREE.MathUtils.clamp(flightCruise+lift*dt*5,FLIGHT.minCruise,FLIGHT.maxCruise);
+      manualInput=Boolean(sx||sy||backing||touchDrive.throttle||touchDrive.turn||lift||keys.has(' '));
+      if(flying()&&flightLanding){
+        const landingTurn=angleDelta(trainer.rotation.y,flightPending.yaw);
+        trainer.rotation.y+=THREE.MathUtils.clamp(landingTurn,-dt*1.6,dt*1.6);
+        const aligned=Math.abs(landingTurn)<.03;
+        const result=stepFlight(trainer.position,trainer.position,{dt,ground:groundForWalk,ceiling:flightCeiling,landing:aligned,cruise:flightCruise,limit:WORLD_LIMIT});
+        trainer.position.y=result.y;
+        if(result.landed){const pending=flightPending;clearMovement();selectedTravel=pending?.travel||(pending?.id?'charizard':'walk');updateTravelVisual();resetCompanionTrail();if(pending?.id)queueArrival(pending.id);else pending?.action?.();}
+      }else if(!activeRoom&&selectedTravel!=='walk'&&(manualInput||pathIndex>=path.length)){
+        advanceRide(dt,{throttle:backing?-1:THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1),turn:backing?0:THREE.MathUtils.clamp(-sx+touchDrive.turn,-1,1),brake:!flying()&&keys.has(' ')});
+      }else if(manualInput&&viewMode==='first'){
         const throttle=backing?-1:THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1),turn=THREE.MathUtils.clamp(-sx+touchDrive.turn,-1,1);
         advance(direction,dt,Infinity,false,{throttle,turn,forceReverse:backing});
       }else if(backing){advance(direction,dt,Infinity,false,{forceReverse:true});}
@@ -677,6 +775,7 @@ async function init(){
         screenGroundDirection(direction,sx,sy,viewProjection.elements,trainer.position,camera.aspect,slopeX,slopeZ);
         advance(direction,dt);
       }
+      else if(flying()&&pathIndex<path.length){advanceFlightRoute(dt);}
       else if(pathIndex<path.length){
         const waypoint=path[pathIndex];delta.set(waypoint.x-trainer.position.x,0,waypoint.z-trainer.position.z);
         const distance=delta.length();direction.copy(delta).normalize();
@@ -684,15 +783,19 @@ async function init(){
         else advance(direction,dt,distance,true);
         if(pathIndex>=path.length){destinationMarker.visible=false;const id=arrivalId,action=arrivalAction;arrivalId=null;arrivalAction=null;queueArrival(id,action);}
       }
-      trainer.position.y=groundForWalk(trainer.position.x,trainer.position.z);
+      if(!flying())trainer.position.y=groundForWalk(trainer.position.x,trainer.position.z);
       direction.subVectors(trainer.position,moveStart);direction.y=0;moving=direction.lengthSq()>1e-10;
     }
     if(travelModel&&!activeRoom&&selectedTravel!=='walk'){
       const shape=travelShape(),dx=Math.sin(trainer.rotation.y)*shape.axle,dz=Math.cos(trainer.rotation.y)*shape.axle;
       const front=groundForWalk(trainer.position.x+dx,trainer.position.z+dz),rear=groundForWalk(trainer.position.x-dx,trainer.position.z-dz);
-      travelModel.group.rotation.x=shape.axle?Math.atan2(rear-front,shape.axle*2):0;
-      travelModel.group.position.y=(front+rear)/2-trainer.position.y;
-      travelModel.update(quietMotion&&!moving?0:dt,{speed:moving?(direction.x*Math.sin(trainer.rotation.y)+direction.z*Math.cos(trainer.rotation.y))/Math.max(dt,.001):0,time:quietMotion?windUniform.value:time,steer:steering});
+      const air=flying();
+      if(!paused&&!roomLoading&&(!quietMotion||moving))mountTime+=dt;
+      if(air&&time-flightStatusTime>.25){flightStatusTime=time;const height=trainer.position.y-groundForWalk(trainer.position.x,trainer.position.z);document.dispatchEvent(new CustomEvent('world:flight-state',{detail:{height,phase:flightPending?'landing':height<2?'takeoff':'flying'}}));}
+      travelModel.group.rotation.x=air?THREE.MathUtils.lerp(travelModel.group.rotation.x,Math.abs(rideControl.speed)*.012,dt*3):shape.axle?Math.atan2(rear-front,shape.axle*2):0;
+      travelModel.group.rotation.z=air?THREE.MathUtils.lerp(travelModel.group.rotation.z,-steering*.20,dt*3):0;
+      travelModel.group.position.y=air?(!quietMotion?Math.sin(mountTime*2.4)*.045:0):(front+rear)/2-trainer.position.y;
+      travelModel.update(paused||roomLoading||quietMotion&&!moving?0:dt,{speed:moving?(direction.x*Math.sin(trainer.rotation.y)+direction.z*Math.cos(trainer.rotation.y))/Math.max(dt,.001):0,time:mountTime,steer:steering,airborne:air?flightDeployment(trainer.position.y,groundForWalk(trainer.position.x,trainer.position.z),flightCeiling(trainer.position.x,trainer.position.z)):0,bank:steering});
     }
 
     if(mixer){if(moving!==previousMoving&&idleAction&&walkAction){if(moving){walkAction.reset().fadeIn(.2).play();idleAction.fadeOut(.2);}else{idleAction.reset().fadeIn(.25).play();walkAction.fadeOut(.25);}}mixer.update(quietMotion&&!moving?0:dt);}
@@ -711,13 +814,14 @@ async function init(){
     interactPrompt.hidden=!nearest||nearest.kind!=='exhibit'||moving||paused||overview||roomLoading;
     if(nearest)document.getElementById('interact-text').textContent=nearest.kind==='exit'?'Leave building':nearest.kind==='exhibit'?`View ${nearest.exhibit.title}`:`Enter ${nearest.place.title}`;
     if(!quietMotion){windUniform.value=time;flagCloths.forEach((f,i)=>f.rotation.y=Math.sin(time*1.4+i)*.1);waterGlints.forEach(g=>g.scale.x=.7+Math.sin(time+g.userData.seed)*.3);}
-    if(activeRoom){focusTarget.copy(activeRoom.camera.target);focusTarget.x+=trainer.position.x*indoorFollow;focusTarget.z+=trainer.position.z*indoorFollow;}else if(overview)focusTarget.set(0,1,-5);else focusTarget.set(trainer.position.x,trainer.position.y+1.25,trainer.position.z-4.0);
+    if(activeRoom){focusTarget.copy(activeRoom.camera.target);focusTarget.x+=trainer.position.x*indoorFollow;focusTarget.z+=trainer.position.z*indoorFollow;}else if(overview)focusTarget.set(0,1,-5);else focusTarget.set(trainer.position.x,trainer.position.y+(flying()?2.1:1.25),trainer.position.z+(selectedTravel==='walk'?-4:0));
     // A uniform translation factor keeps screen-relative controls exact. Indoors
     // the camera follows part of the travelled displacement, preserving context;
     // the same target is retained on release, so it never snaps back to the room.
-    if(manualInput){if(moving){const follow=activeRoom?indoorFollow:1;focus.x+=direction.x*follow;focus.z+=direction.z*follow;focus.y+=(trainer.position.y-moveStart.y)*follow;}}
+    if(!activeRoom&&selectedTravel!=='walk'){focus.lerp(focusTarget,Math.min(1,dt*5));if(!overview&&!pointers.size&&time-lastOrbitTime>3)cameraYaw+=angleDelta(cameraYaw,trainer.rotation.y+Math.PI)*Math.min(1,dt*2.2);}
+    else if(manualInput){if(moving){const follow=activeRoom?indoorFollow:1;focus.x+=direction.x*follow;focus.z+=direction.z*follow;focus.y+=(trainer.position.y-moveStart.y)*follow;}}
     else focus.lerp(focusTarget,reducedMotion?1:Math.min(1,dt*2.3));zoom=THREE.MathUtils.lerp(zoom,targetZoom,Math.min(1,dt*5));
-    const distanceGoal=activeRoom?((activeRoom.camera.distance||19)*(innerWidth<600?1.75:1))/zoom:overview?overviewDistance():(innerWidth<600?28:24)/zoom;actualDistance=THREE.MathUtils.lerp(actualDistance,distanceGoal,reducedMotion?1:Math.min(1,dt*3));actualPitch=THREE.MathUtils.lerp(actualPitch,overview?.91:cameraPitch,reducedMotion?1:Math.min(1,dt*3));const distance=actualDistance,pitch=actualPitch;
+    const distanceGoal=activeRoom?((activeRoom.camera.distance||19)*(innerWidth<600?1.75:1))/zoom:overview?overviewDistance():(flying()?(innerWidth<600?25:19):selectedTravel!=='walk'?(innerWidth<600?25:19):(innerWidth<600?28:24))/zoom;actualDistance=THREE.MathUtils.lerp(actualDistance,distanceGoal,reducedMotion?1:Math.min(1,dt*3));actualPitch=THREE.MathUtils.lerp(actualPitch,overview?.91:flying()?.40:cameraPitch,reducedMotion?1:Math.min(1,dt*3));const distance=actualDistance,pitch=actualPitch;
     distantBuildings.forEach(item=>item.object.visible=!activeRoom&&(viewMode==='first'||overview||Math.hypot(trainer.position.x-item.x,trainer.position.z-item.z)<22));
     if(scene.fog)scene.fog.density=overview?.0015:.011;
     activeRoom?.update?.(quietMotion?0:dt,quietMotion?windUniform.value:time);

@@ -25,6 +25,17 @@
 #travel-reverse{display:flex;align-items:center;gap:7px;min-height:40px;padding:7px 9px 7px 11px;border:1px solid #ffffffc9;border-radius:11px;background:#fffef5ed;backdrop-filter:blur(12px);font-size:11px;color:#476456;touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 5px 20px #294d3a10}
 #travel-reverse[hidden]{display:none}
 #travel-reverse.reversing{background:#dfebd7;border-color:#8fae87;color:#274f37}
+#travel-driving-hint{display:grid;gap:4px;max-width:252px;margin:0;padding:9px 11px;border:1px solid #ffffffc9;border-radius:11px;background:#fffef5ed;box-shadow:0 5px 20px #294d3a10;backdrop-filter:blur(12px);font-size:10px;line-height:1.4;color:#476456}
+#travel-driving-hint span:last-child{font-size:9px;color:#6d8171}
+#travel-driving-hint[hidden]{display:none}
+#travel-flight{display:flex;align-items:center;gap:5px}
+#travel-flight[hidden]{display:none}
+#travel-flight-status{min-width:65px;padding:4px 2px;text-align:right;font-size:9px;font-variant-numeric:tabular-nums;line-height:1.4;color:#476456;text-shadow:0 1px 3px #fffdf7,0 0 8px #fffdf7;white-space:nowrap}
+#travel-flight button{display:flex;align-items:center;gap:5px;min-height:40px;padding:7px 9px;border:1px solid #ffffffc9;border-radius:11px;background:#fffef5ed;backdrop-filter:blur(12px);box-shadow:0 5px 20px #294d3a10;font-size:11px;color:#476456;touch-action:none;user-select:none;-webkit-user-select:none}
+#travel-flight button>span{font-size:17px;line-height:1}
+#travel-flight button.held{background:#dfebd7;border-color:#8fae87;color:#274f37}
+#travel-flight button:disabled{opacity:.4}
+#travel-flight kbd{margin:0 0 0 2px;padding:0 3px}
 .is-indoors #camera-mode-control{top:125px}
 #first-person-drive{display:none;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(2,40px);gap:4px;padding:6px;border:1px solid #ffffffb8;border-radius:13px;background:#fffef5e8;backdrop-filter:blur(12px);box-shadow:0 5px 20px #294d3a10}
 #first-person-drive[hidden]{display:none}
@@ -51,9 +62,21 @@
  #camera-mode-control .camera-view-switch>kbd{display:none}
  #travel-reverse{min-height:40px;font-size:10px;padding:6px 8px;gap:5px}
  #travel-reverse kbd{display:none}
+ #travel-driving-hint{max-width:218px;padding:7px 9px;gap:3px;font-size:9px}
+ #travel-driving-hint span:last-child{font-size:8px}
+ #travel-flight button{min-height:40px;padding:6px 9px;font-size:10px}
+ #travel-flight kbd{display:none}
  .is-indoors #camera-mode-control{top:104px}
  .is-indoors #travel-control{max-height:calc(100% - 217px)}
  #first-person-drive:not([hidden]){display:grid}
 }
 @media(pointer:coarse){#first-person-drive:not([hidden]){display:grid}}
+@media(max-width:600px) and (max-height:650px){
+ #travel-driving-hint span:last-child{display:none}
+ #first-person-drive{grid-template-columns:repeat(4,40px);grid-template-rows:40px}
+ #first-person-drive button[data-drive="left"]{grid-column:1;grid-row:1}
+ #first-person-drive button[data-drive="forward"]{grid-column:2;grid-row:1}
+ #first-person-drive button[data-drive="back"]{grid-column:3;grid-row:1}
+ #first-person-drive button[data-drive="right"]{grid-column:4;grid-row:1}
+}
 @media(prefers-reduced-motion:reduce){.travel-option{transition:none}}
