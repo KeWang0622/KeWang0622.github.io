@@ -19,21 +19,21 @@ const waterField = /* glsl */ `
 
 export function createPainterlyWater(windUniform,pond) {
   const material = new THREE.MeshPhysicalMaterial({
-    color: 0x4e9295,
-    roughness: .30,
+    color: 0x397f88,
+    roughness: .38,
     metalness: 0,
-    clearcoat: .36,
-    clearcoatRoughness: .28,
-    reflectivity: .35,
+    clearcoat: .24,
+    clearcoatRoughness: .36,
+    reflectivity: .32,
     dithering: true
   });
   material.name = 'Quiet teal water · soft reflected sky';
-  material.customProgramCacheKey = () => 'village-painterly-water-v2';
+  material.customProgramCacheKey = () => 'village-painterly-water-v3';
   material.onBeforeCompile = shader => {
     shader.uniforms.uWaterTime = windUniform;
     // THREE.Color converts authored sRGB colours to the linear working space.
-    shader.uniforms.uWaterSky = { value: new THREE.Color(0xb8d7d7) };
-    shader.uniforms.uWaterShallow = { value: new THREE.Color(0x8bb6a5) };
+    shader.uniforms.uWaterSky = { value: new THREE.Color(0xc0dedd) };
+    shader.uniforms.uWaterShallow = { value: new THREE.Color(0x9bbca4) };
     shader.uniforms.uPond = { value: new THREE.Vector4(pond.x,pond.z,pond.rx,pond.rz) };
     shader.vertexShader = `${waterField}\nvarying vec3 vWaterWorld;\n${shader.vertexShader}`;
     shader.vertexShader = shader.vertexShader.replace(
@@ -54,11 +54,19 @@ export function createPainterlyWater(windUniform,pond) {
        float pondEdge=length(pondUV)/(1.+.08*sin(pondAngle*3.)+.04*cos(pondAngle*5.));
        float riverEdge=abs(vWaterWorld.z-(-5.5+sin(vWaterWorld.x*.12)*2.))/1.45;
        float waterEdge=pondEdge<1.4?pondEdge:riverEdge;
-       diffuseColor.rgb=mix(diffuseColor.rgb,uWaterShallow,smoothstep(.38,1.03,waterEdge)*.72);
+       float shallowWater=smoothstep(.35,1.03,waterEdge);
+       diffuseColor.rgb=mix(diffuseColor.rgb,uWaterShallow,shallowWater*.82);
        // Large, quiet tonal patches suggest reflected air without noisy foam.
        float waterPatch = sin(vWaterWorld.x * .24 + vWaterWorld.z * .36)
                         * sin(vWaterWorld.z * .21 - uWaterTime * .035);
-       diffuseColor.rgb *= 1.0 + waterPatch * .055;`
+       diffuseColor.rgb *= 1.0 + waterPatch * .045;
+       // Soft, sparse bands near the shore communicate lapping water. They
+       // follow the same bank coordinate as the colour, never a screen overlay.
+       // Width and intensity stay low enough to avoid sparkling at a distance.
+       float bankRipple=.5+.5*sin(waterEdge*38.-uWaterTime*.54+waterPatch*.7);
+       float rippleDistanceFade=1.-smoothstep(.25,1.,fwidth(waterEdge)*38.);
+       float rippleBand=smoothstep(.79,.98,bankRipple)*smoothstep(.55,.84,waterEdge)*(1.-smoothstep(.94,1.06,waterEdge))*rippleDistanceFade;
+       diffuseColor.rgb=mix(diffuseColor.rgb,uWaterShallow,rippleBand*.13);`
     );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <normal_fragment_maps>',
@@ -78,8 +86,9 @@ export function createPainterlyWater(windUniform,pond) {
       '#include <opaque_fragment>',
       `float waterFacing = clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0);
        float waterFresnel = pow(1.0 - waterFacing, 3.0);
-       // A restrained painted sky reflection; retain lighting and bank shadows.
-       outgoingLight = mix(outgoingLight, uWaterSky, .035 + .16 * waterFresnel);
+       // The grazing surface catches more sky, while the overhead view retains
+       // the deeper teal centre and sandy shallow margin. No reflection pass.
+       outgoingLight = mix(outgoingLight, uWaterSky, .045 + .24 * waterFresnel);
        #include <opaque_fragment>`
     );
   };

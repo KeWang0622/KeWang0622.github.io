@@ -7,8 +7,11 @@ export function buildMeadow({scene,groundHeight,roadDistance,riverZ,nearBuilding
   const group=new THREE.Group();
   group.name='wind-swept-meadow';
   const grassGeometry=makeTuft(),flowerGeometry=makeWildflower();
-  const grassMaterial=meadowMaterial(windUniform,'meadow-grass');
-  const flowerMaterial=meadowMaterial(windUniform,'meadow-wildflowers');
+  // Four small GPU influence fields are shared by every tile. They never alter
+  // terrain or navigation: only blade tips yield as a person passes through.
+  const interactors={value:Array.from({length:4},()=>new THREE.Vector4(0,0,0,0))};
+  const grassMaterial=meadowMaterial(windUniform,'meadow-grass',interactors);
+  const flowerMaterial=meadowMaterial(windUniform,'meadow-wildflowers',interactors);
   const tiles=[],flowerTiles=[],matrix=new THREE.Object3D(),tint=new THREE.Color();
   let seed=27431;
   const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
@@ -79,6 +82,19 @@ export function buildMeadow({scene,groundHeight,roadDistance,riverZ,nearBuilding
     }
   }
   group.userData.decorative=true;
+  group.userData.updateInteractors=(actors=[],dt=1/60,enabled=true)=>{
+    const blend=1-Math.exp(-Math.max(0,Math.min(dt,.1))*18);
+    for(let i=0;i<interactors.value.length;i++){
+      const field=interactors.value[i],actor=enabled?actors[i]:null;
+      const point=actor?.position||actor;
+      if(point&&Number.isFinite(point.x)&&Number.isFinite(point.y)&&Number.isFinite(point.z)){
+        // Initial placement must not sweep a field from the origin to the actor.
+        if(field.w<.01)field.set(point.x,point.y,point.z,0);
+        field.x+=(point.x-field.x)*blend;field.y+=(point.y-field.y)*blend;field.z+=(point.z-field.z)*blend;
+        field.w+=((actor?.radius??(i===0?.88:.68))-field.w)*blend;
+      }else field.w*=1-blend;
+    }
+  };
   group.userData.meadow={tufts:tuftCount,blades:tuftCount*5,flowers:flowerCount,tiles:tiles.length,drawCalls:tiles.length+flowerTiles.length,instancedVertices:tuftCount*grassGeometry.attributes.position.count+flowerCount*flowerGeometry.attributes.position.count};
   group.userData.dispose=()=>{
     for(const mesh of [...tiles,...flowerTiles])mesh.dispose();
@@ -96,18 +112,19 @@ function prepareInstance(mesh){
   // large vegetation pass into the sun's shadow map.
   mesh.castShadow=false;
   mesh.computeBoundingBox();mesh.computeBoundingSphere();
-  mesh.boundingBox.expandByScalar(.25);mesh.boundingSphere.radius+=.25;
+  mesh.boundingBox.expandByScalar(.45);mesh.boundingSphere.radius+=.45;
   mesh.userData.decorative=true;
 }
 
-function meadowMaterial(time,name){
+function meadowMaterial(time,name,interactors){
   const material=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:1,metalness:0,side:THREE.DoubleSide});
   material.name=name;material.forceSinglePass=true;
   material.onBeforeCompile=shader=>{
     // world.js freezes this same clock for Pause Motion / reduced motion. No
     // local animation loop or extra state can accidentally restart the grass.
     shader.uniforms.uMeadowTime=time||{value:0};
-    shader.vertexShader='uniform float uMeadowTime;\n'+shader.vertexShader;
+    shader.uniforms.uMeadowActors=interactors;
+    shader.vertexShader='uniform float uMeadowTime;\nuniform vec4 uMeadowActors[4];\n'+shader.vertexShader;
     shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
       vec3 meadowRoot=(modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.)).xyz;
       float meadowHeight=length(instanceMatrix[1].xyz);
@@ -116,11 +133,24 @@ function meadowMaterial(time,name){
       float meadowRipple=sin(dot(meadowRoot.xz,vec2(.53,-.37))+uMeadowTime*1.25);
       vec3 meadowWind=vec3(.91,0.,.42)*((.10+.16*meadowWave+.035*meadowRipple)*meadowHeight*meadowBend);
       meadowWind.z+=sin(meadowRoot.x*.19-meadowRoot.z*.16-uMeadowTime*.52)*.045*meadowHeight*meadowBend;
+      for(int actor=0;actor<4;actor++){
+        vec4 field=uMeadowActors[actor];
+        vec2 offset=meadowRoot.xz-field.xz;
+        float squaredDistance=dot(offset,offset);
+        // An airborne rider cannot flatten grass below; a nearby walker or MRI
+        // companion bends it away, with a broad, soft falloff and anchored roots.
+        if(field.w>.01&&squaredDistance<field.w*field.w&&abs(meadowRoot.y-field.y)<.72){
+          float influence=pow(1.-squaredDistance/(field.w*field.w),2.);
+          vec2 outward=offset*inversesqrt(max(squaredDistance,.001));
+          meadowWind.xz+=outward*influence*.58*meadowHeight*meadowBend;
+          meadowWind.y-=influence*.32*meadowHeight*meadowBend;
+        }
+      }
       // Each tuft has a different yaw; convert the common world-space wind back
       // into instance coordinates so a breeze never blows in random directions.
       transformed+=vec3(
         dot(instanceMatrix[0].xyz,meadowWind)/dot(instanceMatrix[0].xyz,instanceMatrix[0].xyz),
-        0.,
+        meadowWind.y/max(meadowHeight,.01),
         dot(instanceMatrix[2].xyz,meadowWind)/dot(instanceMatrix[2].xyz,instanceMatrix[2].xyz)
       );`);
     // Standard double-sided shading flips the deliberately upward-biased blade
@@ -129,16 +159,16 @@ function meadowMaterial(time,name){
     // the same received tree/building shadows and all standard PBR lighting.
     shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_begin>',`#include <normal_fragment_begin>
       vec3 meadowUp=normalize(mat3(viewMatrix)*vec3(0.,1.,0.));
-      normal=normalize(meadowUp*.90+normal*faceDirection*.10);
+      normal=normalize(meadowUp*.78+normal*faceDirection*.22);
       nonPerturbedNormal=normal;`);
   };
-  material.customProgramCacheKey=()=>`${name}-world-wind-soft-canopy-v2`;
+  material.customProgramCacheKey=()=>`${name}-world-wind-soft-canopy-v3`;
   return material;
 }
 
 function makeTuft(){
   const positions=[],normals=[],colors=[],uvs=[],indices=[];
-  const base=new THREE.Color(0x6f9066),middle=new THREE.Color(0x88a36c),tip=new THREE.Color(0xa0b67e),color=new THREE.Color();
+  const base=new THREE.Color(0x6f9066),middle=new THREE.Color(0x88a36c),tip=new THREE.Color(0x94ad74),color=new THREE.Color();
   // Five narrow, supple blades with six curve stations. The extra slender
   // silhouettes read as grass close up rather than three broad origami leaves.
   // Fewer tuft centres keep the whole-map vertex budget below one million.
