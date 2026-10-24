@@ -5,22 +5,26 @@ import { EffectComposer } from './lib/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from './lib/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './lib/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from './lib/addons/postprocessing/OutputPass.js';
-import { buildArrivalGround } from './ground.js';
+import { buildArrivalGround } from './ground.js?v=20261023-painted-meadow';
 import { buildSecondaryLandmarks } from './landmarks.js';
 import { buildVillageDetails } from './details.js';
 import { createCameraCompanion } from './camera-companion.js';
 import { createMacCompanion, createPrismCompanion, createMusicCompanion } from './companion-models.js';
-import { WORLD_LIMIT, pondRadius, SCENIC_PLACES, extensionRoadPoints, buildOutdoorExtension } from './outdoor-extension.js';
+import { WORLD_LIMIT, POND, pondRadius, SCENIC_PLACES, extensionRoadPoints, buildOutdoorExtension } from './outdoor-extension.js';
 import { createBridgeSurfaces, WALKER_RADIUS } from './world-surfaces.js';
 import { TRAVEL, angleDelta, footprintOffsets, footprintClear, turnClear, motionClear, findWalkingRoute } from './navigation.js?v=20261023-centered-travel';
 import { stepCompanion } from './companion-navigation.js';
 import { createTravelModel } from './travel-models.js?v=20261023-centered-travel';
-import { createWorldMaterials } from './world-materials.js';
+import { createWorldMaterials } from './world-materials.js?v=20261023-painted-meadow';
 import { FIRST_PERSON_FOV, firstPersonPose } from './ride-camera.js';
 import { stepRideControl } from './ride-controls.js';
 import { planRideSwitch } from './ride-switch.js?v=20261023-centered-travel';
 import { updateCenteredFocus } from './stable-camera.js?v=20261023-centered-travel';
 import { FLIGHT, createFlightEnvelope, stepFlight, findLandingSpot, flightDeployment } from './flight.js';
+import { applyLandscapeLight } from './landscape-light.js?v=20261023-painted-meadow';
+import { buildMeadow } from './meadow.js?v=20261023-painted-meadow';
+import { styleFoliage } from './foliage-art.js?v=20261023-painted-meadow';
+import { createPainterlyWater } from './painterly-water.js?v=20261023-painted-meadow';
 import { createVillageSky } from './village-sky.js';
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
 
@@ -59,15 +63,15 @@ async function init(){
   renderer.toneMappingExposure=1.0;
   const scene=new THREE.Scene();
   scene.background=new THREE.Color(0xc5dfdd);
-  scene.fog=new THREE.FogExp2(0xb8d1c3,.011);
+  scene.fog=new THREE.FogExp2(0xbcd4ce,.0095);
   scene.add(createVillageSky());
   const camera=new THREE.PerspectiveCamera(42,1,.15,1600);
-  const hemi=new THREE.HemisphereLight(0xdceeff,0x60735e,1.85);scene.add(hemi);
-  const sun=new THREE.DirectionalLight(0xffe9ca,2.65);sun.position.set(-18,34,20);sun.castShadow=true;
+  const hemi=new THREE.HemisphereLight(0xdceeff,0x647560,1.30);scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xffedcf,2.85);sun.position.set(-18,34,20);sun.castShadow=true;
   sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-28,right:28,top:28,bottom:-28,near:1,far:100});
-  sun.shadow.normalBias=.045;sun.shadow.bias=-.00008;sun.shadow.radius=5;
+  sun.shadow.normalBias=.03;sun.shadow.bias=-.00008;sun.shadow.radius=2.5;
   scene.add(sun,sun.target);
-  const skyFill=new THREE.DirectionalLight(0x9ac7d5,.6);skyFill.position.set(15,9,-20);scene.add(skyFill);
+  const skyFill=new THREE.DirectionalLight(0xa6cddc,.40);skyFill.position.set(15,9,-20);scene.add(skyFill);
   const target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:4});
   renderer.info.autoReset=false;
   const composer=new EffectComposer(renderer,target);
@@ -75,6 +79,7 @@ async function init(){
   const bloom=new UnrealBloomPass(new THREE.Vector2(1,1),.12,.45,1.1);composer.addPass(bloom);composer.addPass(new OutputPass());
   const loader=new GLTFLoader();
   const surfaces=createWorldMaterials(renderer);
+  new THREE.TextureLoader().load('./assets/materials/meadow-painted-v1.png',texture=>surfaces.setMeadowMap(texture));
   const mats=new Map(), targets=[], blockers=[], flagCloths=[], waterGlints=[], distantBuildings=[];
   const windUniform={value:0};
   let activeRoom=null,roomPlaceId=null,roomLoading=false,outdoorReturn=null;
@@ -123,7 +128,7 @@ async function init(){
   }
   const terrainGeometry=new THREE.PlaneGeometry(150,150,220,220);terrainGeometry.rotateX(-Math.PI/2);
   const p=terrainGeometry.attributes.position, colors=new Float32Array(p.count*3);
-  const grassA=new THREE.Color(0x6d9b52),grassB=new THREE.Color(0x91ad63),roadColor=new THREE.Color(0xc9b382),bankColor=new THREE.Color(0x7d9164),tint=new THREE.Color();
+  const grassA=new THREE.Color(0x729366),grassB=new THREE.Color(0x99b773),bankColor=new THREE.Color(0x7c9b7a),tint=new THREE.Color();
   for(let i=0;i<p.count;i++){
     const x=p.getX(i),z=p.getZ(i),d=roadDistance(x,z),river=Math.abs(z-riverZ(x));
     p.setY(i,groundHeight(x,z));
@@ -154,8 +159,7 @@ async function init(){
     if(i<riverSegments){const n=i*2;rindices.push(n,n+1,n+2,n+1,n+3,n+2);}
   }
   riverGeometry.setAttribute('position',new THREE.Float32BufferAttribute(rverts,3));riverGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(ruvs,2));riverGeometry.setIndex(rindices);riverGeometry.computeVertexNormals();
-  const waterMaterial=new THREE.MeshPhysicalMaterial({color:0x397f91,roughness:.22,metalness:.14,clearcoat:.8,clearcoatRoughness:.2});
-  waterMaterial.onBeforeCompile=shader=>{shader.uniforms.uTime=windUniform;shader.vertexShader='uniform float uTime;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.y+=sin(position.x*1.5+uTime*.8)*.025+sin(position.z*3.+uTime)*.02;');};
+  const waterMaterial=createPainterlyWater(windUniform,POND);
   const water=new THREE.Mesh(riverGeometry,waterMaterial);water.receiveShadow=true;scene.add(water);
   for(let i=0;i<35;i++){const x=-40+rand()*80;const m=box(scene,x,-.315,riverZ(x)+(rand()-.5)*2,.3+rand()*.55,.006,.016,0xa3d3ce);m.castShadow=false;m.userData.seed=rand()*10;waterGlints.push(m);}
   const bridges=createBridgeSurfaces(riverZ,groundHeight);
@@ -224,11 +228,10 @@ async function init(){
     source.traverse(mesh=>{if(!mesh.isMesh)return;
       const geometry=mesh.geometry.clone();const local=new THREE.Matrix4().multiplyMatrices(inverse,mesh.matrixWorld);geometry.applyMatrix4(local);
       const material=mesh.material.clone();if(/^Rock/.test(name)&&surfaces.stoneBump){material.bumpMap=surfaces.stoneBump;material.bumpScale=.018;material.roughnessMap=surfaces.stoneRoughness;material.roughness=.95;}const leaves=/leaf|leaves|grass|flower/i.test(material.name);
-      if(leaves){
-        material.side=THREE.DoubleSide;material.alphaTest=Math.max(material.alphaTest,.3);material.transparent=false;material.customProgramCacheKey=()=>material.name;
-        material.onBeforeCompile=shader=>{shader.uniforms.uWind=windUniform;shader.vertexShader='uniform float uWind;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat sway=sin(uWind*.8+position.x*.7+position.z*.5)*.022; transformed.x += sway*max(position.y,0.);');if(/TwistedTree/i.test(material.name))shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.rgb=vec3(.22,.38,.11);');};
-      }
-      const instanced=new THREE.InstancedMesh(geometry,material,placements.length);instanced.castShadow=true;instanced.receiveShadow=true;const temp=new THREE.Object3D();
+      const depth=leaves?styleFoliage(material,windUniform,geometry):null;
+      const instanced=new THREE.InstancedMesh(geometry,material,placements.length);instanced.castShadow=true;instanced.receiveShadow=true;
+      if(depth)instanced.customDepthMaterial=depth;
+      const temp=new THREE.Object3D();
       placements.forEach((v,i)=>{temp.position.set(v.x,groundHeight(v.x,v.z)+v.y,v.z);temp.rotation.set(0,v.r,0);temp.scale.setScalar(v.s);temp.updateMatrix();instanced.setMatrixAt(i,temp.matrix);});
       instanced.instanceMatrix.needsUpdate=true;scene.add(instanced);environmentRoots.push(instanced);
     });
@@ -327,6 +330,10 @@ async function init(){
   // separate conservative bound for the folded body, not the spread wings.
   const landingCeiling=createFlightEnvelope(flightBoxes,{limit:WORLD_LIMIT,cell:.5,radius:TRAVEL.charizard.radius+TRAVEL.charizard.axle});
 
+
+  // Decorative grass must not enter the flight/landing obstacle atlas.
+  outdoorObjects.push(buildMeadow({scene,groundHeight,roadDistance,riverZ,nearBuilding,pondRadius,windUniform}));
+  applyLandscapeLight(scene,windUniform);
 
   // Character and scanner companion. Character asset is optional during authoring.
   const trainer=new THREE.Group();trainer.position.set(-3.2,groundHeight(-3.2,9.8),9.8);scene.add(trainer);
@@ -641,7 +648,7 @@ async function init(){
     updateTravelVisual();resetCompanionTrail();
     cameraYaw=outdoorReturn.yaw;cameraPitch=outdoorReturn.pitch;zoom=targetZoom=outdoorReturn.zoom;overview=false;overviewButton.disabled=false;updateOverviewButton();
     focus.set(trainer.position.x,trainer.position.y+1.2,trainer.position.z);focusTarget.copy(focus);actualDistance=(innerWidth<600?28:24)/zoom;actualPitch=cameraPitch;
-    scene.background.set(0xc5dfdd);scene.fog=outdoorFog;sun.intensity=2.65;hemi.intensity=1.85;skyFill.intensity=.6;
+    scene.background.set(0xc5dfdd);scene.fog=outdoorFog;sun.intensity=2.85;hemi.intensity=1.30;skyFill.intensity=.40;
     canvas.setAttribute('aria-label','Explore Ke’s research village. Click to walk, or use WASD and arrow keys to move in screen directions.');ui.setRoom?.(null);ui.announce('Back in the village.');canvas.focus({preventScroll:true});
     if(!reducedMotion)canvas.animate([{opacity:.25},{opacity:1}],{duration:420});
   }
@@ -910,7 +917,7 @@ async function init(){
     }else for(const s of landmarkState){const d=trainer.position.distanceTo(s.entry);if(d<nearDistance){nearDistance=d;nearest={kind:'place',...s};}}
     interactPrompt.hidden=!nearest||nearest.kind!=='exhibit'||moving||paused||overview||roomLoading;
     if(nearest)document.getElementById('interact-text').textContent=nearest.kind==='exit'?'Leave building':nearest.kind==='exhibit'?`View ${nearest.exhibit.title}`:`Enter ${nearest.place.title}`;
-    if(!quietMotion){windUniform.value=time;flagCloths.forEach((f,i)=>f.rotation.y=Math.sin(time*1.4+i)*.1);waterGlints.forEach(g=>g.scale.x=.7+Math.sin(time+g.userData.seed)*.3);}
+    if(!quietMotion){windUniform.value+=dt;const breeze=windUniform.value;flagCloths.forEach((f,i)=>f.rotation.y=Math.sin(breeze*1.4+i)*.1);waterGlints.forEach(g=>g.scale.x=.7+Math.sin(breeze+g.userData.seed)*.3);}
     // A fixed-angle camera follows the actor continuously. The target belongs
     // to the navigation body, never to animated heads, wheels or wingbeats.
     if(overview){focusTarget.set(0,1,-5);updateCenteredFocus(focus,focusTarget,{dt,sharpness:4,heightSharpness:4});}
@@ -924,7 +931,7 @@ async function init(){
     actualPitch=THREE.MathUtils.lerp(actualPitch,overview?.91:cameraPitch,reducedMotion?1:Math.min(1,dt*3));
     const distance=actualDistance,pitch=actualPitch;
     distantBuildings.forEach(item=>item.object.visible=!activeRoom);
-    if(scene.fog)scene.fog.density=overview?.0015:.011;
+    if(scene.fog)scene.fog.density=overview?.0015:.0095;
     activeRoom?.update?.(quietMotion?0:dt,quietMotion?windUniform.value:time);
     if(viewMode==='first'){
       // Use the actual mount transform so the eye follows the saddle or seat on
