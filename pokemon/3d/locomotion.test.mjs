@@ -5,6 +5,7 @@ import * as THREE from './lib/three.module.js';
 import {TRAVEL,angleDelta,footprintClear,turnClear,motionClear} from './navigation.js';
 import {createBridgeSurfaces} from './world-surfaces.js';
 import {stepRideControl} from './ride-controls.js';
+import {FLIGHT,stepFlight} from './flight.js';
 
 // Exercise the production input integrator, not a second implementation of it.
 // The browser-only scene is omitted; the actual advance function closes over
@@ -30,7 +31,7 @@ const bridgeWalkable=(x,z,r)=>!bridge.blocks(x,z,r)&&
 // screen-to-ground projection with a fixed perspective camera.
 const rideStart=source.indexOf('  function advanceRide('),rideEnd=source.indexOf('\n  function advanceFlightRoute(',rideStart);
 const inputStart=source.indexOf("      const sx=Number(keys.has('d')",rideEnd);
-const inputEnd=source.indexOf('\n      if(!flying())trainer.position.y=',inputStart);
+const inputEnd=source.indexOf('\n      direction.subVectors(trainer.position,moveStart)',inputStart);
 assert.ok(rideStart>=0&&rideEnd>rideStart&&inputStart>rideEnd&&inputEnd>inputStart,'production mounted movement and input dispatch can be located');
 const inputSource=source.slice(inputStart,inputEnd);
 const screenStart=source.indexOf('function screenGroundDirection(');
@@ -44,19 +45,19 @@ function fixedCamera(){
   camera.position.set(Math.sin(yaw)*Math.cos(pitch)*distance,focus.y+Math.sin(pitch)*distance,Math.cos(yaw)*Math.cos(pitch)*distance);
   camera.lookAt(focus);camera.updateMatrixWorld();return camera;
 }
-function rideHarness(id,walkable,{x=0,z=0,yaw=0,speed=0,steer=0}={}){
-  const trainer={position:new THREE.Vector3(x,0,z),rotation:{y:yaw}};
+function rideHarness(id,walkable,{x=0,z=0,ground=()=>0,y=id==='charizard'?FLIGHT.cruise:ground(x,z),yaw=0,speed=0,steer=0}={}){
+  const trainer={position:new THREE.Vector3(x,y,z),rotation:{y:yaw}};
   const rideControl={speed,steer},camera=fixedCamera();
-  const runtime=new Function('THREE','angleDelta','stepRideControl','turnClear','motionClear','trainer','rideControl','selectedTravel','travelShape','walkable','camera',
-    `let steering=0,reverseHeld=false,keys=new Set();const flying=()=>false,groundForWalk=()=>0,viewProjection=new THREE.Matrix4();${screenSource};${advanceSource};
+  const runtime=new Function('THREE','angleDelta','stepRideControl','turnClear','motionClear','trainer','rideControl','selectedTravel','travelShape','walkable','camera','FLIGHT','stepFlight','groundForWalk',
+    `let steering=0,reverseHeld=false,ridePending=null,flightCruise=6.5,keys=new Set();const flying=()=>selectedTravel==='charizard',flightCeiling=()=>-Infinity,WORLD_LIMIT=64,viewProjection=new THREE.Matrix4();${screenSource};${advanceSource};
     function frame(inputKeys,viewMode='first',dt=.05,controls={}){
       keys=new Set(inputKeys);reverseHeld=controls.reverseHeld||false;
       const touchDrive=controls.touchDrive||{throttle:0,turn:0},direction=new THREE.Vector3(),activeRoom=null,path=[],pathIndex=0;
-      let manualInput=false,flightLanding=false,flightLift=0,flightCruise=6.5;
+      let manualInput=false,flightLanding=false,flightLift=0;
       ${inputSource}
     }
     return {advanceRide,frame,get steering(){return steering;}};`)
-    (THREE,angleDelta,stepRideControl,turnClear,motionClear,trainer,rideControl,id,()=>TRAVEL[id],walkable,camera);
+    (THREE,angleDelta,stepRideControl,turnClear,motionClear,trainer,rideControl,id,()=>TRAVEL[id],walkable,camera,FLIGHT,stepFlight,ground);
   return {trainer,rideControl,camera,advanceRide:runtime.advanceRide,frame:runtime.frame,get steering(){return runtime.steering;}};
 }
 
@@ -188,15 +189,23 @@ function projectedStep(before,after,camera){
   return new THREE.Vector2((b.x-a.x)*camera.aspect,b.y-a.y);
 }
 for(const id of groundModes){
-  test(`${id}: third-person cardinal input moves in its screen direction at every heading`,()=>{
+  test(`${id}: third-person cardinal input curves forward, then settles onto its screen direction`,()=>{
     for(const yaw of [0,.7,Math.PI/2,Math.PI,Math.PI*1.5])for(const command of screenCommands){
       const state=rideHarness(id,()=>true,{x:3,z:-2,yaw}),initial=state.trainer.position.clone();
       for(let i=0;i<40;i++){
         const before=state.trainer.position.clone();state.frame([command.key],'third');
         const step=projectedStep(before,state.trainer.position,state.camera);
-        assert.ok(step.x*command.sx+step.y*command.sy>=-1e-10,`yaw ${yaw}, ${command.key}: no reverse or opposite-screen step`);
-        assert.ok(Math.abs(step.x*command.sy-step.y*command.sx)<1e-9,'motion stays on the requested screen axis');
-        assert.equal(state.rideControl.speed,0,'third-person movement never builds coasting velocity');
+        assert.ok(step.x*command.sx+step.y*command.sy>=-1e-10,
+          `start yaw ${yaw}, ${command.key}, frame ${i}, yaw ${state.trainer.rotation.y}, step (${step.x}, ${step.y}): no reverse or opposite-screen step`);
+        if(i>=30)assert.ok(Math.abs(step.x*command.sy-step.y*command.sx)<1e-9,
+          'after the turning arc, aligned travel follows the requested screen axis');
+        assert.ok(state.rideControl.speed>=0&&state.rideControl.speed<=TRAVEL[id].speed,
+          'directional travel accelerates within its forward speed limit');
+        if(id!=='walk'){
+          const displacement=state.trainer.position.clone().sub(before),heading=state.trainer.rotation.y;
+          assert.ok(Math.abs(displacement.x*Math.cos(heading)-displacement.z*Math.sin(heading))<1e-9,
+            'a ride travels along its nose through the arc, never sideways');
+        }
       }
       assert.ok(state.trainer.position.distanceTo(initial)>.5,`${command.key} makes useful progress after turning`);
     }
@@ -220,6 +229,110 @@ for(const id of groundModes){
     }
   });
 }
+
+test('third-person startup accelerates progressively instead of jumping to cruising speed',()=>{
+  for(const id of groundModes){
+    const state=rideHarness(id,()=>true),projection=new THREE.Matrix4().multiplyMatrices(state.camera.projectionMatrix,state.camera.matrixWorldInverse);
+    const up=screenDirection(new THREE.Vector3(),0,1,projection.elements,state.trainer.position,state.camera.aspect);
+    state.trainer.rotation.y=Math.atan2(up.x,up.z);
+    const dt=1/60,speeds=[];
+    for(let frame=0;frame<30;frame++){
+      const before=state.trainer.position.clone(),previous=state.rideControl.speed;
+      state.frame(['arrowup'],'third',dt);
+      const speed=state.rideControl.speed;speeds.push(speed);
+      assert.ok(speed>=previous-1e-9,`${id}: aligned acceleration is monotonic`);
+      assert.ok(speed-previous<=TRAVEL[id].speed*4*dt+1e-9,`${id}: bounded acceleration prevents a first-frame jump`);
+      assert.ok(Math.abs(state.trainer.position.distanceTo(before)-speed*dt)<1e-9,'reported speed matches visible travel');
+    }
+    assert.ok(speeds[0]>0&&speeds[0]<TRAVEL[id].speed*.1,`${id}: immediate but gentle response`);
+    assert.ok(speeds.at(-1)>TRAVEL[id].speed*.99,`${id}: promptly reaches cruising speed`);
+  }
+});
+
+test('walkable platform height changes cannot act as invisible directional barriers',()=>{
+  // The village's 14 cm display platform has a small height discontinuity.
+  // Its screen-up elevation change must not veto a screen-down ground step.
+  const ground=(x,z)=>z>0?.14:0;
+  for(const id of groundModes){
+    const state=rideHarness(id,()=>true,{z:-.02,yaw:.44,ground});
+    for(let frame=0;frame<30;frame++){
+      const before=state.trainer.position.clone();state.frame(['arrowdown'],'third',1/60);
+      const planarAfter=state.trainer.position.clone();planarAfter.y=before.y;
+      assert.ok(projectedStep(before,planarAfter,state.camera).y<=1e-10,
+        `${id}: horizontal movement continues in the requested screen direction`);
+      assert.equal(state.trainer.position.y,ground(state.trainer.position.x,state.trainer.position.z),
+        'the actor follows the actual platform surface after crossing its edge');
+    }
+    assert.ok(state.trainer.position.z>.3,`${id}: screen Down crosses onto the walkable platform`);
+    assert.equal(state.trainer.position.y,.14);
+    for(let frame=0;frame<120;frame++)state.frame(['arrowup'],'third',1/60);
+    assert.ok(state.trainer.position.z<-.3,`${id}: the opposite direction can leave the platform`);
+    assert.equal(state.trainer.position.y,0);
+  }
+});
+
+test('airborne screen directions preserve cruise height and never initially move opposite to input',()=>{
+  for(const yaw of [0,.7,Math.PI/2,Math.PI,Math.PI*1.5])for(const command of screenCommands){
+    const state=rideHarness('charizard',()=>false,{x:3,z:-2,yaw}),initial=state.trainer.position.clone();
+    for(let frame=0;frame<40;frame++){
+      const before=state.trainer.position.clone();state.frame([command.key],'third');
+      const step=projectedStep(before,state.trainer.position,state.camera);
+      assert.ok(step.x*command.sx+step.y*command.sy>=-1e-10,
+        `${command.key}, yaw ${yaw}: airborne turning cannot move opposite to the requested screen direction`);
+      if(frame>=30)assert.ok(Math.abs(step.x*command.sy-step.y*command.sx)<1e-9,
+        'after turning, flight settles onto the requested screen axis');
+      assert.equal(state.trainer.position.y,FLIGHT.cruise,'the horizontal steering input does not change altitude');
+    }
+    assert.ok(state.trainer.position.distanceTo(initial)>.5,'flying makes useful progress above impassable ground');
+    const stopped=state.trainer.position.clone();
+    for(let frame=0;frame<10;frame++)state.frame([],'third');
+    assert.equal(state.trainer.position.distanceTo(stopped),0,'releasing directions hovers steadily');
+  }
+});
+
+test('moderate and right-angle steering produces continuous forward arcs without a full alignment stop',()=>{
+  for(const id of groundModes.filter(id=>id!=='walk'))for(const goal of [-Math.PI/2,-.6,.6,Math.PI/2]){
+    const shape=TRAVEL[id],state=harness(shape,()=>true),motion={speed:shape.speed};
+    const desired=new THREE.Vector3(Math.sin(goal),0,Math.cos(goal));
+    let previousError=Math.abs(goal),curvedSteps=0;
+    for(let frame=0;frame<60;frame++){
+      const before=state.trainer.position.clone();
+      state.advance(desired,1/60,Infinity,false,{screenDirection:true,motion});
+      const displacement=state.trainer.position.clone().sub(before),yaw=state.trainer.rotation.y;
+      const error=Math.abs(angleDelta(yaw,goal));
+      assert.ok(error<=previousError+1e-9,`${id}: each turn approaches the requested direction`);
+      assert.ok(displacement.length()>0,`${id}: a visible arc continues moving while turning`);
+      assert.ok(displacement.dot(desired)>0,`${id}: an arc always makes progress toward the requested direction`);
+      assert.ok(Math.abs(displacement.x*Math.cos(yaw)-displacement.z*Math.sin(yaw))<1e-9,
+        `${id}: the vehicle follows its actual heading`);
+      if(error>.05)curvedSteps++;
+      previousError=error;
+    }
+    assert.ok(curvedSteps>=4,'turning is spread over several frames');
+    assert.ok(previousError<1e-9,'the arc settles onto the requested heading');
+  }
+});
+
+test('smooth directional travel still sweeps obstacles and clears stored speed when blocked',()=>{
+  for(const id of ['model-s','cybertruck','porsche']){
+    const shape=TRAVEL[id],wall=(x,z,r)=>z+r<3;
+    const state=harness(shape,wall),motion={speed:0},forward=new THREE.Vector3(0,0,1);
+    let stopped=false;
+    for(let frame=0;frame<100;frame++){
+      const before=state.trainer.position.clone();
+      state.advance(forward,1/60,Infinity,false,{screenDirection:true,motion});
+      const {position,rotation}=state.trainer;
+      assert.ok(footprintClear(position.x,position.z,rotation.y,shape,wall),'the full vehicle remains clear of the wall');
+      if(position.distanceTo(before)<1e-12){
+        assert.equal(motion.speed,0,'collision removes pending forward motion');stopped=true;break;
+      }
+    }
+    assert.ok(stopped,`${id}: continued directional input stops at the wall`);
+    const before=state.trainer.position.clone();
+    state.advance(new THREE.Vector3(),1/60,Infinity,false,{forceReverse:true});
+    assert.ok(state.trainer.position.z<before.z,'explicit reverse backs away immediately');
+  }
+});
 
 for(const id of groundModes.filter(id=>id!=='walk')){
   test(`${id}: screen Up turns toward the requested direction before moving instead of auto-reversing`,()=>{
@@ -404,7 +517,7 @@ function porchCrossings({destination=null,planned=false,selectedTravel='model-s'
     {place:{id:'pika'},entry:{x:22,z:-14.45}}
   ];
   const update=new Function('trainer','direction','landmarkState','travelShape','queueDoorTransition','path','arrivalId','selectedTravel',
-    `let activeRoom=null,blockedDoorId=null,roomExitArmed=false,pathIndex=0;${doorSource};return updateDoorCrossings;`)
+    `let activeRoom=null,ridePending=null,blockedDoorId=null,roomExitArmed=false,pathIndex=0;${doorSource};return updateDoorCrossings;`)
     (trainer,new THREE.Vector3(dx,0,dz),landmarkState,()=>TRAVEL[selectedTravel],id=>opened.push(id),planned?[{x:-4,z:7},{x:22,z:-14.45}]:[],destination,selectedTravel);
   update(true,1000);return opened;
 }

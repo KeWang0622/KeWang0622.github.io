@@ -1,3 +1,32 @@
+// Follow the player's stable world anchor continuously. The caller supplies a
+// pelvis/seat anchor rather than an animated head or mesh, so footsteps, wing
+// beats and suspension cannot shake the camera. Move eye and look-at together
+// using this focus; heading, viewing angle and zoom never belong to this step.
+// Fixed-angle follow reference: https://github.com/brunosimon/folio-2025/blob/main/sources/Game/View.js
+export function updateCenteredFocus(focus,target,{
+  dt=1/60,sharpness=10,heightSharpness=8
+}={}){
+  if(![focus.x,focus.y,focus.z,target.x,target.y,target.z,dt,sharpness,
+    heightSharpness].every(Number.isFinite)||dt<=0||sharpness<=0||
+    heightSharpness<=0)return false;
+  // Exponential damping has the same response across normal frame rates, unlike
+  // a per-frame lerp. A resumed background tab cannot cause a one-frame jump.
+  const elapsed=Math.min(dt,.05);
+  const horizontal=-Math.expm1(-sharpness*elapsed);
+  const vertical=-Math.expm1(-heightSharpness*elapsed);
+  let changed=false;
+  for(const axis of ['x','y','z']){
+    const delta=target[axis]-focus[axis];
+    if(delta===0)continue;
+    // Only snap sub-pixel numerical residue; there is no visible dead zone.
+    focus[axis]=Math.abs(delta)<1e-7?target[axis]:
+      focus[axis]+delta*(axis==='y'?vertical:horizontal);
+    changed=true;
+  }
+  return changed;
+}
+
+// Legacy edge-only framing, retained for explicit overview/compatibility uses.
 // A fixed-orientation camera only translates when the player's ground position
 // leaves its central window. Height, heading, ride choice and animation never
 // affect framing. The window is expressed in the camera's ground-plane basis.

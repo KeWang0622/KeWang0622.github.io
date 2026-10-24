@@ -1,9 +1,104 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {updateStableFocus,updateStableHeight} from './stable-camera.js';
+import {updateCenteredFocus,updateStableFocus,updateStableHeight} from './stable-camera.js';
 
 const settings={yaw:.44,pitch:.64,distance:32,fov:42,aspect:1.6};
 const close=(actual,expected,message)=>assert.ok(Math.abs(actual-expected)<1e-9,message);
+
+test('centered follow starts on the first movement, including very small movements',()=>{
+  for(const distance of [.0001,.01,.1,1,8]){
+    const focus={x:0,y:1.25,z:0};
+    assert.equal(updateCenteredFocus(focus,{x:distance,y:1.25,z:-distance}),true);
+    assert.ok(focus.x>0&&focus.x<distance);
+    assert.ok(focus.z<0&&focus.z>-distance);
+    close(focus.y,1.25);
+  }
+});
+
+test('centered follow is frame-rate independent for a stationary target',()=>{
+  const target={x:10,y:8,z:-14};
+  const results=[24,30,60,120,240].map(hz=>{
+    const focus={x:-2,y:1.25,z:3};
+    for(let frame=0;frame<hz;frame++)updateCenteredFocus(focus,target,{dt:1/hz});
+    return focus;
+  });
+  for(const focus of results){
+    close(focus.x,10-12*Math.exp(-10));
+    close(focus.y,8-6.75*Math.exp(-8));
+    close(focus.z,-14+17*Math.exp(-10));
+  }
+});
+
+test('a moving subject stays close to center at walking and driving speeds',()=>{
+  for(const speed of [3.6,10]){
+    const residuals=[30,60,120].map(hz=>{
+      const focus={x:0,y:1.25,z:0},target={...focus};
+      for(let frame=1;frame<=2*hz;frame++){
+        target.x=speed*frame/hz;
+        updateCenteredFocus(focus,target,{dt:1/hz});
+        assert.ok(target.x-focus.x<speed/10,'follow lag stays below one damping time');
+      }
+      return target.x-focus.x;
+    });
+    assert.ok(Math.max(...residuals)-Math.min(...residuals)<speed/30,
+      'motion remains consistent across refresh rates');
+  }
+});
+
+test('changing direction and stopping settle monotonically without overshoot or oscillation',()=>{
+  const focus={x:0,y:1.25,z:0};
+  for(const target of [{x:8,y:4,z:-8},{x:-4,y:1.25,z:6},{x:-4,y:1.25,z:6}]){
+    for(let frame=0;frame<180;frame++){
+      const before={...focus};
+      updateCenteredFocus(focus,target);
+      for(const axis of ['x','y','z']){
+        assert.ok(focus[axis]>=Math.min(before[axis],target[axis]));
+        assert.ok(focus[axis]<=Math.max(before[axis],target[axis]));
+      }
+    }
+    assert.ok(Math.hypot(focus.x-target.x,focus.y-target.y,focus.z-target.z)<1e-7);
+  }
+  assert.equal(updateCenteredFocus(focus,{...focus}),false);
+});
+
+test('camera response is translation invariant and independent of heading or selected ride',()=>{
+  for(const heading of [0,Math.PI/2,Math.PI,-Math.PI/3]){
+    for(const ride of ['walk','bicycle','model-s','cybertruck','porsche','horse','charizard']){
+      const focus={x:3,y:1.25,z:-2},translated={x:103,y:31.25,z:48};
+      const target={x:6,y:2.5,z:-7,heading,ride};
+      const settings={dt:1/60,sharpness:10,heightSharpness:8,yaw:.44,pitch:.64,zoom:1};
+      const originalSettings={...settings};
+      updateCenteredFocus(focus,target,settings);
+      updateCenteredFocus(translated,{...target,x:target.x+100,y:target.y+30,z:target.z+50},settings);
+      close(translated.x-focus.x,100);close(translated.y-focus.y,30);close(translated.z-focus.z,50);
+      assert.deepEqual(settings,originalSettings,'the helper cannot change angle or zoom');
+    }
+  }
+});
+
+test('a seat-height change is blended rather than snapping the viewpoint',()=>{
+  const focus={x:2,y:1.25,z:4};
+  updateCenteredFocus(focus,{x:2,y:2.6,z:4});
+  close(focus.x,2);close(focus.z,4);
+  assert.ok(focus.y>1.25&&focus.y<1.45);
+  for(let i=0;i<120;i++)updateCenteredFocus(focus,{x:2,y:2.6,z:4});
+  assert.ok(Math.abs(focus.y-2.6)<1e-6);
+});
+
+test('invalid centered-follow inputs are atomic and suspended frames have bounded damping',()=>{
+  for(const invalid of [{dt:0},{dt:NaN},{sharpness:0},{heightSharpness:-1}]){
+    const focus={x:1,y:2,z:3},before={...focus};
+    assert.equal(updateCenteredFocus(focus,{x:10,y:20,z:30},invalid),false);
+    assert.deepEqual(focus,before);
+  }
+  const focus={x:1,y:2,z:3},before={...focus};
+  assert.equal(updateCenteredFocus(focus,{x:10,y:NaN,z:30}),false);
+  assert.deepEqual(focus,before,'partial coordinate updates cannot corrupt the camera');
+  const resumed={...focus},normal={...focus};
+  updateCenteredFocus(resumed,{x:10,y:20,z:30},{dt:10});
+  updateCenteredFocus(normal,{x:10,y:20,z:30},{dt:.05});
+  assert.deepEqual(resumed,normal);
+});
 
 test('central movement, facing changes and ride selection leave the camera exactly stationary',()=>{
   const focus={x:-3.2,y:1.25,z:5.5},before={...focus};
