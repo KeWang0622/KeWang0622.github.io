@@ -12,13 +12,14 @@ import { createCameraCompanion } from './camera-companion.js';
 import { createMacCompanion, createPrismCompanion, createMusicCompanion } from './companion-models.js';
 import { WORLD_LIMIT, pondRadius, SCENIC_PLACES, extensionRoadPoints, buildOutdoorExtension } from './outdoor-extension.js';
 import { createBridgeSurfaces, WALKER_RADIUS } from './world-surfaces.js';
-import { TRAVEL, angleDelta, footprintOffsets, footprintClear, turnClear, motionClear, findWalkingRoute } from './navigation.js?v=20261023-stable-map';
+import { TRAVEL, angleDelta, footprintOffsets, footprintClear, turnClear, motionClear, findWalkingRoute } from './navigation.js?v=20261023-centered-travel';
 import { stepCompanion } from './companion-navigation.js';
-import { createTravelModel } from './travel-models.js?v=20261023-stable-map';
+import { createTravelModel } from './travel-models.js?v=20261023-centered-travel';
 import { createWorldMaterials } from './world-materials.js';
 import { FIRST_PERSON_FOV, firstPersonPose } from './ride-camera.js';
 import { stepRideControl } from './ride-controls.js';
-import { updateStableFocus, updateStableHeight } from './stable-camera.js';
+import { planRideSwitch } from './ride-switch.js?v=20261023-centered-travel';
+import { updateCenteredFocus } from './stable-camera.js?v=20261023-centered-travel';
 import { FLIGHT, createFlightEnvelope, stepFlight, findLandingSpot, flightDeployment } from './flight.js';
 import { createVillageSky } from './village-sky.js';
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
@@ -322,11 +323,15 @@ async function init(){
     else record(obj.matrixWorld);
   });
   const flightCeiling=createFlightEnvelope(flightBoxes,{limit:WORLD_LIMIT});
+  // Landing folds the wings before passing surrounding obstacles. Keep a
+  // separate conservative bound for the folded body, not the spread wings.
+  const landingCeiling=createFlightEnvelope(flightBoxes,{limit:WORLD_LIMIT,cell:.5,radius:TRAVEL.charizard.radius+TRAVEL.charizard.axle});
 
 
   // Character and scanner companion. Character asset is optional during authoring.
   const trainer=new THREE.Group();trainer.position.set(-3.2,groundHeight(-3.2,9.8),9.8);scene.add(trainer);
   let mixer=null,idleAction=null,walkAction=null,trainerBody=null,avatar=null,limbs=[];
+  let ridePending=null;
   let selectedTravel='walk',travelModel=null,viewMode='third',firstLookYaw=0,firstLookPitch=-.10,reverseHeld=false;
   const touchDrive={throttle:0,turn:0};
   const rideControl={speed:0,steer:0};
@@ -501,43 +506,59 @@ async function init(){
     document.dispatchEvent(new CustomEvent('world:travel-changed',{detail:{id:selectedTravel,indoors:Boolean(activeRoom)}}));
   }
   function requestFlightLanding({travel=null,id=null,action=null,point=trainer.position}={}){
+    // A replacement request must cancel the old destination even if there is
+    // no safe landing for the newly requested ride.
+    clearMovement();
     const shape=TRAVEL[travel||'walk'];
-    const spot=findLandingSpot(point,{shape,ground:groundForWalk,ceiling:flightCeiling,limit:WORLD_LIMIT,
-      clear:(x,z,shape)=>footprintClear(x,z,trainer.rotation.y,shape,walkable)});
-    if(!spot){ui.announce('No clear landing spot here. Fly toward an open path first.');return false;}
-    clearMovement();flightPending={travel,id,action,yaw:trainer.rotation.y};path=[spot];pathIndex=0;leaveOverview();
+    const spot=findLandingSpot(point,{shape,ground:groundForWalk,ceiling:landingCeiling,limit:WORLD_LIMIT,
+      clear:(x,z,shape)=>footprintClear(x,z,trainer.rotation.y,shape,walkable)&&footprintClear(x,z,trainer.rotation.y,TRAVEL.charizard,walkable)});
+    if(!spot){const message='No clear landing spot here. Fly toward an open path first.';travelStatus(null,message);ui.announce(message);return false;}
+    flightPending={travel,id,action,yaw:trainer.rotation.y};path=[spot];pathIndex=0;leaveOverview();
     ui.announce(travel?'Flying to a clear spot to land and change rides.':'Landing near the entrance.');return true;
   }
-  function setTravel(id){
-    if(!TRAVEL[id]||activeRoom||id===selectedTravel)return;
-    if(flying()){requestFlightLanding({travel:id});return;}
-    if(!footprintClear(trainer.position.x,trainer.position.z,trainer.rotation.y,TRAVEL[id],walkable)){
-      ui.announce('This ride needs more space. Move onto an open path first.');updateTravelVisual();return;
-    }
+  const rideName=id=>({'walk':'walking','bicycle':'Bicycle','model-s':'Model S','cybertruck':'Cybertruck','porsche':'Porsche 911','horse':'Horse','charizard':'Charizard'}[id]||id);
+  function travelStatus(id,message){document.dispatchEvent(new CustomEvent('world:travel-status',{detail:{id,message}}));}
+  function cancelRideSwitch(){if(ridePending||flightPending?.travel){ridePending=null;flightPending=null;flightLanding=false;travelStatus(null,'');}}
+  function applyTravel(id){
     clearMovement();selectedTravel=id;flightCruise=FLIGHT.cruise;
     firstLookYaw=0;firstLookPitch=-.10;updateTravelVisual();resetCompanionTrail();
-    ui.announce(viewMode==='third'?(id==='charizard'?'Taking flight. Arrows move in screen directions; Space rises and C descends.':'Arrows move in screen directions. Hold R on a ride to back straight out.'):'W/S moves forward and back. A/D turns.');
+    doorCooldownUntil=performance.now()+600;
+    travelStatus(null,id==='walk'?'Back on foot.':`Ready to explore with ${rideName(id)}.`);
+    ui.announce(id==='charizard'?'Taking flight. Arrows move on screen; Space rises and C descends.':`Switched to ${rideName(id)}.`);
     canvas.focus({preventScroll:true});
+  }
+  function setTravel(id){
+    if(!TRAVEL[id]||activeRoom)return;
+    if(id===selectedTravel){if(ridePending||flightPending?.travel)clearMovement();return;}
+    if(flying()){if(requestFlightLanding({travel:id}))travelStatus(id,`Landing to switch to ${rideName(id)}…`);return;}
+    clearMovement();
+    const plan=planRideSwitch({x:trainer.position.x,z:trainer.position.z,yaw:trainer.rotation.y},
+      {fromShape:travelShape(),toShape:TRAVEL[id],walkable,limit:WORLD_LIMIT});
+    if(!plan){const message='No room nearby for this ride. Follow the path to an open area, then try again.';travelStatus(null,message);ui.announce(message);return;}
+    if(!plan.route.length&&Math.abs(angleDelta(trainer.rotation.y,plan.placement.yaw))<1e-8){applyTravel(id);return;}
+    ridePending={id,...plan,index:0,elapsed:0};
+    travelStatus(id,`Making room for ${rideName(id)}…`);
+    ui.announce(`Moving to a clear spot for ${rideName(id)}.`);canvas.focus({preventScroll:true});
   }
   document.addEventListener('world:travel-select',event=>setTravel(event.detail?.id));
   function route(from,to){if(flying())return [{x:THREE.MathUtils.clamp(to.x,MIN+FLIGHT.radius,MAX-FLIGHT.radius),z:THREE.MathUtils.clamp(to.z,MIN+FLIGHT.radius,MAX-FLIGHT.radius)}];routeTimedOut=false;return findWalkingRoute({...from,yaw:trainer.rotation.y},to,{shape:travelShape(),walkable,min:MIN,max:MAX,onBudgetExceeded:()=>{routeTimedOut=true;}});}
   let overview=false,cameraYaw=.44,cameraPitch=.64,zoom=1,targetZoom=1,actualDistance=innerWidth<600?28:24,actualPitch=.64;
-  const focus=new THREE.Vector3(-3.2,1.5,7.2),focusTarget=focus.clone(),exploreFocus=focus.clone();
+  const focus=new THREE.Vector3(-3.2,groundHeight(-3.2,9.8)+1.2,9.8),focusTarget=focus.clone(),exploreFocus=focus.clone();
   const eyePosition=new THREE.Vector3(),lookPosition=new THREE.Vector3();
   function setView(mode){
     if(!['first','third'].includes(mode))return;
     clearMovement();viewMode=mode;overview=false;firstLookYaw=0;firstLookPitch=-.10;
-    focus.set(trainer.position.x,trainer.position.y+1.25,trainer.position.z);focusTarget.copy(focus);
+    focus.set(trainer.position.x,trainer.position.y+(flying()?1.8:1.2),trainer.position.z);focusTarget.copy(focus);
     actualDistance=(activeRoom?(activeRoom.camera.distance||19)*(innerWidth<600?1.75:1):innerWidth<600?28:24)/zoom;actualPitch=cameraPitch;
     updateOverviewButton();updateTravelVisual();resize();
     document.dispatchEvent(new CustomEvent('world:view-changed',{detail:{mode}}));
-    ui.announce(mode==='first'?'First person. W and S move forward and back; A and D turn. Drag to look around. V returns to third person.':'Third person. The map keeps its orientation; arrows move in screen directions. Hold R to reverse a ride.');
+    ui.announce(mode==='first'?'First person. W and S move forward and back; A and D turn. Drag to look around. V returns to third person.':'Third person. The camera follows you smoothly and keeps the same orientation. Arrows move on screen; R reverses a ground ride.');
     canvas.focus({preventScroll:true});
   }
   document.addEventListener('world:view-select',event=>setView(event.detail?.mode));
-  document.addEventListener('world:reverse',event=>{reverseHeld=Boolean(event.detail?.active);if(reverseHeld){navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;}});
-  document.addEventListener('world:flight',event=>{flightLift=THREE.MathUtils.clamp(Number(event.detail?.lift)||0,-1,1);if(flightLift){navigationRevision++;path=[];flightPending=null;flightLanding=false;}});
-  document.addEventListener('world:drive',event=>{touchDrive.throttle=THREE.MathUtils.clamp(Number(event.detail?.throttle)||0,-1,1);touchDrive.turn=THREE.MathUtils.clamp(Number(event.detail?.turn)||0,-1,1);if(touchDrive.throttle||touchDrive.turn){flightLanding=false;flightPending=null;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;}});
+  document.addEventListener('world:reverse',event=>{reverseHeld=Boolean(event.detail?.active);if(reverseHeld){cancelRideSwitch();navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;}});
+  document.addEventListener('world:flight',event=>{flightLift=THREE.MathUtils.clamp(Number(event.detail?.lift)||0,-1,1);if(flightLift){cancelRideSwitch();navigationRevision++;path=[];flightPending=null;flightLanding=false;}});
+  document.addEventListener('world:drive',event=>{touchDrive.throttle=THREE.MathUtils.clamp(Number(event.detail?.throttle)||0,-1,1);touchDrive.turn=THREE.MathUtils.clamp(Number(event.detail?.turn)||0,-1,1);if(touchDrive.throttle||touchDrive.turn){cancelRideSwitch();flightLanding=false;flightPending=null;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;destinationMarker.visible=false;}});
   const zoomOut=document.getElementById('zoom-out'),zoomIn=document.getElementById('zoom-in'),overviewButton=document.getElementById('view-overview');
   function updateOverviewButton(){overviewButton.textContent=overview?'Explore':'Map';overviewButton.setAttribute('aria-pressed',String(overview));overviewButton.setAttribute('aria-label',overview?'Return to the trainer':'Show village map');}
   function leaveOverview(){
@@ -550,7 +571,7 @@ async function init(){
   function queueArrival(id,action){const revision=navigationRevision;setTimeout(()=>{if(revision!==navigationRevision||paused||roomLoading)return;if(action)action();else if(id)enterInterior(id);},150);}
   function moveTo(point,id=null,action=null){
     if(flying()&&id){requestFlightLanding({id,point});return;}
-    rideControl.speed=0;flightPending=null;flightLanding=false;
+    cancelRideSwitch();rideControl.speed=0;flightPending=null;flightLanding=false;
     if(id&&selectedTravel!=='walk'&&!activeRoom)point=point.clone().add(new THREE.Vector3(0,0,travelShape().axle+travelShape().radius));
     navigationRevision++;path=route(trainer.position,point);pathIndex=0;arrivalId=id;arrivalAction=action;leaveOverview();
     if(!path.length){destinationMarker.visible=false;const distance=Math.hypot(trainer.position.x-point.x,trainer.position.z-point.z),steps=Math.max(1,Math.ceil(distance/.16));let direct=true;for(let i=0;i<=steps;i++){const t=i/steps;if(!walkable(THREE.MathUtils.lerp(trainer.position.x,point.x,t),THREE.MathUtils.lerp(trainer.position.z,point.z,t))){direct=false;break;}}if(distance<(activeRoom?1.65:2.15)&&direct)queueArrival(id,action);else ui.announce(routeTimedOut?'Choose a nearer point along the path, then continue to your destination.':'That route is blocked. Try approaching from the path, or open the chapter in the field guide.');return;}
@@ -561,8 +582,8 @@ async function init(){
   function walkToScenic(id){if(activeRoom)exitInterior();const s=scenicState.find(s=>s.place.id===id);if(s)moveTo(s.entry,null,()=>ui.announce(`${s.place.title}. ${s.place.note}`));}
   function walkTo(id){if(activeRoom)exitInterior();const s=landmarkState.find(s=>s.place.id===id);if(s)moveTo(s.entry,id);}
   let doorTransitionPending=false,doorCooldownUntil=0,blockedDoorId=null,roomExitArmed=false;
-  const indoorFollow=.58;
   function updateDoorCrossings(moving,now){
+    if(ridePending)return;
     if(activeRoom){
       const distance=Math.hypot(trainer.position.x-activeRoom.exit.position.x,trainer.position.z-activeRoom.exit.position.z);
       if(distance>1.8)roomExitArmed=true;
@@ -589,7 +610,7 @@ async function init(){
       finally{doorTransitionPending=false;}
     });
   }
-  function clearMovement(){rideControl.speed=0;rideControl.steer=0;flightLift=0;flightPending=null;flightLanding=false;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;keys.clear();destinationMarker.visible=false;footprints.forEach(f=>{f.age=8;f.m.visible=false;});}
+  function clearMovement(){cancelRideSwitch();rideControl.speed=0;rideControl.steer=0;flightLift=0;flightPending=null;flightLanding=false;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;navigationRevision++;path=[];pathIndex=0;arrivalId=null;arrivalAction=null;keys.clear();destinationMarker.visible=false;footprints.forEach(f=>{f.age=8;f.m.visible=false;});}
   function showExterior(show){outdoorObjects.forEach(object=>object.visible=show);mapStates.forEach(s=>s.label.hidden=!show);}
   async function enterInterior(id){
     if(roomLoading||activeRoom)return;const place=data.places.find(p=>p.id===id);if(!place)return;
@@ -602,7 +623,7 @@ async function init(){
       activeRoom=room;roomPlaceId=id;roomExitArmed=false;doorCooldownUntil=performance.now()+800;showExterior(false);room.group.visible=true;
       trainer.position.copy(room.spawn);if(walkable(trainer.position.x,trainer.position.z-1.4))trainer.position.z-=1.4;trainer.rotation.y=Math.PI;firstLookYaw=0;firstLookPitch=-.10;updateTravelVisual();resetCompanionTrail();
       cameraYaw=room.camera.yaw??.15;cameraPitch=room.camera.pitch??.66;zoom=targetZoom=1;overview=false;updateOverviewButton();overviewButton.disabled=true;
-      focus.copy(room.camera.target);focus.x+=trainer.position.x*indoorFollow;focus.z+=trainer.position.z*indoorFollow;focusTarget.copy(focus);actualDistance=(room.camera.distance||19)*(innerWidth<600?1.75:1);actualPitch=cameraPitch;
+      focus.set(trainer.position.x,trainer.position.y+1.2,trainer.position.z);focusTarget.copy(focus);actualDistance=(room.camera.distance||19)*(innerWidth<600?1.75:1);actualPitch=cameraPitch;
       scene.background.set(0xd6e0d8);scene.fog=null;sun.intensity=1.1;hemi.intensity=1.2;skyFill.intensity=.25;
       keys.clear();canvas.focus({preventScroll:true});canvas.setAttribute('aria-label',`Inside ${place.title}. Walk with WASD or arrows, select an exhibit, or return through the door.`);ui.setRoom?.(id);ui.announce(`Inside ${place.title}. Walk to a display to explore it, or return through the door.`);
       if(!reducedMotion)canvas.animate([{opacity:.25},{opacity:1}],{duration:420});
@@ -619,7 +640,7 @@ async function init(){
     flightCruise=FLIGHT.cruise;
     updateTravelVisual();resetCompanionTrail();
     cameraYaw=outdoorReturn.yaw;cameraPitch=outdoorReturn.pitch;zoom=targetZoom=outdoorReturn.zoom;overview=false;overviewButton.disabled=false;updateOverviewButton();
-    focus.set(trainer.position.x,trainer.position.y+1.25,trainer.position.z-4);focusTarget.copy(focus);actualDistance=(innerWidth<600?28:24)/zoom;actualPitch=cameraPitch;
+    focus.set(trainer.position.x,trainer.position.y+1.2,trainer.position.z);focusTarget.copy(focus);actualDistance=(innerWidth<600?28:24)/zoom;actualPitch=cameraPitch;
     scene.background.set(0xc5dfdd);scene.fog=outdoorFog;sun.intensity=2.65;hemi.intensity=1.85;skyFill.intensity=.6;
     canvas.setAttribute('aria-label','Explore Ke’s research village. Click to walk, or use WASD and arrow keys to move in screen directions.');ui.setRoom?.(null);ui.announce('Back in the village.');canvas.focus({preventScroll:true});
     if(!reducedMotion)canvas.animate([{opacity:.25},{opacity:1}],{duration:420});
@@ -642,7 +663,7 @@ async function init(){
   canvas.addEventListener('pointerup',e=>{const beganOnCanvas=pointers.has(e.pointerId);pointers.delete(e.pointerId);if(!beganOnCanvas)return;if(dragged||paused){if(!pointers.size)downPoint=null;return;}const rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(activeRoom?activeRoom.targets:targets,false)[0];if(hit){if(activeRoom){if(hit.object.userData.exit){moveTo(activeRoom.exit.approach,null,exitInterior);return;}const exhibit=activeRoom.exhibits.find(e=>e.id===hit.object.userData.exhibitId);if(exhibit)moveTo(exhibit.approach,null,()=>ui.openExhibit?.(exhibit));}else walkTo(hit.object.userData.placeId);return;}const ground=raycaster.intersectObjects(activeRoom?[activeRoom.floor]:[terrain,...bridgeFloors],false)[0];if(ground)moveTo(ground.point);downPoint=null;});
   canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);downPoint=null;});
   canvas.addEventListener('wheel',e=>{e.preventDefault();setZoom(targetZoom-e.deltaY*.001);},{passive:false});
-  canvas.addEventListener('keydown',e=>{if(paused)return;const k=e.key.toLowerCase();if(k==='v'&&!e.repeat){e.preventDefault();setView(viewMode==='first'?'third':'first');return;}if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','r',' ','c'].includes(k)){e.preventDefault();keys.add(k);flightLanding=false;flightPending=null;navigationRevision++;path=[];arrivalId=null;arrivalAction=null;
+  canvas.addEventListener('keydown',e=>{if(paused)return;const k=e.key.toLowerCase();if(k==='v'&&!e.repeat){e.preventDefault();setView(viewMode==='first'?'third':'first');return;}if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','r',' ','c'].includes(k)){e.preventDefault();cancelRideSwitch();keys.add(k);flightLanding=false;flightPending=null;navigationRevision++;path=[];arrivalId=null;arrivalAction=null;
       if(overview){leaveOverview();camera.position.set(focus.x+Math.sin(cameraYaw)*Math.cos(actualPitch)*actualDistance,focus.y+Math.sin(actualPitch)*actualDistance,focus.z+Math.cos(cameraYaw)*Math.cos(actualPitch)*actualDistance);camera.lookAt(focus);camera.updateMatrixWorld();}
       overview=false;updateOverviewButton();destinationMarker.visible=false;}if((k==='e'||k==='enter')&&nearest){e.preventDefault();interact();}});
   window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();rideControl.speed=0;flightLift=0;reverseHeld=false;touchDrive.throttle=touchDrive.turn=0;});
@@ -688,9 +709,18 @@ async function init(){
     steering=forceReverse?0:relative?THREE.MathUtils.clamp(options.turn||0,-1,1)*.55:THREE.MathUtils.clamp(turn,-.55,.55);
     if(mounted||relative){
       if(turnClear(trainer.position.x,trainer.position.z,oldYaw,requestedYaw,shape,walkable))nextYaw=requestedYaw;
-      if(followingRoute||options.screenDirection){trainer.rotation.y=nextYaw;if(Math.abs(angleDelta(nextYaw,goal))>.025||!turnClear(trainer.position.x,trainer.position.z,nextYaw,goal,shape,walkable))return;nextYaw=goal;}
+      if(followingRoute){trainer.rotation.y=nextYaw;if(Math.abs(angleDelta(nextYaw,goal))>.025||!turnClear(trainer.position.x,trainer.position.z,nextYaw,goal,shape,walkable))return;nextYaw=goal;}
     }else nextYaw=oldYaw+turn*Math.min(1,dt*shape.turn);
-    const paceFor=yaw=>forceReverse?-.55:relative?throttle*(mounted&&throttle<0?.55:1):mounted?
+    // Direction changes blend into forward arcs instead of waiting until
+    // perfectly aligned, then jumping immediately to full speed.
+    if(options.screenDirection&&options.motion){
+      const alignment=mounted?Math.max(0,Math.cos(angleDelta(nextYaw,goal))):1;
+      const desired=shape.speed*alignment*alignment;
+      const rate=desired<options.motion.speed?shape.speed*6:shape.speed*4;
+      options.motion.speed+=THREE.MathUtils.clamp(desired-options.motion.speed,-rate*dt,rate*dt);
+      if(alignment===0)options.motion.speed=0;
+    }
+    const paceFor=yaw=>forceReverse?-.55:options.screenDirection&&options.motion?options.motion.speed/shape.speed:relative?throttle*(mounted&&throttle<0?.55:1):mounted?
       Math.max(reversing?.25:0,Math.cos(angleDelta(yaw,steeringGoal)))*(reversing?-.55:1):1;
     const candidateFor=yaw=>{
       const heading=mounted||relative?yaw:goal,pace=paceFor(yaw);
@@ -706,11 +736,42 @@ async function init(){
       if(motionClear(trainer.position,straightBack,oldYaw,shape,walkable)){nextYaw=oldYaw;next=straightBack;clear=true;steering=0;}
     }
     trainer.rotation.y=nextYaw;
+    // Perspective can turn a near-perpendicular ground arc into a tiny step
+    // opposite the pressed arrow. Keep turning, but never take that step.
+    if(options.screenProgress&&options.screenProgress(next)<-1e-12){
+      if(options.motion)options.motion.speed=0;
+      return;
+    }
+    if(!clear&&options.motion)options.motion.speed=0;
     if(clear){trainer.position.x=next.x;trainer.position.z=next.z;}
     else if(!mounted){
       const heading=relative?nextYaw:goal;
       const slideX={x:next.x,z:trainer.position.z};if(motionClear(trainer.position,slideX,heading,shape,walkable))trainer.position.x=slideX.x;
       const slideZ={x:trainer.position.x,z:next.z};if(motionClear(trainer.position,slideZ,heading,shape,walkable))trainer.position.z=slideZ.z;
+    }
+  }
+  function advanceRideSwitch(dt){
+    const pending=ridePending;
+    if(!pending)return;
+    pending.elapsed+=dt;
+    if(pending.elapsed>15){cancelRideSwitch();travelStatus(null,'The path is tight here. Move onto the open path and try again.');return;}
+    const waypoint=pending.route[pending.index];
+    if(waypoint){
+      delta.set(waypoint.x-trainer.position.x,0,waypoint.z-trainer.position.z);
+      const distance=delta.length();
+      if(distance<1e-5)pending.index++;
+      else advance(delta.normalize(),dt*.65,distance,true);
+      return;
+    }
+    const goal=pending.placement.yaw,change=angleDelta(trainer.rotation.y,goal);
+    const nextYaw=trainer.rotation.y+THREE.MathUtils.clamp(change,-travelShape().turn*dt,travelShape().turn*dt);
+    if(!turnClear(trainer.position.x,trainer.position.z,trainer.rotation.y,nextYaw,travelShape(),walkable)){
+      cancelRideSwitch();travelStatus(null,'This spot is too tight. Move onto the path to change rides.');return;
+    }
+    trainer.rotation.y=nextYaw;
+    if(Math.abs(angleDelta(nextYaw,goal))<1e-6){
+      if(footprintClear(trainer.position.x,trainer.position.z,nextYaw,TRAVEL[pending.id],walkable))applyTravel(pending.id);
+      else {cancelRideSwitch();travelStatus(null,'Move a little farther into the open before switching.');}
     }
   }
   function advanceRide(dt,{throttle=0,turn=0,brake=false}={}){
@@ -731,18 +792,22 @@ async function init(){
     trainer.rotation.y=nextYaw;
     if(clear){trainer.position.x=next.x;trainer.position.z=next.z;}else rideControl.speed=0;
   }
-  function advanceScreenFlight(vector,dt){
+  function advanceScreenFlight(vector,dt,screenProgress=null){
     const next={x:trainer.position.x,z:trainer.position.z};
     steering=0;
     if(vector.lengthSq()>1e-10){
       const goal=Math.atan2(vector.x,vector.z),turn=angleDelta(trainer.rotation.y,goal);
       trainer.rotation.y+=THREE.MathUtils.clamp(turn,-dt*travelShape().turn,dt*travelShape().turn);
       steering=THREE.MathUtils.clamp(turn,-.55,.55);
-      // Face the requested screen direction before moving; never back into it.
-      if(Math.abs(angleDelta(trainer.rotation.y,goal))<.025){
-        trainer.rotation.y=goal;next.x+=vector.x*dt*travelShape().speed;next.z+=vector.z*dt*travelShape().speed;
-      }
-    }
+      const alignment=Math.max(0,Math.cos(angleDelta(trainer.rotation.y,goal)));
+      const desired=travelShape().speed*alignment*alignment;
+      const rate=travelShape().speed*(desired<rideControl.speed?6:4);
+      rideControl.speed+=THREE.MathUtils.clamp(desired-rideControl.speed,-rate*dt,rate*dt);
+      if(alignment===0)rideControl.speed=0;
+      next.x+=Math.sin(trainer.rotation.y)*dt*rideControl.speed;
+      next.z+=Math.cos(trainer.rotation.y)*dt*rideControl.speed;
+    }else rideControl.speed=0;
+    if(screenProgress&&screenProgress(next)<-1e-12){next.x=trainer.position.x;next.z=trainer.position.z;rideControl.speed=0;}
     const result=stepFlight(trainer.position,next,{dt,ground:groundForWalk,ceiling:flightCeiling,cruise:flightCruise,limit:WORLD_LIMIT});
     trainer.position.set(result.x,result.y,result.z);
   }
@@ -779,24 +844,32 @@ async function init(){
         const aligned=Math.abs(landingTurn)<.03;
         const result=stepFlight(trainer.position,trainer.position,{dt,ground:groundForWalk,ceiling:flightCeiling,landing:aligned,cruise:flightCruise,limit:WORLD_LIMIT});
         trainer.position.y=result.y;
-        if(result.landed){const pending=flightPending;clearMovement();selectedTravel=pending?.travel||(pending?.id?'charizard':'walk');updateTravelVisual();resetCompanionTrail();if(pending?.id)queueArrival(pending.id);else pending?.action?.();}
-      }else if(viewMode==='first'&&!activeRoom&&selectedTravel!=='walk'&&(manualInput||pathIndex>=path.length)){
+        if(result.landed){const pending=flightPending;clearMovement();travelStatus(null,pending?.travel?`Ready to explore with ${rideName(pending.travel)}.`:'Landed.');selectedTravel=pending?.travel||(pending?.id?'charizard':'walk');updateTravelVisual();resetCompanionTrail();if(pending?.id)queueArrival(pending.id);else pending?.action?.();}
+      }else if(ridePending){advanceRideSwitch(dt);}
+      else if(viewMode==='first'&&!activeRoom&&selectedTravel!=='walk'&&(manualInput||pathIndex>=path.length)){
         advanceRide(dt,{throttle:backing?-1:THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1),turn:backing?0:THREE.MathUtils.clamp(-sx+touchDrive.turn,-1,1),brake:!flying()&&keys.has(' ')});
       }else if(manualInput&&viewMode==='first'){
         const throttle=backing?-1:THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1),turn=THREE.MathUtils.clamp(-sx+touchDrive.turn,-1,1);
         advance(direction,dt,Infinity,false,{throttle,turn,forceReverse:backing});
       }else if(backing&&!flying()&&!keys.has(' ')){rideControl.speed=0;advance(direction,dt,Infinity,false,{forceReverse:true});}
       else if(manualInput){
-        rideControl.speed=0;
         viewProjection.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
         const x=trainer.position.x,z=trainer.position.z;
         // Include local terrain slope; indoors this is exactly a horizontal plane.
         const slopeX=activeRoom||flying()?0:(groundForWalk(x+.04,z)-groundForWalk(x-.04,z))/.08;
         const slopeZ=activeRoom||flying()?0:(groundForWalk(x,z+.04)-groundForWalk(x,z-.04))/.08;
-        screenGroundDirection(direction,THREE.MathUtils.clamp(sx-touchDrive.turn,-1,1),THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1),viewProjection.elements,trainer.position,camera.aspect,slopeX,slopeZ);
-        if(flying())advanceScreenFlight(direction,dt);
-        else if(!keys.has(' '))advance(direction,dt,Infinity,false,{screenDirection:true});
-        else steering=0;
+        const inputX=THREE.MathUtils.clamp(sx-touchDrive.turn,-1,1),inputY=THREE.MathUtils.clamp(sy+touchDrive.throttle,-1,1);
+        screenGroundDirection(direction,inputX,inputY,viewProjection.elements,trainer.position,camera.aspect,slopeX,slopeZ);
+        const screenOrigin=trainer.position.clone().project(camera);
+        const screenProgress=next=>{
+          // Direction is measured on the current height plane. A walkable
+          // bridge/platform step must not be mistaken for backwards movement.
+          const projected=new THREE.Vector3(next.x,trainer.position.y,next.z).project(camera);
+          return (projected.x-screenOrigin.x)*camera.aspect*inputX+(projected.y-screenOrigin.y)*inputY;
+        };
+        if(flying())advanceScreenFlight(direction,dt,screenProgress);
+        else if(!keys.has(' '))advance(direction,dt,Infinity,false,{screenDirection:true,motion:rideControl,screenProgress});
+        else {steering=0;rideControl.speed=0;}
       }
       else if(flying()&&pathIndex<path.length){advanceFlightRoute(dt);}
       else if(pathIndex<path.length){
@@ -838,15 +911,12 @@ async function init(){
     interactPrompt.hidden=!nearest||nearest.kind!=='exhibit'||moving||paused||overview||roomLoading;
     if(nearest)document.getElementById('interact-text').textContent=nearest.kind==='exit'?'Leave building':nearest.kind==='exhibit'?`View ${nearest.exhibit.title}`:`Enter ${nearest.place.title}`;
     if(!quietMotion){windUniform.value=time;flagCloths.forEach((f,i)=>f.rotation.y=Math.sin(time*1.4+i)*.1);waterGlints.forEach(g=>g.scale.x=.7+Math.sin(time+g.userData.seed)*.3);}
-    // Fixed compass, pitch and scale for every ride. Only the outer framing
-    // window can move the map; turning, coasting and wingbeats cannot steer it.
-    if(overview){focusTarget.set(0,1,-5);focus.lerp(focusTarget,reducedMotion?1:Math.min(1,dt*2.3));}
+    // A fixed-angle camera follows the actor continuously. The target belongs
+    // to the navigation body, never to animated heads, wheels or wingbeats.
+    if(overview){focusTarget.set(0,1,-5);updateCenteredFocus(focus,focusTarget,{dt,sharpness:4,heightSharpness:4});}
     else if(viewMode==='third'&&!paused&&!roomLoading){
-      const framing={yaw:cameraYaw,pitch:cameraPitch,distance:actualDistance,fov:camera.fov,aspect:camera.aspect,dt,maxSpeed:10};
-      updateStableFocus(focus,trainer.position,framing);
-      // Tall terrain and deliberate climbs may reach the top edge. Translate
-      // vertically only there, without rotating, zooming or tracking animation.
-      updateStableHeight(focus,{x:trainer.position.x,y:trainer.position.y+(flying()?3:1.8),z:trainer.position.z},framing);
+      focusTarget.set(trainer.position.x,trainer.position.y+(flying()?1.8:1.2),trainer.position.z);
+      updateCenteredFocus(focus,focusTarget,{dt});
     }
     zoom=THREE.MathUtils.lerp(zoom,targetZoom,Math.min(1,dt*5));
     const distanceGoal=activeRoom?((activeRoom.camera.distance||19)*(innerWidth<600?1.75:1))/zoom:overview?overviewDistance():(innerWidth<600?28:24)/zoom;
