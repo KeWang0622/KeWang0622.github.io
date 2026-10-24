@@ -1,3 +1,4 @@
+import {canReverseTravel} from './travel-policy.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -116,8 +117,8 @@ const advanceEnd=worldSource.indexOf('\n  function advanceRide(',advanceStart);
 assert.ok(travelStart>=0&&travelEnd>travelStart&&clearEnd>clearStart&&advanceEnd>advanceStart);
 function productionSwitchHarness(walkable,{id='bicycle',x=0,z=0,yaw=0}={}){
   const trainer={position:new THREE.Vector3(x,0,z),rotation:{y:yaw}};
-  const build=new Function('THREE','TRAVEL','angleDelta','footprintClear','turnClear','motionClear','planRideSwitch','FLIGHT','findLandingSpot','walkable','trainer','initialId',`
-    let selectedTravel=initialId,ridePending=null,flightPending=null,flightLanding=false;
+  const build=new Function('THREE','TRAVEL','angleDelta','footprintClear','turnClear','motionClear','planRideSwitch','FLIGHT','findLandingSpot','walkable','trainer','initialId','canReverseTravel',`
+    let selectedTravel=initialId,ridePending=null,flightPending=null,flightLanding=false,firstMoveYaw=null;
     let activeRoom=null,viewMode='third',flightCruise=6.5,firstLookYaw=0,firstLookPitch=0,doorCooldownUntil=0;
     let steering=0,flightLift=0,reverseHeld=false,navigationRevision=0,path=[],pathIndex=0,arrivalId=null,arrivalAction=null;
     const delta=new THREE.Vector3(),rideControl={speed:0,steer:0},touchDrive={throttle:0,turn:0},keys=new Set(),footprints=[];
@@ -136,7 +137,7 @@ function productionSwitchHarness(walkable,{id='bicycle',x=0,z=0,yaw=0}={}){
       get flightPending(){return flightPending;},get flightLanding(){return flightLanding;},
       get route(){return path;},get doorCooldownUntil(){return doorCooldownUntil;}};
   `);
-  return build(THREE,TRAVEL,angleDelta,footprintClear,turnClear,motionClear,planRideSwitch,FLIGHT,findLandingSpot,walkable,trainer,id);
+  return build(THREE,TRAVEL,angleDelta,footprintClear,turnClear,motionClear,planRideSwitch,FLIGHT,findLandingSpot,walkable,trainer,id,canReverseTravel);
 }
 
 test('production switching drives the old bicycle to safe parking before showing Cybertruck',()=>{
