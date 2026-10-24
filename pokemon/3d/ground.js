@@ -1,4 +1,4 @@
-/* Arrival paving and garden edges: authored geometry, batched by material. */
+/* Worn limestone paths and a hand-laid arrival court, batched by material. */
 import * as THREE from './lib/three.module.js';
 import { RoundedBoxGeometry } from './lib/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from './lib/addons/utils/BufferGeometryUtils.js';
@@ -13,24 +13,29 @@ export function buildArrivalGround({scene,roads,groundHeight,riverZ,rand,surface
   const textureCanvas=document.createElement('canvas');textureCanvas.width=textureCanvas.height=256;
   const ctx=textureCanvas.getContext('2d'),pixels=ctx.createImageData(256,256);
   let textureSeed=1729;const noise=()=>{textureSeed=(1664525*textureSeed+1013904223)>>>0;return textureSeed/4294967296;};
-  for(let i=0;i<pixels.data.length;i+=4){const value=226+noise()*29;pixels.data[i]=value;pixels.data[i+1]=value;pixels.data[i+2]=value;pixels.data[i+3]=255;}ctx.putImageData(pixels,0,0);
-  for(let i=0;i<190;i++){const x=noise()*256,y=noise()*256,r=.4+noise()*1.2;ctx.fillStyle=noise()>.5?'rgba(113,102,83,.17)':'rgba(255,255,247,.32)';ctx.beginPath();ctx.ellipse(x,y,r*1.4,r,noise()*3,0,Math.PI*2);ctx.fill();}
+  for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+    const i=(y*256+x)*4,u=x/256,v=y/256;
+    const wash=Math.sin(Math.PI*2*(u+v))*2.6+Math.cos(Math.PI*2*(2*u-v))*1.8;
+    const value=244+wash+noise()*5;
+    pixels.data[i]=value;pixels.data[i+1]=value-1;pixels.data[i+2]=value-4;pixels.data[i+3]=255;
+  }ctx.putImageData(pixels,0,0);
+  for(let i=0;i<190;i++){const x=noise()*256,y=noise()*256,r=.4+noise()*1.2;ctx.fillStyle=noise()>.5?'rgba(113,102,83,.09)':'rgba(255,255,247,.24)';ctx.beginPath();ctx.ellipse(x,y,r*1.4,r,noise()*3,0,Math.PI*2);ctx.fill();}
   const gravel=new THREE.CanvasTexture(textureCanvas);gravel.colorSpace=THREE.SRGBColorSpace;gravel.wrapS=gravel.wrapT=THREE.RepeatWrapping;gravel.anisotropy=4;
-  const tones=[0xc6bca3,0xd5c9ad,0xcfc3a7,0xc0b79e,0xd7ccb8];
-  // Crisp path ribbons follow the sculpted terrain. Small shoulders soften the
-  // material change without the wide, blurred painted strips of the prototype.
+  const tones=[0xcbbfa7,0xd8cdb9,0xd2c4ad,0xc7bba6,0xe0d5c2];
+  // A narrow painted shoulder dissolves into the meadow. The authored route
+  // centre and terrain heights stay identical to the traversable paths.
   const sampledRoads=roads.map(curve=>curve.getSpacedPoints(180));
   roads.forEach((curve,index)=>{
     const points=curve.getSpacedPoints(100),v=[],uv=[],ix=[];
     const width=index===0?1.14:.92;
     for(let i=0;i<points.length;i++){
       const p=points[i],tangent=curve.getTangentAt(i/(points.length-1)),n=new THREE.Vector3(-tangent.z,0,tangent.x);
-      const w=width+Math.sin(i*1.73)*.035;
+      const w=width+.22+Math.sin(p.x*.63+p.z*.34)*.045+Math.sin(p.x*1.37-p.z*.81)*.018;
       for(const s of [-1,1]){const x=p.x+n.x*w*s,z=p.z+n.z*w*s;v.push(x,groundHeight(x,z)+.06,z);uv.push(s===-1?0:1,i*.22);}
       if(i&&Math.abs(p.z-riverZ(p.x))>2.2){const j=i*2;ix.push(j-2,j-1,j,j-1,j+1,j);}
     }
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();
-    const path=new THREE.Mesh(g,surfaceMaterials?.pathGravel||new THREE.MeshStandardMaterial({color:0xd7c4a1,map:gravel,roughness:1}));path.receiveShadow=true;scene.add(path);
+    const path=new THREE.Mesh(g,surfaceMaterials?.pathGravel||new THREE.MeshStandardMaterial({color:0xe4d4af,map:gravel,roughness:1}));path.name=`Limestone path ${index+1}`;path.receiveShadow=true;scene.add(path);
     // Uneven dressed-stone edging on the arrival routes; distant paths stay quiet.
     const steps=Math.ceil(curve.getLength()/.54);
     for(let i=0;i<=steps;i++){
@@ -50,7 +55,7 @@ export function buildArrivalGround({scene,roads,groundHeight,riverZ,rand,surface
   const shape=new THREE.Shape();outline.forEach(([x,z],i)=>i?shape.lineTo(x,-z):shape.moveTo(x,-z));shape.closePath();
   const mortarGeometry=new THREE.ShapeGeometry(shape);mortarGeometry.rotateX(-Math.PI/2);
   const mortarPositions=mortarGeometry.attributes.position;for(let i=0;i<mortarPositions.count;i++)mortarPositions.setY(i,groundHeight(mortarPositions.getX(i),mortarPositions.getZ(i))+.047);
-  mortarGeometry.computeVertexNormals();const mortar=new THREE.Mesh(mortarGeometry,new THREE.MeshStandardMaterial({color:0x8d8972,roughness:1}));mortar.receiveShadow=true;scene.add(mortar);
+  mortarGeometry.computeVertexNormals();const mortar=new THREE.Mesh(mortarGeometry,new THREE.MeshStandardMaterial({color:0x96907b,roughness:1}));mortar.receiveShadow=true;scene.add(mortar);
   // A compact, chamfered entry court. Every paver is modeled, then batched.
   for(let row=0;row<12;row++)for(let col=0;col<21;col++){
     const x=-9.7+col*.59+(row%2)*.295,z=5.7+row*.53;
@@ -72,6 +77,6 @@ export function buildArrivalGround({scene,roads,groundHeight,riverZ,rand,surface
       for(let z=-bed.d/2;z<bed.d/2;z+=.43)stone(bed.x+side*bed.w/2,bed.z+z+.20,.40,.15,0xb9b69c,Math.PI/2,.15);
     }
   }
-  for(const[color,parts]of buckets){const mesh=new THREE.Mesh(mergeGeometries(parts,false),new THREE.MeshStandardMaterial({color,map:gravel,bumpMap:gravel,bumpScale:.009,roughness:.94}));mesh.castShadow=mesh.receiveShadow=true;scene.add(mesh);parts.forEach(g=>g.dispose());}
+  for(const[color,parts]of buckets){const mesh=new THREE.Mesh(mergeGeometries(parts,false),new THREE.MeshStandardMaterial({color,map:gravel,bumpMap:gravel,bumpScale:.006,roughness:.98}));mesh.castShadow=mesh.receiveShadow=true;scene.add(mesh);parts.forEach(g=>g.dispose());}
   return beds;
 }

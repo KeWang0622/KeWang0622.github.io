@@ -8,13 +8,16 @@ come from `../data.js`; the renderer does not invent biographical facts.
 - `index.html`, `style.css`: responsive full-screen scene, identity, field guide and dialogs.
 - `interface.js`: accessible portfolio content, links, session-only discovery state and focus handling.
 - `world.js`: terrain, water, asset loading, instanced foliage, lighting, ray picking,
-  A* walking, animation and the follow/orbit/map camera.
+  A* walking, animation and the centered fixed-angle camera.
 - `navigation.js`, `companion-navigation.js`, `world-surfaces.js`: swept vehicle footprints, routes, followers and shared bridge geometry/collision.
 - `travel-models.js`, `charizard-model.js`: original ride meshes, articulated riders, and first-person visibility/camera anchors.
 - `travel-ui.js`, `travel-catalog.js`, `travel.css`: the permanent seven-mode travel rail, perspective switch and touch driving controls.
 - `ride-controls.js`, `flight.js`: shared mounted driving physics, aerial clearance and safe landing.
 - `ride-camera.js`, `village-sky.js`: seat-relative first-person view and a lightweight painted daylight sky.
-- `ground.js`: batched paving, gravel paths, stone edges and planted arrival beds.
+- `ground.js`, `world-materials.js`: batched limestone paving, softly feathered paths, painted terrain, stone edges and planted arrival beds.
+- `meadow.js`, `foliage-art.js`: original instanced meadow drifts, tiny wildflowers and textured tree canopies with a shared, pausable wind clock.
+- `landscape-light.js`: broad, slow cloud shadows that modulate direct light while preserving ambient fill.
+- `painterly-water.js`: gentle water displacement, matching analytic normals and a restrained painted sky reflection.
 - `details.js`: material-batched benches, bicycle, drainage, compass and bridge-side reeds.
 - `outdoor-extension.js`: connected walking trails, a third river bridge, and
   the Riverside Lookout, Pine Grove, Hilltop Terrace and Waterlily Pond scenic stops.
@@ -48,7 +51,7 @@ The exterior spans 128 world units across. Four scenic destinations extend the s
 research rooms with a riverside viewing deck, a pine-grove picnic clearing,
 a hilltop terrace and a planted waterlily pond. Select a scenic label on the map to walk there.
 
-Click open ground to wander. Drag to orbit, scroll/pinch or use +/− to zoom. Focus
+Click open ground to wander. The third-person camera follows continuously from a fixed angle; it does not rotate or change zoom automatically. Drag to choose an angle, or scroll/pinch or use +/− to set the distance. Focus
 the canvas for WASD / arrow movement. Walk through a doorway to enter or leave;
 the camera follows the trainer. E or Enter opens a nearby exhibit. Village is an
 optional shortcut outside. Map shows the larger village,
@@ -79,13 +82,14 @@ ride finds open dry ground, flies there, and lands before the ride changes.
 Selecting a building while flying also lands before entering.
 
 The view switch or **V** toggles third and first person; third person is the
-fresh-load default. On foot, third-person movement follows screen directions;
-first-person walking uses W/S forward/back and A/D turn. For every ride, in both
-views, **W/↑** accelerates along the nose, **S/↓** brakes then reverses, and
-**A/D/←/→** steer. Cars use signed-speed steering and cannot spin in place.
-**Space** brakes a ground ride; **R** or the reverse button backs straight out.
-The chase camera follows behind a ride; dragging temporarily orbits independently.
-Touch screens have a driving pad and flight altitude buttons.
+fresh-load default. Third-person WASD / arrows choose a screen direction for
+walking and every ride. Vehicles turn gradually toward that direction, preserving
+momentum and their collision footprint. First-person walking uses W/S forward/back
+and A/D turn; first-person rides use W to accelerate, S to brake/reverse and A/D
+to steer. **Space** brakes a ground ride; **R** or the reverse button backs straight
+out. The camera tracks the navigation body, not animated heads or wingbeats.
+Switching rides finds nearby safe clearance, and a pending switch can be replaced
+or cancelled. Touch screens have a driving pad and flight altitude buttons.
 
 Ground movement sweeps the full vehicle footprint and preserves a straight
 backward escape when steering beside an obstacle would trap a corner. First
@@ -143,9 +147,22 @@ Navigation and camera regression checks run in CI before the Jekyll build:
 node --test pokemon/3d/*.test.mjs
 ```
 
-The 54 checks include animated ride meshes inside their collision envelopes,
+The regression checks include animated ride meshes inside their collision envelopes,
 every ride crossing all three bridges, rear-diagonal and explicit reverse escape,
 relative first-person controls, unchanged room routes, and clear central camera
 sightlines through each cockpit or above each mount. Browser verification covers
 actual forward/reverse bridge crossings, switching views and rides, and the
 mobile driving pad at 390px and 320px widths.
+
+## Painted landscape art direction
+
+The outdoor scene uses a restrained sage/ivory/teal palette, warm directional light,
+cool ambient fill and soft aerial perspective. Broad pigment variation and an
+original AI-generated ground albedo add texture without baking shadows into the
+terrain. Grass appears in coherent drifts with open clearings; up-biased canopy
+normals keep the backs of tiny blades from rendering as black spikes. Decorative
+meadow geometry is created after the flight atlas, so it cannot block navigation
+or landing. Tree leaves preserve their texture and use matching visible/shadow
+wind displacement. Water derives its surface and fragment normals from the same
+low-amplitude wave field. All new ambient motion shares Pause Motion.
+See `assets/materials/SOURCE.md` for texture provenance and the complete prompt.
