@@ -1,7 +1,8 @@
-// Mounted controls are relative to the vehicle, never to the camera. This is
-// shared by the first- and third-person views: W accelerates, S brakes then
-// reverses, and A/D steer. The caller still owns swept collision checks.
-const CAR_IDS = new Set(['model-s', 'cybertruck', 'porsche']);
+import {canReverseTravel} from './travel-policy.js?v=20261023-car-reverse';
+
+// Signed acceleration and steering for mounted travel. Only cars have a
+// reverse gear; the caller turns bikes and living mounts toward the requested
+// direction. The caller also owns swept collision checks.
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const toward = (value, target, amount) => value + clamp(target - value, -amount, amount);
 const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
@@ -9,7 +10,7 @@ const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallbac
 /**
  * @param {{speed:number, steer?:number}} state Mutable velocity and steering.
  * @param {{throttle?:number, turn?:number, brake?:boolean}} input
- *   throttle: +1 forward, -1 brake/reverse; turn: +1 left, -1 right.
+ *   throttle: +1 forward, -1 brake (then reverse for cars); turn: +1 left, -1 right.
  * @param {{id?:string, speed:number, axle?:number, turn?:number, car?:boolean,
  *   reverseRatio?:number, acceleration?:number, braking?:number,
  *   coastDeceleration?:number}} shape Travel footprint with its mode id.
@@ -22,9 +23,10 @@ const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallbac
 export function stepRideControl(state, {throttle = 0, turn = 0, brake = false} = {}, shape, dt) {
   const step = clamp(finite(dt), 0, .1);
   const maxSpeed = Math.max(0, finite(shape.speed));
-  const car = shape.car ?? CAR_IDS.has(shape.id);
+  const canReverse = canReverseTravel(shape.id);
+  const car = shape.car ?? canReverse;
   const reverseRatio = clamp(finite(shape.reverseRatio, car ? .45 : .40), 0, 1);
-  const reverseMax = maxSpeed * reverseRatio;
+  const reverseMax = canReverse ? maxSpeed * reverseRatio : 0;
   const previousSpeed = clamp(finite(state.speed), -reverseMax, maxSpeed);
   const command = clamp(finite(throttle), -1, 1);
   const steeringInput = clamp(finite(turn), -1, 1);

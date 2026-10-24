@@ -1,5 +1,6 @@
 import { TRAVEL_MODES } from './travel-catalog.js?v=20261023-centered-travel';
 import { padDirectionAt, combinePadDirections } from './touch-drive.js?v=20261023-mobile';
+import { canReverseTravel } from './travel-policy.js?v=20261023-car-reverse';
 
 export function initTravelUI() {
   const stage = document.getElementById('world-stage');
@@ -42,6 +43,7 @@ export function initTravelUI() {
   let driveThrottle = 0, driveTurn = 0, flightLift = 0;
   const mounted = () => !indoors && selected !== 'walk';
   const flying = () => !indoors && selected === 'charizard';
+  const drivingCar = () => !indoors && canReverseTravel(selected);
   const canDrive = () => ready && !paused && !roomLoading;
   function sendDrive() {
     const actions = [...driveInputs.values()];
@@ -106,7 +108,7 @@ export function initTravelUI() {
     button.addEventListener('blur', () => { flightInputs.delete(`key-${button.dataset.lift}`); sendFlight(); });
   }
   function reverse(active) {
-    active = Boolean(active && canDrive() && mounted() && !flying());
+    active = Boolean(active && canDrive() && drivingCar());
     if (reversing === active) return;
     reversing = active;
     reverseButton.classList.toggle('reversing', active);
@@ -154,38 +156,40 @@ export function initTravelUI() {
     options.append(button); buttons.push(button);
   }
   function refresh() {
-    const effective = indoors ? 'walk' : selected, isMounted = mounted(), isFlying = flying(), isThird = view === 'third';
+    const effective = indoors ? 'walk' : selected, isMounted = mounted(), isFlying = flying(), isCar = drivingCar(), isThird = view === 'third';
     controls.classList.toggle('travel-indoors', indoors);
     cameraControls.classList.toggle('is-flying', isFlying);
     note.textContent = indoors ? 'Walking indoors' : isFlying ? 'Fly over the village' : 'Rides stay outside';
-    reverseButton.hidden = !isMounted || isFlying;
-    reverseButton.disabled = !canDrive();
+    reverseButton.hidden = !isCar;
+    reverseButton.disabled = !canDrive() || !isCar;
     drivingHint.hidden = !isMounted;
     drivingHint.innerHTML = isThird
-      ? `<span>↑ ↓ ← → move on screen</span><span>${isFlying ? 'Space rise · C descend' : 'R reverse · Space stop'}</span>`
-      : isFlying
-        ? '<span>W/S fly / brake · A/D steer</span><span>Space rise · C descend</span>'
-        : '<span>W/S forward / reverse · A/D steer</span><span>Space brake</span>';
+      ? `<span>↑ ↓ ← → move on screen</span><span>${isFlying ? 'Space rise · C descend' : isCar ? 'R reverse · Space stop' : 'Turn to move · Space stop'}</span>`
+      : isCar
+        ? '<span>W/S forward / reverse · A/D steer</span><span>Space brake</span>'
+        : `<span>WASD choose a direction · turn to move</span><span>${isFlying ? 'Space rise · C descend' : 'Space stop'}</span>`;
     flightControls.hidden = !isFlying;
     for (const button of flightButtons) button.disabled = !canDrive();
     // CSS exposes this only on compact/touch layouts. Walking and room visits
     // need exactly the same controls as rides, rather than tap-only movement.
     drivePad.hidden = false;
-    drivePad.setAttribute('aria-label', isThird ? 'Screen direction controls' : isFlying ? 'Flight steering' : isMounted ? 'Riding controls' : 'First person movement');
+    drivePad.setAttribute('aria-label', isThird ? 'Screen direction controls' : isCar ? 'Car driving controls' : 'Turn and move controls');
     const padLabels = isThird
       ? { forward: ['↑', 'Move up'], left: ['←', 'Move left'], back: ['↓', 'Move down'], right: ['→', 'Move right'] }
-      : { forward: ['↑', 'Move forward'], left: ['↶', 'Steer left'], back: ['↓', isFlying ? 'Brake and move backward' : isMounted ? 'Brake and reverse' : 'Move backward'], right: ['↷', 'Steer right'] };
+      : isCar
+        ? { forward: ['↑', 'Accelerate forward'], left: ['↶', 'Steer left'], back: ['↓', 'Brake and reverse'], right: ['↷', 'Steer right'] }
+        : { forward: ['↑', 'Move forward'], left: ['←', 'Turn left and move forward'], back: ['↓', 'Turn around and move forward'], right: ['→', 'Turn right and move forward'] };
     for (const button of drivePad.children) {
       const [glyph, label] = padLabels[button.dataset.drive];
       button.textContent = glyph; button.setAttribute('aria-label', label); button.disabled = !canDrive();
     }
     const desktopHint = document.querySelector('#walk-hint .desktop-hint'), mobileHint = document.querySelector('#walk-hint .mobile-hint');
     if (desktopHint) desktopHint.textContent = isThird
-      ? isFlying ? 'move on screen · Space rise · C descend' : isMounted ? 'move on screen · R reverse · Space stop' : 'move on screen · click to walk'
-      : isFlying ? 'W/S fly · A/D steer · drag to look' : isMounted ? 'W/S forward / reverse · A/D steer' : 'W/S move · A/D turn · drag to look';
+      ? isFlying ? 'turn to fly · Space rise' : isCar ? 'move on screen · R reverse · Space stop' : isMounted ? 'turn to move · Space stop' : 'move on screen · click to walk'
+      : isCar ? 'W/S forward / reverse · A/D steer' : 'WASD turn to move';
     if (mobileHint) mobileHint.textContent = isThird
       ? isFlying ? 'Arrows to fly · Rise / Descend' : 'Arrows to move · tap a place to visit'
-      : isFlying ? 'Arrow pad to fly · drag to look' : isMounted ? 'Arrow pad to drive · drag to look' : 'Arrow pad to move · drag to look';
+      : isCar ? 'Arrow pad to drive · drag to look' : isFlying ? 'Arrows turn to fly · Rise / Descend' : 'Arrows turn to move · drag to look';
     for (const button of viewButtons) { button.disabled = !canDrive(); button.setAttribute('aria-pressed', String(button.dataset.view === view)); }
     for (const button of buttons) {
       const mode = TRAVEL_MODES.find(item => item.id === button.dataset.travelId), active = mode.id === effective, pending = mode.id === pendingTravel;
