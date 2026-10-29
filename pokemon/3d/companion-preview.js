@@ -12,7 +12,7 @@ export async function createCompanionPreview(canvas,onPortraits){
   scene.add(new THREE.HemisphereLight(0xffffff,0xa8b5c2,2.4));
   const key=new THREE.DirectionalLight(0xfff7e8,3.2);key.position.set(-3,5,6);scene.add(key);
   const fill=new THREE.DirectionalLight(0xcceaff,2.1);fill.position.set(4,3,-2);scene.add(fill);
-  const mri=(await new GLTFLoader().loadAsync('./assets/companion.glb')).scene;
+  const mri=(await new GLTFLoader().loadAsync('./assets/companion.glb?v=20261029-mri-long-bore')).scene;
   const models={mri,camera:createCameraCompanion(),mac:createMacCompanion(),prism:createPrismCompanion(),music:createMusicCompanion()};
   const rigs={};
   for(const [id,model] of Object.entries(models)){
