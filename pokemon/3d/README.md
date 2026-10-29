@@ -166,3 +166,12 @@ or landing. Tree leaves preserve their texture and use matching visible/shadow
 wind displacement. Water derives its surface and fragment normals from the same
 low-amplitude wave field. All new ambient motion shares Pause Motion.
 See `assets/materials/SOURCE.md` for texture provenance and the complete prompt.
+
+## MRI scanner identity
+
+The MRI Scout, backpack portraits and workshop gable use one Blender-authored
+long-bore scanner model. Its cylindrical magnet has nearly two bore diameters of
+axial depth, with a continuous open tunnel and patient table. The workshop's
+full-size scanner uses the same geometry principle and retains the previous
+furniture collision footprint. See `assets/COMPANION-SOURCE.md` for source and
+rebuild instructions.

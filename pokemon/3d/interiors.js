@@ -124,7 +124,25 @@ for(const sx of [-1,1])box(x+sx*(w/2-.12),.03,z,.028,.008,d-.20,CREAM);for(const
   function screen(x,y,z,w=1.5,h=.9,mode='sequence',parent=group){
     box(x,y,z,w+.12,h+.12,.12,INK,parent);const tex=canvasTexture(640,360,(ctx,cw,ch)=>{ctx.fillStyle='#223c42';ctx.fillRect(0,0,cw,ch);ctx.strokeStyle='#456268';ctx.lineWidth=1;for(let xx=40;xx<cw;xx+=40){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,ch);ctx.stroke();}for(let yy=40;yy<ch;yy+=40){ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(cw,yy);ctx.stroke();}ctx.fillStyle='#dfebde';ctx.font='600 26px system-ui';ctx.fillText(mode==='sequence'?'SEQUENCE DESIGN':mode==='video'?'CREATIVE STUDIO':'RESEARCH NOTEBOOK',32,40);ctx.strokeStyle='#d5b978';ctx.lineWidth=4;ctx.beginPath();if(mode==='sequence'){const points=[[32,130],[100,130],[115,82],[155,82],[170,130],[238,130],[253,170],[360,170],[375,130],[608,130]];points.forEach(([px,py],i)=>i?ctx.lineTo(px,py):ctx.moveTo(px,py));ctx.stroke();ctx.strokeStyle='#7ec3b8';ctx.beginPath();[[32,265],[185,265],[200,200],[390,200],[405,265],[608,265]].forEach(([px,py],i)=>i?ctx.lineTo(px,py):ctx.moveTo(px,py));ctx.stroke();}else if(mode==='video'){for(let i=0;i<4;i++){ctx.fillStyle=['#c9958d','#719a99','#d4ba8b','#7d8fa7'][i];ctx.fillRect(32+i*148,92,132,132);ctx.fillStyle='#f3e1bc';ctx.beginPath();ctx.arc(98+i*148,140,22,0,Math.PI*2);ctx.fill();}ctx.fillStyle='#bb86a2';ctx.fillRect(32,262,530,23);ctx.fillStyle='#679a9c';ctx.fillRect(32,301,410,19);}else{for(let i=0;i<5;i++){ctx.fillStyle=['#82b6ae','#d7be80','#88a5b6'][i%3];ctx.fillRect(33,85+i*46,170+i%3*130,12);}ctx.fillStyle='#e1d9c3';ctx.fillRect(465,84,110,195);}});plane(w,h,tex,parent,x,y,z+.068);box(x,y-h/2-.18,z,.12,.36,.14,INK,parent);box(x,y-h/2-.38,z+.08,.62,.06,.40,INK,parent);return tex;
   }
-  function scanner(x,z,scale=1){const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);group.add(g);box(0,.25,0,2.65,.5,1.28,CREAM,g);const body=mesh(new THREE.TorusGeometry(.84,.40,14,44),mat(CREAM),g,0,1.48,0);const inner=mesh(new THREE.TorusGeometry(.64,.13,10,40),mat(0x5998b6),g,0,1.48,.36);const rim=mesh(new THREE.TorusGeometry(1.16,.028,8,44),mat(BRASS),g,0,1.48,.16);box(0,.82,1.3,.81,.16,2.1,0x9fc1cd,g);box(0,.34,1.7,.48,.67,.58,CREAM,g);box(0,.06,1.7,.82,.12,.83,INK,g);box(.89,1.45,.36,.23,.55,.09,0x7c969a,g);for(const yy of [1.31,1.42,1.53])sphere(.89,yy,.418,.029,0x83c2b2,g);block(x,z+.5,2.7*scale,3.1*scale);return g;}
+  function scanner(x,z,scale=1){
+    const g=new THREE.Group();g.name='MRI scanner · long-bore magnet';g.position.set(x,0,z);g.scale.setScalar(scale);group.add(g);
+    // MRI has a substantial axial magnet body, not a thin toroidal CT gantry.
+    // The shell and liner are genuinely open through the entire 1.5 m tunnel.
+    const profile=new THREE.Shape();profile.absarc(0,0,1.19,0,Math.PI*2,false);
+    const bore=new THREE.Path();bore.absarc(0,0,.58,0,Math.PI*2,true);profile.holes.push(bore);
+    const shell=new THREE.ExtrudeGeometry(profile,{depth:1.48,steps:1,curveSegments:64,bevelEnabled:true,bevelThickness:.045,bevelSize:.045,bevelSegments:3});
+    mesh(shell,mat(CREAM),g,0,1.48,-.99);
+    const liner=mesh(new THREE.CylinderGeometry(.575,.575,1.51,64,1,true),mat(0x80b6cb,{side:THREE.DoubleSide,roughness:.48}),g,0,1.48,-.25);liner.rotation.x=Math.PI/2;
+    mesh(new THREE.TorusGeometry(.592,.055,12,64),mat(0x5998b6),g,0,1.48,.52);
+    mesh(new THREE.TorusGeometry(1.194,.018,8,64),mat(0x7c969a),g,0,1.48,-.81);
+    box(0,.25,-.25,2.50,.5,1.62,CREAM,g);
+    box(0,.99,.48,.74,.13,3.02,CREAM,g);box(0,1.075,.47,.65,.07,2.94,0x9fc1cd,g);
+    box(0,.52,1.55,.42,.91,.50,CREAM,g);box(0,.07,1.55,.79,.14,.83,INK,g);
+    box(.90,1.45,.55,.23,.55,.07,0x7c969a,g);
+    for(const yy of [1.31,1.42,1.53])sphere(.90,yy,.596,.029,0x83c2b2,g);
+    // Retain the established furniture footprint and the room's routes.
+    block(x,z+.5,2.7*scale,3.1*scale);return g;
+  }
   function easel(x,z,color=WOOD){line([x-.54,0,z+.17],[x,2.35,z],.055,color);line([x+.54,0,z+.17],[x,2.35,z],.055,color);line([x,2.12,z],[x,0,z-.65],.05,color);box(x,1.43,z+.06,1.36,1.53,.09,CREAM);box(x,.67,z+.16,1.52,.10,.22,color);block(x,z,1.5,1.1);}
   function sofa(x,z,rotation=0,color=theme.accent){const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rotation;group.add(g);box(0,.34,0,2.3,.50,.87,color,g);box(0,.89,-.32,2.3,.76,.26,color,g);for(const side of [-1,1])box(side*1.03,.62,.02,.27,.60,1.0,color,g);for(const side of [-1,1])box(side*.5,.62,.08,.88,.14,.73,CREAM,g);for(const xx of [-.87,.87])box(xx,.08,.23,.1,.16,.1,WOOD,g);block(x,z,rotation?1.1:2.4,rotation?2.4:1.1);return g;}
   function cabinet(x,z,w=3.0){box(x,.50,z,w,1,.68,WOOD);box(x,1.04,z,w+.1,.10,.78,CREAM);for(const side of [-1,1]){box(x+side*w*.25,.53,z+.355,w*.45,.75,.045,theme.accent);

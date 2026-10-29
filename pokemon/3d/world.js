@@ -200,7 +200,7 @@ async function init(){
 
   // Load one authored workshop family and genuine CC0 textured vegetation.
   const [arrivalResult,companionResult,foliageResult,adobeResult]=await Promise.allSettled([
-    loader.loadAsync('./assets/arrival.glb?v=20261024-living-village'),loader.loadAsync('./assets/companion.glb'),loader.loadAsync('./assets/foliage/foliage.glb'),loader.loadAsync('./assets/adobe-lab.glb?v=20261024-living-village')
+    loader.loadAsync('./assets/arrival.glb?v=20261029-mri-long-bore'),loader.loadAsync('./assets/companion.glb?v=20261029-mri-long-bore'),loader.loadAsync('./assets/foliage/foliage.glb'),loader.loadAsync('./assets/adobe-lab.glb?v=20261024-living-village')
   ]);
   const arrival=arrivalResult.status==='fulfilled'?arrivalResult.value.scene:null;
   const adobeModel=adobeResult.status==='fulfilled'?adobeResult.value.scene:null;
@@ -216,6 +216,11 @@ async function init(){
     if(['mrfoundry','adobe'].includes(place.id)&&arrival){
       const model=(place.id==='adobe'&&adobeModel?adobeModel:arrival).clone(true);model.position.set(loc.x,groundHeight(loc.x,loc.z),loc.z);
       const scale=place.id==='mrfoundry'?1:.92;model.scale.setScalar(scale);
+      if(place.id==='mrfoundry'&&companionModel){
+        // The workshop emblem and companion share the current MRI geometry.
+        const badge=companionModel.clone(true);badge.name='MRFoundry MRI facade emblem';
+        badge.scale.setScalar(1.12);badge.rotation.y=-.42;badge.position.set(0,3.73,2.93);model.add(badge);
+      }
       model.traverse(o=>{if(!o.isMesh)return;o.userData.placeId=place.id;targets.push(o);
       });scene.add(model);
       blockers.push({x:loc.x,z:loc.z,w:loc.w/2+.2,d:loc.d/2-.2});
@@ -649,7 +654,7 @@ async function init(){
     roomLoading=true;document.dispatchEvent(new CustomEvent('world:room-loading',{detail:{loading:true}}));ui.setRoomLoading?.(place.title);clearMovement();const entryRevision=navigationRevision;ui.announce(`Entering ${place.title}.`);
     try{
       let room=roomCache.get(id);
-      if(!room){const[{createInterior},{EXHIBITS}]=await Promise.all([import('./interiors.js'),import('./exhibits.js')]);room=await createInterior({place,exhibits:EXHIBITS[id]||[]});room.group.visible=false;scene.add(room.group);roomCache.set(id,room);}
+      if(!room){const[{createInterior},{EXHIBITS}]=await Promise.all([import('./interiors.js?v=20261029-mri-long-bore'),import('./exhibits.js')]);room=await createInterior({place,exhibits:EXHIBITS[id]||[]});room.group.visible=false;scene.add(room.group);roomCache.set(id,room);}
       if(entryRevision!==navigationRevision||paused)return;
       outdoorReturn={position:trainer.position.clone(),yaw:cameraYaw,pitch:cameraPitch,zoom:targetZoom};
       activeRoom=room;roomPlaceId=id;roomExitArmed=false;doorCooldownUntil=performance.now()+800;showExterior(false);room.group.visible=true;
