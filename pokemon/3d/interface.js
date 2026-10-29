@@ -172,7 +172,7 @@
   }
   async function prepareCompanionPreview(){
     if(preview){preview.resume();preview.select(selectedBuddy);return;}
-    if(!previewPromise)previewPromise=import('./companion-preview.js').then(m=>m.createCompanionPreview(document.getElementById('buddy-preview'),images=>{
+    if(!previewPromise)previewPromise=import('./companion-preview.js?v=20261029-mri-long-bore').then(m=>m.createCompanionPreview(document.getElementById('buddy-preview'),images=>{
       for(const [id,src] of Object.entries(images))portraits.set(id,src);
       for(const button of picker.children){const buddy=companions.find(b=>b.id===button.dataset.buddy);button.querySelector('.slot-art').replaceChildren(portraitNode(buddy));}
       refreshParty();
