@@ -604,6 +604,7 @@
  .closing-layout .hero .mark{max-width:430px}
 }
 @media(min-width:801px) and (max-width:1100px){#top .wordmark img{width:118px}#top{gap:12px}}
+.eval-figure{display:block;width:100%;max-height:52vh;object-fit:contain;background:#fff;border-radius:8px;margin:6px 0 4px}
 </style>
 <meta name="description" content="MRFoundry: MRI research guidance for coding agents. An interactive tutorial on skills, scientific tools, experiments and research memory.">
 <link rel="canonical" href="https://kewang0622.github.io/slides/mrfoundry/">
@@ -4064,6 +4065,18 @@ S({
     <div class="punch ok">A useful correction includes the problem, the evidence and a proposed fix.</div>`,
   notes: `Ask directly: if you know one trap in your own sub-field, that is a PR.
     Mention the repo is MIT and citable via CITATION.cff.`,
+});
+
+// ---- evaluation (paired, held-out)
+S({
+  section: 'Evaluation', kind: 'wide',
+  html: `<p class="kicker">Evaluation · preregistered, paired, held-out</p>
+    <h1>Does it help? Measured, not assumed</h1>
+    <p class="lede">The same agent, language model, tools and time limit, with or without MRFoundry, on held-out MRI tasks checked by independent graders, across 19 language models.</p>
+    <img class="eval-figure" src="evaluation.png" alt="Paired evaluation: verified completion with and without MRFoundry by MRI domain, and for sequence design by each of 19 language models">
+    <div class="punch ok">Sequence design with Bloch simulation of the exported file: <strong>50% → 83%</strong> verified (37 pairs gained, 1 lost); the 11 strongest models all reached 100%. Across 487 paired trials in 10 MRI domains: 68% → 76%.</div>
+    <p class="cite">Interim results, 31 October 2026. Gains are largest where MRI-specific details decide correctness. Reconstruction, hardware, statistics and writing tasks that strong models already solve show no gain yet; they are the focus of the next skill revision. Every started trial is reported.</p>`,
+  notes: `Each pair runs the same model twice at the same time, once with the skills installed and once without; graders replay exported sequences in a Bloch simulator and rerun submitted code on hidden data. Point to the sequence-design panel: models that can execute but lack MRI detail gain the most; the two weakest models fail in both arms. Be explicit that some domains show no gain.`,
 });
 
 // ---- 19. scope
