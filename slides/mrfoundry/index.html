@@ -604,7 +604,7 @@
  .closing-layout .hero .mark{max-width:430px}
 }
 @media(min-width:801px) and (max-width:1100px){#top .wordmark img{width:118px}#top{gap:12px}}
-.eval-figure{display:block;width:100%;max-height:46vh;object-fit:contain;background:#fff;border-radius:8px;margin:6px 0 4px}
+.benchmark-results{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:10px 0}.benchmark-result{border:1px solid var(--line);border-radius:10px;padding:20px 24px}.benchmark-result h2{font-size:25px;margin:0 0 10px}.benchmark-result .rate{font-size:clamp(30px,3.6vw,48px);line-height:1.15;color:var(--text);font-weight:700;margin:8px 0}.benchmark-result p{font-size:17px;line-height:1.5;margin:6px 0;color:var(--muted)}.benchmark-result .gain{color:var(--text)}.benchmark-evaluation .cite{font-size:15px;line-height:1.5}.benchmark-evaluation .lede{font-size:21px;line-height:1.45}.benchmark-evaluation .punch{font-size:18px;line-height:1.5}@media(max-width:760px){.benchmark-results{grid-template-columns:1fr;gap:12px}.benchmark-result{padding:16px}.benchmark-evaluation .lede{font-size:18px}.benchmark-evaluation .cite{font-size:14px}}
 </style>
 <meta name="description" content="MRFoundry: MRI research guidance for coding agents. An interactive tutorial on skills, scientific tools, experiments and research memory.">
 <link rel="canonical" href="https://kewang0622.github.io/slides/mrfoundry/">
@@ -4067,16 +4067,19 @@ S({
     Mention the repo is MIT and citable via CITATION.cff.`,
 });
 
-// ---- evaluation (paired, held-out)
+// ---- evaluation (frozen paired study; public Core and private Hard)
 S({
-  section: 'Evaluation', kind: 'wide',
-  html: `<p class="kicker">Evaluation · preregistered, paired, held-out</p>
-    <h1>Does it help? Measured, not assumed</h1>
-    <p class="lede">The same agent, language model, tools and time limit, with or without MRFoundry, on newly generated MRI tasks checked by independent graders, across ten language models.</p>
-    <img class="eval-figure" src="evaluation.png" alt="Paired evaluation of the newest MRFoundry release on newly generated tasks: verified completion with and without the skills by MRI domain and by language model">
-    <div class="punch ok">Newest release (0.14.0) on newly generated tasks, opened only after it was frozen: <strong>61% &rarr; 75%</strong> verified (324 paired trials, 10 domains, 10 models; difference 14 points, 95% CI 6 to 23); an independent repeat of 95 task-model combinations again favored the skills (23 versus 5; sign test P < 0.001); higher completion in nine of ten domains, equal in one, none lower. Sequence design with Bloch simulation: 43% &rarr; 60%.</div>
-    <p class="cite">Final results at the preregistered cutoffs (1 November 2026, 14:00 UTC; 2 November 2026, 05:00 UTC), with ten of 19 planned models reached. Every started trial is reported. Earlier revisions and earlier held-out suites, including domains in which earlier revisions did not help, are reported in the manuscript's Supporting Information.</p>`,
-  notes: `Each pair runs the same model twice at the same time, once with the skills installed and once without; graders replay exported sequences in a Bloch simulator and rerun submitted code on hidden data. The tasks were generated and sealed after the release was frozen. Mention that earlier revisions, including domains where they did not help, are documented in the manuscript supplement, and that a few gains came from delivering files where the task asked.`,
+  section: 'Evaluation', kind: 'wide benchmark-evaluation',
+  html: `<p class="kicker">MRI Agent Bench · paired evaluation</p>
+    <h1>Do skills improve verified completion?</h1>
+    <p class="lede">Each pair uses the same model, task, inputs, tools, and time limit in separate attempts. The intervention adds MRFoundry skills and their project-level discovery instruction.</p>
+    <div class="benchmark-results">
+      <section class="benchmark-result"><h2>Core · 240 pairs</h2><p>No skills &rarr; With MRFoundry skills</p><div class="rate">67.5% &rarr; 78.3%</div><p>162/240 &rarr; 188/240 verified completions</p><p class="gain">+10.8 percentage points<br>95% CI: +0.8 to +21.2</p></section>
+      <section class="benchmark-result"><h2>Hard · 134 pairs</h2><p>No skills &rarr; With MRFoundry skills</p><div class="rate">36.6% &rarr; 44.8%</div><p>49/134 &rarr; 60/134 verified completions</p><p class="gain">+8.2 percentage points<br>95% CI: −3.9 to +19.7</p></section>
+    </div>
+    <div class="punch info">Hard pools two cohorts with different task counts and model coverage; its interval includes zero. These aggregate results do not establish improvement for every task or model.</div>
+    <p class="cite">Frozen evaluation of MRFoundry 0.14.0. Public Core: 24 task types, 10 domains, 88 released variants; the study uses 24 tasks across 10 models. Hard task identities remain private; approved aggregate results are public. <a href="https://kewang0622.github.io/MRIAgentBench/">Browse tasks, results, and the submission guide ↗</a></p>`,
+  notes: `Verified completion is based on required artifacts and task-specific executable checks. Each model–task pair has separate no-skills and with-skills attempts; the intervention includes the skills and their project-level discovery instruction, and the agent chooses whether to read skills. Core contains 240 pairs, using one task per task type across ten models; the 88 released variants describe public benchmark coverage, not the number used in this study. Hard pools 90 pairs from three models on 30 tasks and 44 pairs from four models on 11 tasks. Confidence intervals are two-way cluster-bootstrap intervals over task types and models for the with-skills minus no-skills completion-rate change; Hard crosses zero. Results and public-release materials are linked from MRI Agent Bench. Private Hard identities and all raw run artifacts are not claimed to be public.`,
 });
 
 // ---- 19. scope
