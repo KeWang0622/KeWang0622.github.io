@@ -56,7 +56,7 @@ the canvas for WASD / arrow movement. Walk through a doorway to enter or leave;
 the camera follows the trainer. E or Enter opens a nearby exhibit. Village is an
 optional shortcut outside. Map shows the larger village,
 and Home base returns to the workshop court. **B** opens the companion backpack:
-choose MRI Scout, Camera Buddy, Mac, Prism or Tempo. Drag a preview to turn it,
+choose MRI Scout, Camera Buddy, Mac, Prism or Tempo. Drag a preview to turn it (or tilt the flat MRI Scout),
 then take that companion along or put it away. The party row shows who is walking
 with you; select a party member to recall it. Take everyone deploys all five, and
 Let’s go returns keyboard focus to the village. They follow the traveled path in
@@ -169,9 +169,9 @@ See `assets/materials/SOURCE.md` for texture provenance and the complete prompt.
 
 ## MRI scanner identity
 
-The MRI Scout, backpack portraits and workshop gable use one Blender-authored
-long-bore scanner model. Its cylindrical magnet has nearly two bore diameters of
-axial depth, with a continuous open tunnel and patient table. The workshop's
-full-size scanner uses the same geometry principle and retains the previous
-furniture collision footprint. See `assets/COMPANION-SOURCE.md` for source and
-rebuild instructions.
+The MRI Scout, backpack portraits and workshop gable use the same owner-approved
+transparent mascot as the MRFoundry websites. A camera-facing sprite retains its
+exact artwork, aspect ratio and colors; following and collision behavior are unchanged.
+The workshop’s full-size scanner remains physical furniture with its existing open
+bore and collision footprint. The former Blender avatar is retained as historical
+source. See `assets/COMPANION-SOURCE.md` for artwork and model provenance.
