@@ -8,6 +8,7 @@ import { OutputPass } from './lib/addons/postprocessing/OutputPass.js';
 import { buildArrivalGround } from './ground.js?v=20261023-painted-meadow';
 import { buildSecondaryLandmarks } from './landmarks.js';
 import { buildVillageDetails } from './details.js';
+import { loadMRFoundryCompanion } from './mrfoundry-companion.js';
 import { createCameraCompanion } from './camera-companion.js';
 import { createMacCompanion, createPrismCompanion, createMusicCompanion } from './companion-models.js';
 import { WORLD_LIMIT, POND, pondRadius, SCENIC_PLACES, extensionRoadPoints, buildOutdoorExtension } from './outdoor-extension.js';
@@ -200,15 +201,15 @@ async function init(){
 
   // Load one authored workshop family and genuine CC0 textured vegetation.
   const [arrivalResult,companionResult,foliageResult,adobeResult]=await Promise.allSettled([
-    loader.loadAsync('./assets/arrival.glb?v=20261029-mri-long-bore'),loader.loadAsync('./assets/companion.glb?v=20261029-mri-long-bore'),loader.loadAsync('./assets/foliage/foliage.glb'),loader.loadAsync('./assets/adobe-lab.glb?v=20261024-living-village')
+    loader.loadAsync('./assets/arrival.glb?v=20261029-mri-long-bore'),loadMRFoundryCompanion(),loader.loadAsync('./assets/foliage/foliage.glb'),loader.loadAsync('./assets/adobe-lab.glb?v=20261024-living-village')
   ]);
   const arrival=arrivalResult.status==='fulfilled'?arrivalResult.value.scene:null;
   const adobeModel=adobeResult.status==='fulfilled'?adobeResult.value.scene:null;
   const foliage=foliageResult.status==='fulfilled'?foliageResult.value.scene:null;
-  const companionModel=companionResult.status==='fulfilled'?companionResult.value.scene:null;
+  const companionModel=companionResult.status==='fulfilled'?companionResult.value:null;
   function prepareModel(model){model.traverse(obj=>{if(!obj.isMesh)return;obj.castShadow=obj.receiveShadow=true;for(const material of [].concat(obj.material)){material.roughness=Math.max(material.roughness??.8,.65);if(material.map)material.map.anisotropy=4;if(material.alphaTest>0||/leaf|leaves|grass|flower/i.test(material.name)){material.side=THREE.DoubleSide;material.transparent=false;material.alphaTest=Math.max(material.alphaTest,.4);}}});}
   if(arrival)prepareModel(arrival);if(adobeModel)prepareModel(adobeModel);
-  if(companionModel)prepareModel(companionModel);
+  // The mascot texture preserves its approved colors; it is not a lit scene mesh.
   if(foliage)prepareModel(foliage);
   const secondary=buildSecondaryLandmarks({THREE,scene,groundHeight,box,cyl,sphere,roof,add,mat,shadow,lineBetween,C,blockers,targets,flagCloths});
   const landmarkState=data.places.map(place=>{
@@ -217,9 +218,9 @@ async function init(){
       const model=(place.id==='adobe'&&adobeModel?adobeModel:arrival).clone(true);model.position.set(loc.x,groundHeight(loc.x,loc.z),loc.z);
       const scale=place.id==='mrfoundry'?1:.92;model.scale.setScalar(scale);
       if(place.id==='mrfoundry'&&companionModel){
-        // The workshop emblem and companion share the current MRI geometry.
+        // The workshop emblem and companion share the approved MRI mascot artwork.
         const badge=companionModel.clone(true);badge.name='MRFoundry MRI facade emblem';
-        badge.scale.setScalar(1.12);badge.rotation.y=-.42;badge.position.set(0,3.73,2.93);model.add(badge);
+        badge.scale.setScalar(.90);badge.position.set(0,3.68,2.93);model.add(badge);
       }
       model.traverse(o=>{if(!o.isMesh)return;o.userData.placeId=place.id;targets.push(o);
       });scene.add(model);

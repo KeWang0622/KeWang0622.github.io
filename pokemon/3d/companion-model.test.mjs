@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import * as THREE from './lib/three.module.js';
 import {GLTFLoader} from './lib/addons/loaders/GLTFLoader.js';
 
-test('MRI companion has a genuinely open long bore and retains its height and front direction',async()=>{
+test('Historical MRI companion source has a genuinely open long bore and retains its height and front direction',async()=>{
   const bytes=await readFile(new URL('./assets/companion.glb',import.meta.url));
   const data=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
   const gltf=await new Promise((resolve,reject)=>new GLTFLoader().parse(data,'',resolve,reject));
