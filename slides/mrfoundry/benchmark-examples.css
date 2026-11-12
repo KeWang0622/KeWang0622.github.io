@@ -1,0 +1,64 @@
+/* Match the deck's dark blue palette; diagrams are task schematics. */
+.slide.benchmark-example.on {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  justify-content: safe center;
+  gap: 15px;
+  max-width: 1320px;
+  margin: auto;
+  padding: 22px 40px;
+  overflow-y: auto;
+}
+.benchmark-example > * { flex-shrink: 0; }
+.bench-heading h1 { font-size: clamp(28px, 3vw, 42px); margin: 0 0 13px; }
+.bench-request { max-width: 1080px; margin: 0; color: #ccd8e6; font-size: clamp(16px, 1.55vw, 20px); line-height: 1.5; }
+.bench-body { display: grid; grid-template-columns: minmax(0, .34fr) minmax(0, .66fr); gap: 42px; align-items: start; }
+.bench-visual { min-width: 0; }
+.bench-visual svg { display: block; width: 100%; max-width: 310px; height: auto; max-height: 250px; margin: 0 auto; }
+.bench-skills { text-align: center; font-size: 13px; color: #a9ccff; margin: 8px 0 12px; }
+.bench-takeaway { font-size: 16px; line-height: 1.5; color: #d5dfed; margin: 0; padding-left: 13px; border-left: 2px solid #75bfc4; }
+.bench-walkthrough { min-width: 0; }
+.bench-stages { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+.bench-stages button { background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: var(--muted); padding: 12px 8px 14px; text-align: left; font: inherit; font-size: 16px; cursor: pointer; }
+.bench-stages button span { display: inline-block; font: 11px var(--mono); margin-right: 8px; color: var(--dim); }
+.bench-stages button[aria-pressed="true"] { color: #c7ddff; border-bottom-color: #a9ccff; background: #82b7ff09; }
+.bench-stages button:hover { color: var(--text); }
+.bench-stages button:hover:not([aria-pressed="true"]) { border-bottom-color: transparent; background: #82b7ff06; }
+.bench-stages button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.bench-panel { min-height: 286px; padding-top: 20px; }
+.bench-panel-kicker { color: #75bfc4; text-transform: uppercase; font: 10px var(--mono); letter-spacing: .13em; margin: 0 0 9px; }
+.bench-panel h2 { font-size: clamp(21px, 2vw, 27px); line-height: 1.25; margin: 0 0 18px; }
+.bench-panel dl { margin: 0; }
+.bench-panel dl > div { display: grid; grid-template-columns: 135px 1fr; gap: 16px; padding: 9px 0; border-top: 1px solid #ffffff09; }
+.bench-panel dt { color: #dbe7f7; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.bench-panel dd { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.bench-outputs { border-top: 1px solid var(--line); padding-top: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.bench-outputs > span { color: var(--muted); font-size: 12px; margin-right: 6px; }
+.bench-outputs code { background: #152132; color: #c7daf3; border: 1px solid #273b53; padding: 5px 9px; border-radius: 5px; font-size: 12px; }
+.bench-source { margin: 0; font-size: 12px; line-height: 1.5; color: var(--dim); display: flex; justify-content: space-between; gap: 18px; }
+.bench-source a { color: #a9ccff; white-space: nowrap; }
+@media (min-width: 801px) and (max-height: 740px) {
+  .slide.benchmark-example.on { gap: 12px; padding-top: 14px; padding-bottom: 14px; }
+  .bench-heading h1 { font-size: 32px; margin-bottom: 10px; }
+  .bench-request { font-size: 17px; }
+  .bench-visual svg { max-height: 210px; }
+  .bench-panel { padding-top: 14px; min-height: 270px; }
+  .bench-panel h2 { font-size: 23px; margin-bottom: 12px; }
+  .bench-panel dd { font-size: 14px; }
+}
+@media (max-width: 800px) {
+  .slide.benchmark-example.on { justify-content: flex-start; padding: 24px 20px 30px; gap: 20px; }
+  .bench-body { grid-template-columns: 1fr; gap: 22px; }
+  .bench-visual { display: grid; grid-template-columns: 120px 1fr; align-items: center; column-gap: 18px; }
+  .bench-visual svg { grid-row: 1 / 3; max-height: 120px; }
+  .bench-skills { text-align: left; font-size: 12px; margin: 0 0 8px; }
+  .bench-takeaway { font-size: 14px; }
+  .bench-stages button { font-size: 13px; padding: 12px 3px; }
+  .bench-stages button span { font-size: 10px; margin-right: 4px; }
+  .bench-panel { min-height: 0; padding-top: 18px; }
+  .bench-panel dl > div { grid-template-columns: 1fr; gap: 3px; padding: 11px 0; }
+  .bench-panel dd { font-size: 15px; }
+  .bench-source { display: block; }
+  .bench-source a { display: inline-block; margin-top: 8px; }
+}

@@ -611,6 +611,7 @@
 <link rel="icon" type="image/png" href="../../assets/img/mrfoundry-favicon.png">
 <meta property="og:image" content="https://kewang0622.github.io/assets/img/mrfoundry-social.png">
 <meta property="og:image:alt" content="The MRFoundry MRI scanner mascot">
+<link rel="stylesheet" href="benchmark-examples.css">
 </head>
 <body>
 
@@ -632,6 +633,7 @@
   <button id="motion-toggle">Motion: on</button><button id="replay-figure">Replay figure</button><span class="sp">analytic simulations · no patient data</span>
 </div>
 
+<script src="benchmark-examples.js"></script>
 <script>
 // ===========================================================================
 // mri_figures.js — the computational core behind every figure in the talk.
@@ -4069,12 +4071,19 @@ S({
     Mention the repo is MIT and citable via CITATION.cff.`,
 });
 
+// Public task requirements make the evaluation criteria concrete.
+BENCHMARK_EXAMPLES.forEach(example => S({
+  section: 'Evaluation', kind: 'benchmark-example',
+  html: benchmarkExampleHTML(example),
+  notes: example.notes + ' Source: <a href="' + example.source + '">' + example.id + ' task specification</a>.',
+}));
+
 // ---- evaluation (frozen paired study; public Core and private Hard)
 S({
   section: 'Evaluation', kind: 'wide benchmark-evaluation',
   html: `<p class="kicker">MRI Agent Bench · paired evaluation</p>
     <h1>Do skills improve verified completion?</h1>
-    <p class="lede">Each pair uses the same model, task, inputs, tools, and time limit in separate attempts. The intervention adds MRFoundry skills and their project-level discovery instruction.</p>
+    <p class="lede">Across tasks like these, completion is verified from delivered artifacts and task-specific checks. Each pair holds the model, task, inputs, tools and time limit fixed; the intervention adds MRFoundry skills and their discovery instruction.</p>
     <div class="benchmark-results">
       <section class="benchmark-result"><h2>Core · 240 pairs</h2><p>No skills &rarr; With MRFoundry skills</p><div class="rate">67.5% &rarr; 78.3%</div><p>162/240 &rarr; 188/240 verified completions</p><p class="gain">+10.8 percentage points<br>95% CI: +0.8 to +21.2</p></section>
       <section class="benchmark-result"><h2>Hard · 134 pairs</h2><p>No skills &rarr; With MRFoundry skills</p><div class="rate">36.6% &rarr; 44.8%</div><p>49/134 &rarr; 60/134 verified completions</p><p class="gain">+8.2 percentage points<br>95% CI: −3.9 to +19.7</p></section>
@@ -4252,7 +4261,8 @@ const CHAPTERS=[
  {label:'Agents & skills',start:4,end:7},
  {label:'Get started',start:8,end:8},
  {label:'MRI examples',start:9,end:18},
- {label:'In practice',start:19,end:24},
+ {label:'In practice',start:19,end:22},
+ {label:'Benchmark',start:23,end:25},
 ];
 const chapterButtons=CHAPTERS.map((chapter,index)=>{
  const button=document.createElement('button');
@@ -4325,6 +4335,10 @@ function show(i) {
   s._el.scrollTop=0;
   s._el.classList.add('on');
   elSect.textContent = s.section || '';
+  document.querySelector('#foot .sp').textContent = s.kind === 'benchmark-example'
+    ? 'public task walkthrough · illustrative diagram'
+    : s.section === 'Evaluation' ? 'frozen benchmark results · verified completion'
+    : 'analytic simulations · no patient data';
   chapterButtons.forEach((button,index)=>{const c=CHAPTERS[index];const active=cur>=c.start&&cur<=c.end;button.setAttribute('aria-current',active?'step':'false');button.setAttribute('aria-pressed',String(active));});
   document.getElementById('replay-figure').disabled = !s.fig;
   document.getElementById('motion-toggle').disabled = REDUCED || !s.fig;
