@@ -27,40 +27,79 @@ I obtained my Ph.D. degree from [Electrical Engineering and Computer Sciences at
 
 Personal contact: **kewang0622 [at] gmail [dot] com**.
 
-<div class="mri-feature" markdown="0">
-  <a class="mri-feature-mascot" href="{{ '/slides/mrfoundry/' | relative_url }}" aria-label="Open the MRFoundry interactive tutorial"><img src="{{ '/assets/img/mri-mascot.png' | relative_url }}" width="78" height="88" alt="Friendly MRI scanner mascot" loading="lazy"></a>
-  <div class="mri-feature-copy"><strong class="mrfoundry-feature-name"><img class="mrfoundry-wordmark-light" src="{{ '/assets/img/mrfoundry-wordmark-light.svg' | relative_url }}" width="216" height="40" alt="MRFoundry"><img class="mrfoundry-wordmark-dark" src="{{ '/assets/img/mrfoundry-wordmark-dark.svg' | relative_url }}" width="216" height="40" alt="MRFoundry"></strong><p>From an MRI research question to skills, tools, and evidence.</p><a href="{{ '/slides/mrfoundry/' | relative_url }}">Explore the interactive tutorial ↗</a><span aria-hidden="true"> · </span><a href="{{ '/mrfoundry/examples/' | relative_url }}">See MRFoundry in action ↗</a><span aria-hidden="true"> · </span><a href="https://github.com/KeWang0622/MRFoundry">GitHub</a></div>
+<div class="home-projects" id="selected-projects" aria-label="Selected projects" markdown="0">
+  <section class="home-project" aria-labelledby="mrfoundry-feature-title">
+    <a class="home-project-image mri-project-image" href="{{ '/slides/mrfoundry/' | relative_url }}" aria-label="Open the MRFoundry interactive tutorial"><img src="{{ '/assets/img/mri-mascot.png' | relative_url }}" width="58" height="66" alt="" loading="lazy"></a>
+    <div class="home-project-copy">
+      <h2 id="mrfoundry-feature-title"><img class="mrfoundry-wordmark-light" src="{{ '/assets/img/mrfoundry-wordmark-light.svg' | relative_url }}" width="168" height="31" alt="MRFoundry"><img class="mrfoundry-wordmark-dark" src="{{ '/assets/img/mrfoundry-wordmark-dark.svg' | relative_url }}" width="168" height="31" alt="MRFoundry"></h2>
+      <p>Tools and skills for MRI research.</p>
+      <div class="home-project-links"><a href="{{ '/slides/mrfoundry/' | relative_url }}">Tutorial ↗</a><a href="{{ '/mrfoundry/examples/' | relative_url }}">Examples ↗</a><a href="https://github.com/KeWang0622/MRFoundry">GitHub ↗</a></div>
+    </div>
+  </section>
+  <section class="home-project" aria-labelledby="film-feature-title">
+    <a class="home-project-image film-project-image" href="{{ '/films/' | relative_url }}" aria-label="Watch the films"><img src="{{ '/films/assets/lisa-journey.webp' | relative_url }}" width="64" height="64" alt="A scene from Lisa’s Journey" loading="lazy"><span aria-hidden="true">▶</span></a>
+    <div class="home-project-copy">
+      <h2 id="film-feature-title">Films by Ke Wang</h2>
+      <p>Five short films. My favorite: Lisa’s Journey.</p>
+      <div class="home-project-links"><a href="{{ '/films/' | relative_url }}">Watch films ↗</a><a href="https://github.com/KeWang0622/ai-film">Open source ↗</a></div>
+    </div>
+  </section>
 </div>
 <style>
-.mri-feature{display:flex;align-items:center;gap:18px;margin:1.5rem 0;padding:14px 0;border-top:1px solid #8883;border-bottom:1px solid #8883;clear:both}.mri-feature-mascot{flex:0 0 78px}.mri-feature-mascot img{display:block;width:78px;height:88px;object-fit:contain;transition:transform .2s}.mri-feature-mascot:hover img{transform:translateY(-3px) rotate(-3deg)}.mri-feature-copy{min-width:0}.mrfoundry-feature-name{display:block}.mri-feature .mrfoundry-feature-name img{width:216px;max-width:100%;height:auto;object-fit:contain}.mri-feature .mrfoundry-wordmark-light{display:block}.mri-feature .mrfoundry-wordmark-dark{display:none}html[data-theme="dark"] .mri-feature .mrfoundry-wordmark-light{display:none}html[data-theme="dark"] .mri-feature .mrfoundry-wordmark-dark{display:block}.mri-feature p{font-size:.86rem;opacity:.75;margin:6px 0 7px}.mri-feature a{font-size:.82rem}@media(prefers-reduced-motion:reduce){.mri-feature-mascot img{transition:none}}
-</style>
-
-<section class="film-feature" aria-labelledby="film-feature-title" markdown="0">
-  <span class="film-feature-label">THE SCREENING ROOM</span>
-  <h2 id="film-feature-title">Films by Ke Wang</h2>
-  <p>Step inside my little cinema for five short films. Lisa’s Journey is my favorite.</p>
-  <div class="film-feature-links"><a href="{{ '/films/' | relative_url }}">Watch the films ↗</a><span aria-hidden="true"> · </span><a href="https://github.com/KeWang0622/ai-film">GitHub</a></div>
-</section>
-<style>
-.film-feature{position:relative;clear:both;margin:1.25rem 0 1.5rem;padding:1.4rem calc(24% + 1.5rem) 1.4rem 1.5rem;border:1px solid #e9d9cc;border-radius:20px;background:#fff8ee;color:#392f2a;font-family:"Nunito Sans",ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-.film-feature::after{content:"";position:absolute;top:14px;right:14px;bottom:14px;width:22%;border:4px solid #fffdf9;border-radius:14px;background:#ead9cb url("{{ '/films/assets/screening-room.webp' | relative_url }}") center/cover no-repeat;box-shadow:0 2px 8px #72534312;pointer-events:none}
-.film-feature .film-feature-label{display:block;margin-bottom:.5rem;font-size:.61rem;font-weight:700;line-height:1.4;letter-spacing:.11em;color:#896356}
-.film-feature h2{margin:0;font-family:inherit;font-size:1.45rem;font-weight:700;line-height:1.25;letter-spacing:-.025em;color:#392f2a}
-.film-feature p{margin:.45rem 0 .75rem;font-size:.88rem;line-height:1.5;color:#6a5b51}
-.film-feature .film-feature-links{font-size:.82rem;color:#a78a7a}
-.film-feature .film-feature-links a{color:#495d42;font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#495d424d}
-.film-feature .film-feature-links a:hover{color:#392f2a;text-decoration-color:#392f2a}
-.film-feature .film-feature-links a:focus-visible{outline:2px solid #495d42;outline-offset:4px;border-radius:3px}
-@media(max-width:575px){.film-feature{padding:1.3rem;border-radius:17px}.film-feature::after{display:none}.film-feature h2{font-size:1.35rem}}
-</style>
-
-<div class="benchmark-feature" markdown="0">
-  <div><strong>MRI Agent Bench</strong><span class="benchmark-tag">Executable MRI research tasks</span></div>
-  <p>Can an agent deliver working MRI research artifacts? The public Core benchmark covers 24 task types across 10 domains, with 88 released task variants and executable checks.</p>
-  <a href="https://kewang0622.github.io/MRIAgentBench/">Explore the benchmark ↗</a><span aria-hidden="true"> · </span><a href="https://github.com/KeWang0622/MRIAgentBench">Tasks, code, and submission guide</a>
-</div>
-<style>
-.benchmark-feature{clear:both;margin:1.25rem 0 1.5rem;padding:1rem 1.15rem;border:1px solid #8884;border-left:3px solid #6955a3;border-radius:5px}.benchmark-feature strong{font-size:1.06rem}.benchmark-tag{display:block;margin-top:2px;font-size:.75rem;opacity:.7}.benchmark-feature p{font-size:.88rem;line-height:1.5;margin:.55rem 0}.benchmark-feature a{font-size:.82rem}
+.home-projects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  clear: both;
+  scroll-margin-top: 100px;
+  margin: 1.25rem 0;
+  padding: 18px 0;
+  border-top: 1px solid var(--global-divider-color, #ddd);
+  border-bottom: 1px solid var(--global-divider-color, #ddd);
+}
+.home-projects .home-project {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.home-projects .home-project + .home-project {
+  border-left: 1px solid var(--global-divider-color, #ddd);
+  padding-left: 24px;
+}
+.home-projects .home-project-image { flex: 0 0 64px; }
+.home-projects .home-project-image img { display: block; }
+.home-projects .mri-project-image img { width: 58px; height: 66px; object-fit: contain; }
+.home-projects .film-project-image { position: relative; border-radius: 8px; overflow: hidden; }
+.home-projects .film-project-image img { width: 64px; height: 64px; object-fit: cover; }
+.home-projects .film-project-image span { position: absolute; right: 5px; bottom: 5px; display: grid; place-items: center; width: 19px; height: 19px; padding-left: 1px; border-radius: 50%; background: #fff4df; color: #343b2b; font-size: 8px; }
+.home-projects .home-project-copy { min-width: 0; }
+.home-projects h2 { margin: 0; font-family: inherit; font-size: 1.25rem; font-weight: 700; line-height: 31px; letter-spacing: -.025em; color: var(--global-text-color); }
+.home-projects h2 img { width: 168px; max-width: 100%; height: auto; }
+.home-projects .mrfoundry-wordmark-light { display: block; }
+.home-projects .mrfoundry-wordmark-dark { display: none; }
+html[data-theme="dark"] .home-projects .mrfoundry-wordmark-light { display: none; }
+html[data-theme="dark"] .home-projects .mrfoundry-wordmark-dark { display: block; }
+.home-projects p { margin: 5px 0 8px; font-size: .78rem; line-height: 1.45; color: var(--global-text-color); opacity: .75; }
+.home-projects .home-project-links { display: flex; flex-wrap: wrap; column-gap: 13px; row-gap: 5px; }
+.home-projects .home-project-links a { font-size: .74rem; font-weight: 500; line-height: 1.4; white-space: nowrap; }
+.home-projects a:focus-visible { outline: 2px solid var(--global-theme-color); outline-offset: 4px; border-radius: 3px; }
+@media (max-width: 767px) {
+  .home-projects { gap: 18px; }
+  .home-projects .home-project { gap: 10px; }
+  .home-projects .home-project + .home-project { padding-left: 18px; }
+  .home-projects .home-project-image { flex-basis: 48px; }
+  .home-projects .mri-project-image img { width: 46px; height: 53px; }
+  .home-projects .film-project-image img { width: 48px; height: 58px; }
+  .home-projects h2 { font-size: 1.125rem; }
+  .home-projects h2 img { width: 150px; }
+}
+@media (max-width: 575px) {
+  .home-projects { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 15px 0; }
+  .home-projects .home-project + .home-project { border-left: 0; border-top: 1px solid var(--global-divider-color, #ddd); padding: 14px 0 0; }
+  .home-projects .home-project { gap: 14px; }
+  .home-projects p { margin-top: 3px; margin-bottom: 6px; }
+}
 </style>
 
 <div class="kw-line" markdown="0"><span class="kw-label" title="Open-source projects I’ve contributed to. Repository stars checked {{ site.data.open_source.as_of }}.">Proud&nbsp;Contributor</span>{% for repo in site.data.open_source.contributions %}<a class="kw-chip" href="{{ repo.url }}" target="_blank" rel="noopener" title="{{ repo.repo }} — {{ repo.description | escape }} · {{ repo.stars }} repository stars as of {{ site.data.open_source.as_of }}"><span class="kw-emoji">{{ repo.emoji }}</span><span class="kw-name">{{ repo.repo | split: '/' | last }}</span><span class="kw-stars">{% if repo.stars >= 1000 %}{{ repo.stars | divided_by: 1000.0 | round: 1 }}k{% else %}{{ repo.stars }}{% endif %}</span></a>{% endfor %}</div>
