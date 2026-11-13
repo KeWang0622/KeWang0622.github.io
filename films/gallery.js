@@ -1,11 +1,11 @@
 'use strict';
 
 const films = [
+  { id: 'lisa-journey', title: 'Lisa’s Journey', description: 'Contemporary drama · 3:15' },
   { id: 'interstellar', title: 'Interstellar', description: 'Science fiction · 2:01' },
   { id: 'casablanca', title: 'Casablanca', description: 'Romance · Black & white · 3:48' },
   { id: 'mr-and-mrs-smith', title: 'Mr. & Mrs. Smith', description: 'Action comedy · 3:23' },
-  { id: 'titanic', title: 'Titanic', description: 'Romance · 2:01' },
-  { id: 'lisa-journey', title: 'Lisa’s Journey', description: 'Contemporary drama · 3:15' }
+  { id: 'titanic', title: 'Titanic', description: 'Romance · 2:01' }
 ];
 
 const dialog = document.getElementById('screening');
