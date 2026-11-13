@@ -35,6 +35,24 @@ Personal contact: **kewang0622 [at] gmail [dot] com**.
 .mri-feature{display:flex;align-items:center;gap:18px;margin:1.5rem 0;padding:14px 0;border-top:1px solid #8883;border-bottom:1px solid #8883;clear:both}.mri-feature-mascot{flex:0 0 78px}.mri-feature-mascot img{display:block;width:78px;height:88px;object-fit:contain;transition:transform .2s}.mri-feature-mascot:hover img{transform:translateY(-3px) rotate(-3deg)}.mri-feature-copy{min-width:0}.mrfoundry-feature-name{display:block}.mri-feature .mrfoundry-feature-name img{width:216px;max-width:100%;height:auto;object-fit:contain}.mri-feature .mrfoundry-wordmark-light{display:block}.mri-feature .mrfoundry-wordmark-dark{display:none}html[data-theme="dark"] .mri-feature .mrfoundry-wordmark-light{display:none}html[data-theme="dark"] .mri-feature .mrfoundry-wordmark-dark{display:block}.mri-feature p{font-size:.86rem;opacity:.75;margin:6px 0 7px}.mri-feature a{font-size:.82rem}@media(prefers-reduced-motion:reduce){.mri-feature-mascot img{transition:none}}
 </style>
 
+<section class="film-feature" aria-labelledby="film-feature-title" markdown="0">
+  <span class="film-feature-label">THE SCREENING ROOM</span>
+  <h2 id="film-feature-title">Films by Ke Wang</h2>
+  <p>Five short films, made one scene at a time.</p>
+  <div class="film-feature-links"><a href="{{ '/films/' | relative_url }}">Watch the films ↗</a><span aria-hidden="true"> · </span><a href="https://github.com/KeWang0622/ai-film">GitHub</a></div>
+</section>
+<style>
+.film-feature{clear:both;margin:1.25rem 0 1.5rem;padding:1.35rem 1.5rem;border:1px solid #d9c8a333;border-radius:5px;background:#171817;background-image:linear-gradient(90deg,rgba(13,17,16,.96),rgba(13,17,16,.83) 55%,rgba(13,17,16,.45)),url("{{ '/films/assets/cinema-hero.webp' | relative_url }}");background-size:cover;background-position:center;color:#f5efdf}
+.film-feature-label{display:block;margin-bottom:.5rem;font-size:.61rem;line-height:1.4;letter-spacing:.14em;color:#c7baa0}
+.film-feature h2{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:1.6rem;font-weight:400;line-height:1.2;color:#f5efdf}
+.film-feature p{margin:.45rem 0 .65rem;font-size:.88rem;line-height:1.5;color:#e0dbcf}
+.film-feature-links{font-size:.82rem;color:#c7baa0}
+.film-feature .film-feature-links a{color:#f5efdf;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#f5efdf66}
+.film-feature .film-feature-links a:hover{color:#fff;text-decoration-color:#fff}
+.film-feature .film-feature-links a:focus-visible{outline:2px solid #f5efdf;outline-offset:4px;border-radius:2px}
+@media(max-width:575px){.film-feature{padding:1.2rem}.film-feature h2{font-size:1.45rem}}
+</style>
+
 <div class="benchmark-feature" markdown="0">
   <div><strong>MRI Agent Bench</strong><span class="benchmark-tag">Executable MRI research tasks</span></div>
   <p>Can an agent deliver working MRI research artifacts? The public Core benchmark covers 24 task types across 10 domains, with 88 released task variants and executable checks.</p>
