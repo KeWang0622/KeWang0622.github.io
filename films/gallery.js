@@ -96,6 +96,21 @@ function selectFilm(index) {
       String(button.dataset.programme === film.id),
     ),
   );
+  const strip = document.querySelector(".film-programme");
+  const cover = programme[selectedIndex];
+  const coverLeft =
+    cover.getBoundingClientRect().left -
+    strip.getBoundingClientRect().left +
+    strip.scrollLeft;
+  if (
+    coverLeft < strip.scrollLeft ||
+    coverLeft + cover.offsetWidth > strip.scrollLeft + strip.clientWidth
+  ) {
+    strip.scrollTo({
+      left: coverLeft - (strip.clientWidth - cover.offsetWidth) / 2,
+      behavior: reducedMotion.matches ? "auto" : "smooth",
+    });
+  }
   const descriptionParts = film.description.split(" · ");
   document.getElementById("selected-runtime").textContent =
     descriptionParts.pop();

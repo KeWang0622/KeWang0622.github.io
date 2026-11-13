@@ -178,7 +178,7 @@ img {
 .room-controls {
   display: flex;
   align-items: center;
-  gap: 23px;
+  gap: 20px;
 }
 .room-controls button {
   border: 0;
@@ -193,6 +193,36 @@ img {
 }
 .room-controls button:hover {
   color: #efbf81;
+}
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 7px;
+  padding: 8px 12px;
+  background: #f5e7cd;
+  color: #292c23;
+  border: 1px solid #fff5dfb0;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+  box-shadow: 0 3px 14px #0003;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.source-link:hover {
+  background: #fff8e9;
+  transform: translateY(-1px);
+}
+.source-short {
+  display: none;
+}
+.source-arrow {
+  margin-left: 2px;
+  font-size: 12px;
 }
 .gallery {
   display: flex;
@@ -228,6 +258,7 @@ img {
   min-height: 180px;
   max-height: 440px;
   perspective: 1500px;
+  container-type: size;
   touch-action: pan-y;
   outline-offset: -8px;
 }
@@ -249,7 +280,7 @@ img {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(60vw, 820px);
+  width: min(62vw, 900px, 210cqh);
   aspect-ratio: 2.22;
   transform: translate(calc(-50% + var(--x)), -50%) rotateY(var(--angle))
     scale(var(--scale));
@@ -475,15 +506,36 @@ img {
   border-left: 7px solid currentColor;
 }
 .cinema-dock {
-  padding: 12px 35px 18px;
+  padding: 14px 38px 18px;
   position: relative;
   z-index: 7;
+  background: linear-gradient(180deg, transparent, #0b100b70 80%);
+}
+.programme-heading {
+  max-width: 1070px;
+  margin: 0 auto 3px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  text-shadow: 0 1px 6px #000;
+}
+.programme-heading h2 {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.programme-heading p {
+  font-size: 9px;
+  color: #cfbfa7;
 }
 .programme-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
+  max-width: 1190px;
+  margin: auto;
 }
 .browse-arrow {
   display: flex;
@@ -505,62 +557,100 @@ img {
 .film-programme {
   display: flex;
   align-items: flex-start;
-  gap: 13px;
+  gap: 16px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 9px 5px 9px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #d8b47a70 transparent;
 }
 .film-programme button {
   display: block;
-  width: 96px;
+  flex: 0 0 auto;
+  width: clamp(140px, 13.8vw, 202px);
   background: none;
   border: 0;
   padding: 0;
   color: #d5c6ae;
   text-align: left;
+  scroll-snap-align: center;
 }
 .programme-thumb {
-  height: 44px;
+  aspect-ratio: 1.95;
   display: block;
   position: relative;
-  border: 1px solid #fff2;
-  border-radius: 5px;
+  border: 1px solid #ead5af55;
+  border-radius: 7px;
   overflow: hidden;
+  box-shadow: 0 5px 15px #0005;
   transition:
-    border-color 0.2s,
-    transform 0.2s;
-  opacity: 0.65;
+    border-color 0.25s,
+    transform 0.25s,
+    box-shadow 0.25s;
+}
+.programme-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 50%, #0007);
+  pointer-events: none;
 }
 .programme-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.85);
+  transition: transform 0.5s;
 }
 .programme-thumb > span {
   position: absolute;
-  bottom: 3px;
-  left: 5px;
-  font-size: 7px;
+  bottom: 7px;
+  left: 8px;
+  z-index: 1;
+  font-size: 9px;
   text-shadow: 0 1px 4px #000;
   font-weight: 700;
 }
+.programme-thumb .programme-duration {
+  left: auto;
+  right: 8px;
+  font-variant-numeric: tabular-nums;
+  font-size: 8px;
+}
 .programme-name {
   display: block;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
-  margin-top: 6px;
+  margin-top: 10px;
+  text-shadow: 0 1px 8px #000;
 }
 .film-programme button[aria-pressed="true"] .programme-thumb {
   border-color: #ffe2ab;
-  opacity: 1;
-  box-shadow: 0 0 14px #ffc88b3b;
+  box-shadow:
+    0 0 0 1px #ffe2ab70,
+    0 5px 20px #ffc88b26;
 }
 .film-programme button[aria-pressed="true"] .programme-name {
   color: #fff2da;
 }
+.film-programme button[aria-pressed="true"] .programme-name::before {
+  content: "";
+  display: inline-block;
+  vertical-align: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #f3ca8b;
+  margin-right: 6px;
+}
 .film-programme button:hover .programme-thumb {
   transform: translateY(-3px);
-  opacity: 1;
+  border-color: #f6d4a3;
+}
+.film-programme button:hover img {
+  transform: scale(1.035);
 }
 .dock-caption {
   display: flex;
@@ -571,8 +661,8 @@ img {
   font-weight: 600;
   letter-spacing: 0.03em;
   color: #dbc6a6;
-  max-width: 1040px;
-  margin: 15px auto 0;
+  max-width: 1070px;
+  margin: 5px auto 0;
   text-shadow: 0 1px 5px #000;
 }
 .explore-hint span {
@@ -582,8 +672,17 @@ img {
   font-variant-numeric: tabular-nums;
   font-size: 9px;
 }
+.dock-caption a {
+  color: #fff0d7;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: #f2c98d66;
+  text-underline-offset: 4px;
+}
 .dock-caption a:hover {
   color: white;
+  text-decoration-color: currentColor;
 }
 .dragging .film-track {
   transition: none;
@@ -902,24 +1001,12 @@ img {
     max-height: 520px;
   }
   .film-card {
-    width: min(59vw, 1050px);
-  }
-  .cinema-dock {
-    padding-bottom: 28px;
-  }
-  .programme-thumb {
-    height: 55px;
-  }
-  .film-programme button {
-    width: 118px;
-  }
-  .programme-name {
-    font-size: 10px;
+    width: min(59vw, 1050px, 210cqh);
   }
 }
 @media (max-width: 1050px) {
   .film-card {
-    width: 66vw;
+    width: min(66vw, 210cqh);
   }
   .screening-details {
     display: block;
@@ -932,21 +1019,6 @@ img {
   }
   .site-header {
     padding: 0 25px;
-  }
-  .film-programme button {
-    width: 82px;
-  }
-  .programme-name {
-    font-size: 7px;
-  }
-  .programme-thumb {
-    height: 39px;
-  }
-  .programme-row {
-    gap: 18px;
-  }
-  .film-programme {
-    gap: 11px;
   }
 }
 @media (max-aspect-ratio: 1/1) {
@@ -990,21 +1062,6 @@ img {
   }
   .selected-film h2 {
     font-size: 31px;
-  }
-  .cinema-dock {
-    padding-bottom: 28px;
-  }
-  .programme-row {
-    gap: 16px;
-  }
-  .film-programme button {
-    width: 80px;
-  }
-  .programme-name {
-    font-size: 7px;
-  }
-  .programme-thumb {
-    height: 39px;
   }
 }
 @media (max-width: 600px) {
@@ -1103,38 +1160,6 @@ img {
     font-size: 10px;
     padding: 11px 18px;
   }
-  .cinema-dock {
-    padding: 12px 18px 22px;
-  }
-  .programme-row {
-    gap: 10px;
-  }
-  .browse-arrow {
-    height: 29px;
-    width: 29px;
-    font-size: 16px;
-    border-color: #e3d0ab55;
-  }
-  .film-programme {
-    gap: 7px;
-    min-width: 0;
-  }
-  .film-programme button {
-    width: clamp(34px, 11vw, 44px);
-    flex-shrink: 0;
-  }
-  .programme-thumb {
-    height: 32px;
-    border-radius: 4px;
-  }
-  .programme-name {
-    display: none;
-  }
-  .programme-thumb > span {
-    font-size: 6px;
-    left: 4px;
-    bottom: 2px;
-  }
   .dock-caption {
     font-size: 6px;
     margin-top: 17px;
@@ -1225,16 +1250,7 @@ img {
     font-size: 9px;
   }
   .film-card {
-    width: 54vw;
-  }
-  .cinema-dock {
-    padding-bottom: 12px;
-  }
-  .programme-thumb {
-    height: 32px;
-  }
-  .programme-name {
-    font-size: 6px;
+    width: min(54vw, 210cqh);
   }
   .dock-caption {
     margin-top: 10px;
@@ -1244,6 +1260,118 @@ img {
   }
   .film-stage {
     min-height: 150px;
+  }
+}
+@media (max-width: 900px) {
+  .cinema-dock {
+    padding: 12px 25px 23px;
+  }
+  .programme-heading {
+    margin-bottom: 2px;
+  }
+  .film-programme {
+    gap: 14px;
+    flex: 1;
+  }
+  .film-programme button {
+    width: 164px;
+  }
+  .programme-name {
+    font-size: 12px;
+  }
+  .programme-row {
+    gap: 13px;
+  }
+}
+@media (max-width: 600px) {
+  .cinema-app {
+    min-height: 700px;
+  }
+  .cinema-dock {
+    padding: 12px 18px 20px;
+  }
+  .programme-heading h2 {
+    font-size: 11px;
+  }
+  .programme-heading p {
+    font-size: 8px;
+  }
+  .programme-row > .browse-arrow {
+    display: none;
+  }
+  .film-programme {
+    gap: 13px;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+  .film-programme button {
+    width: 142px;
+  }
+  .programme-thumb {
+    border-radius: 6px;
+  }
+  .programme-name {
+    font-size: 11px;
+    margin-top: 8px;
+  }
+  .programme-thumb > span {
+    font-size: 8px;
+    bottom: 5px;
+    left: 7px;
+  }
+  .programme-thumb .programme-duration {
+    left: auto;
+    right: 7px;
+    font-size: 8px;
+  }
+  .dock-caption {
+    margin-top: 8px;
+  }
+}
+@media (max-height: 650px) and (min-aspect-ratio: 1/1) {
+  .cinema-app {
+    min-height: 620px;
+  }
+  .cinema-dock {
+    padding-top: 8px;
+    padding-bottom: 12px;
+  }
+  .film-programme button {
+    width: 145px;
+  }
+  .programme-name {
+    font-size: 10px;
+  }
+  .programme-heading h2 {
+    font-size: 11px;
+  }
+}
+@media (max-width: 600px) {
+  .room-controls {
+    gap: 12px;
+  }
+  .wordmark-label {
+    display: none;
+  }
+  .source-link {
+    padding: 7px 8px;
+    gap: 5px;
+    font-size: 10px;
+    border-radius: 6px;
+  }
+  .source-link svg {
+    width: 12px;
+    height: 12px;
+  }
+  .source-full,
+  .source-arrow {
+    display: none;
+  }
+  .source-short {
+    display: inline;
+  }
+  .dock-caption a {
+    font-size: 8px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
